@@ -261,13 +261,27 @@ const FirebaseSync = {
       const snap = await getDocFromServer(ref);
 
       if (this._needsPushOnLogin) {
-        // Lần đầu đăng nhập trên thiết bị này: ưu tiên local, merge rồi push
+        // Lần đầu đăng nhập trên thiết bị này (hoặc sau khi xóa cache)
         if (snap.exists()) {
           const srv     = snap.data();
           const srvSets = srv.sets || [];
           const locSets = Storage.getSets();
-          const locIds  = new Set(locSets.map(s => s.id));
 
+          // Nếu local trống (xóa cache) mà server có data → ưu tiên server hoàn toàn
+          const localIsEmpty = locSets.length === 0 &&
+            Object.keys(Storage.getProgress()).length === 0;
+
+          if (localIsEmpty) {
+            // Pull toàn bộ từ server, không push local trống lên
+            this._applyToLocal(srv);
+            this._lastServerTs = srv.updatedAt?.seconds;
+            this._needsPushOnLogin = false;
+            this._updateStatus('synced');
+            this._rerender();
+            return true;
+          }
+
+          const locIds  = new Set(locSets.map(s => s.id));
           const merged = [...locSets, ...srvSets.filter(s => !locIds.has(s.id))];
           const mergedProg = Object.assign({}, srv.progress || {}, Storage.getProgress());
           const locStreak = Storage.getStreak();
