@@ -1,12 +1,12 @@
 // ===== FIREBASE MODULE =====
 const FIREBASE_CONFIG = {
-  apiKey:             "AIzaSyBnM_4SgFek2PdjKAIWj0sXWnrhz5PzYQ0",
-  authDomain:         "vocalearn-3a4f2.firebaseapp.com",
-  projectId:          "vocalearn-3a4f2",
-  storageBucket:      "vocalearn-3a4f2.firebasestorage.app",
-  messagingSenderId:  "904250085974",
-  appId:              "1:904250085974:web:28d08a71893526486521f7",
-  measurementId:      "G-8PEK5H6Z71"
+  apiKey:            "AIzaSyBnM_4SgFek2PdjKAIWj0sXWnrhz5PzYQ0",
+  authDomain:        "vocalearn-3a4f2.firebaseapp.com",
+  projectId:         "vocalearn-3a4f2",
+  storageBucket:     "vocalearn-3a4f2.firebasestorage.app",
+  messagingSenderId: "904250085974",
+  appId:             "1:904250085974:web:28d08a71893526486521f7",
+  measurementId:     "G-8PEK5H6Z71"
 };
 
 // ===== KHỞI TẠO FIREBASE =====
@@ -121,7 +121,11 @@ const FirebaseSync = {
         localStorage.setItem('vocalearn_streak', JSON.stringify(best));
       } catch { localStorage.setItem('vocalearn_streak', JSON.stringify(data.streak)); }
     }
-    if (data.username     !== undefined) localStorage.setItem('vocalearn_username',       data.username);
+    // Chỉ ghi đè username nếu local đang trống (tránh mất tên vừa đặt)
+    if (data.username !== undefined) {
+      const localName = localStorage.getItem('vocalearn_username') || '';
+      if (!localName) localStorage.setItem('vocalearn_username', data.username);
+    }
     if (data.trash        !== undefined) localStorage.setItem('vocalearn_trash',          JSON.stringify(data.trash));
     if (data.chatSessions !== undefined) localStorage.setItem('vocalearn_chat_sessions',  JSON.stringify(data.chatSessions));
     if (data.geminiKey    !== undefined) localStorage.setItem('vocalearn_gemini_key',     data.geminiKey);

@@ -2759,6 +2759,12 @@ function promptSetName() {
   if (name === null) return;
   const trimmed = name.trim().slice(0, 30);
   localStorage.setItem('vocalearn_username', trimmed);
+  // Push ngay lên Firebase để tránh bị ghi đè khi sync
+  if (window.FirebaseSync && typeof FirebaseSync.push === 'function') {
+    FirebaseSync.push();
+  } else if (window.AutoSave && typeof AutoSave.triggerSave === 'function') {
+    AutoSave.triggerSave();
+  }
   renderHome();
 }
 
