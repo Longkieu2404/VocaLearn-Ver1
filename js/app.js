@@ -442,27 +442,64 @@ function renderHome() {
     banner.style.display = 'none';
   }
 
-  // Sample sets — ẩn bộ đã thuộc 100%
+  // Sample sets — hiển thị tất cả, nếu nhiều hơn SAMPLE_PREVIEW_COUNT thì ẩn bớt và có nút "Hiện tất cả"
+  const SAMPLE_PREVIEW_COUNT = 6;
   const sg = document.getElementById('sampleSets');
   sg.innerHTML = '';
-  const visibleSamples = SAMPLE_SETS.filter(s => !isSetFullyMastered(s));
-  if (visibleSamples.length === 0) {
-    sg.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">🎉 Bạn đã thuộc hết tất cả bộ thẻ mẫu!</p>';
+  const allSamples = SAMPLE_SETS;
+  if (allSamples.length === 0) {
+    sg.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">Không có bộ thẻ mẫu.</p>';
+  } else if (allSamples.length <= SAMPLE_PREVIEW_COUNT) {
+    allSamples.forEach(s => sg.appendChild(createSetCard(s)));
   } else {
-    visibleSamples.forEach(s => sg.appendChild(createSetCard(s)));
+    // Hiển thị một phần, ẩn phần còn lại
+    const previewSamples = allSamples.slice(0, SAMPLE_PREVIEW_COUNT);
+    const hiddenSamples = allSamples.slice(SAMPLE_PREVIEW_COUNT);
+    previewSamples.forEach(s => sg.appendChild(createSetCard(s)));
+
+    // Container cho các thẻ ẩn
+    const hiddenWrap = document.createElement('div');
+    hiddenWrap.id = 'sampleSetsHidden';
+    hiddenWrap.style.display = 'none';
+    hiddenSamples.forEach(s => hiddenWrap.appendChild(createSetCard(s)));
+    sg.appendChild(hiddenWrap);
+
+    // Nút "Hiện tất cả"
+    const showAllBtn = document.createElement('button');
+    showAllBtn.id = 'btnShowAllSamples';
+    showAllBtn.style.cssText = 'margin-top:0.75rem;padding:8px 20px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:0.9rem;cursor:pointer;font-weight:600;transition:background 0.2s,color 0.2s';
+    showAllBtn.textContent = `Hiện tất cả (${allSamples.length} bộ thẻ)`;
+    showAllBtn.onclick = () => {
+      hiddenWrap.querySelectorAll('.set-card').forEach(card => {
+        sg.insertBefore(card, hiddenWrap);
+      });
+      hiddenWrap.remove();
+      showAllBtn.style.display = 'none';
+    };
+    sg.appendChild(showAllBtn);
   }
 
-  // My sets — ẩn bộ đã thuộc 100%
+  // My sets — hiển thị tất cả, có nút "Xem tất cả" chuyển sang trang bộ thẻ của tôi
+  const MY_SETS_PREVIEW_COUNT = 4;
   const mg = document.getElementById('mySetsHome');
   mg.innerHTML = '';
   const userSets = getUserSets();
-  const visibleUserSets = userSets.filter(s => !isSetFullyMastered(s));
   if (userSets.length === 0) {
     mg.innerHTML = '<p style="color:var(--text3);font-size:0.9rem">Chưa có bộ thẻ nào. Nhấn + để tạo!</p>';
-  } else if (visibleUserSets.length === 0) {
-    mg.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">🎉 Bạn đã thuộc hết tất cả bộ thẻ của mình!</p>';
   } else {
-    visibleUserSets.forEach(s => mg.appendChild(createSetCard(s)));
+    const previewUserSets = userSets.slice(0, MY_SETS_PREVIEW_COUNT);
+    previewUserSets.forEach(s => mg.appendChild(createSetCard(s)));
+
+    // Nút "Xem tất cả" luôn hiện và chuyển sang trang bộ thẻ của tôi
+    const seeAllBtn = document.createElement('button');
+    seeAllBtn.style.cssText = 'display:block;margin-top:0.75rem;padding:8px 20px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:0.9rem;cursor:pointer;font-weight:600;transition:background 0.2s,color 0.2s';
+    if (userSets.length > MY_SETS_PREVIEW_COUNT) {
+      seeAllBtn.textContent = `Xem tất cả (${userSets.length} bộ thẻ) →`;
+    } else {
+      seeAllBtn.textContent = 'Xem bộ thẻ của tôi →';
+    }
+    seeAllBtn.onclick = () => { navigateTo('sets'); renderSetsPage(); };
+    mg.appendChild(seeAllBtn);
   }
 }
 
