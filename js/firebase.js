@@ -65,9 +65,10 @@ const FirebaseSync = {
   _isOnline:         navigator.onLine,
   // [FIX] Track xem có thay đổi offline chưa được sync lên không
   _hasPendingOfflineWrites: false,
-  // [FIX2] Bỏ qua snapshot đầu tiên sau khi pull() đã apply data xong
-  // Ngăn listener ghi đè data đúng vừa được set vào localStorage
-  _skipNextSnapshot: false,
+  // [FIX2] Timestamp khi pull() hoàn thành. Listener sẽ bỏ qua MỌI snapshot
+  // trong vòng 5 giây sau pull để tránh Firestore cache/echo ghi đè data đúng.
+  _pullCompletedAt: 0,
+  PULL_GUARD_MS: 5000,
 
   _userDocRef() {
     const user = auth.currentUser;
@@ -179,12 +180,9 @@ const FirebaseSync = {
       if (this._isPulling) return;
       if (!snap.exists()) return;
 
-      // [FIX2] Bỏ qua snapshot đầu tiên ngay sau khi pull() đã apply data
-      // (snapshot này thường là data cũ từ Firestore cache, ghi đè data đúng)
-      if (this._skipNextSnapshot) {
-        this._skipNextSnapshot = false;
-        return;
-      }
+      // [FIX2] Bỏ qua mọi snapshot trong vòng PULL_GUARD_MS sau khi pull() xong.
+      // Các snapshot ngay sau pull là Firestore cache/echo — không phải thay đổi thật.
+      if (Date.now() - this._pullCompletedAt < this.PULL_GUARD_MS) return;
 
       // [FIX] Nếu có pending offline writes chưa push xong → KHÔNG áp data từ server
       // vì data server lúc này vẫn là phiên bản cũ (trước khi offline)
@@ -347,9 +345,8 @@ const FirebaseSync = {
       return true;
     } finally {
       this._isPulling = false;
-      // [FIX2] Đánh dấu bỏ qua snapshot đầu tiên từ listener
-      // để tránh data vừa apply bị ghi đè bởi Firestore cache snapshot
-      this._skipNextSnapshot = true;
+      // [FIX2] Ghi timestamp pull xong để listener bỏ qua echo trong 5 giây
+      this._pullCompletedAt = Date.now();
       setTimeout(() => this.startListening(), 500);
     }
   },
@@ -376,6 +373,8 @@ const FirebaseSync = {
       await setDoc(ref, data, { merge: true });
       // [FIX] Push thành công → reset flag pending offline writes
       this._hasPendingOfflineWrites = false;
+      // Reset guard để listener nhận updates từ thiết bị khác sau khi push xong
+      this._pullCompletedAt = 0;
       this._updateStatus('synced');
       return true;
     } catch (e) {
