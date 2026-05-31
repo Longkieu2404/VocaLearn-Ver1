@@ -65,6 +65,9 @@ const FirebaseSync = {
   _isOnline:         navigator.onLine,
   // [FIX] Track xem có thay đổi offline chưa được sync lên không
   _hasPendingOfflineWrites: false,
+  // [FIX2] Bỏ qua snapshot đầu tiên sau khi pull() đã apply data xong
+  // Ngăn listener ghi đè data đúng vừa được set vào localStorage
+  _skipNextSnapshot: false,
 
   _userDocRef() {
     const user = auth.currentUser;
@@ -176,6 +179,13 @@ const FirebaseSync = {
       if (this._isPulling) return;
       if (!snap.exists()) return;
 
+      // [FIX2] Bỏ qua snapshot đầu tiên ngay sau khi pull() đã apply data
+      // (snapshot này thường là data cũ từ Firestore cache, ghi đè data đúng)
+      if (this._skipNextSnapshot) {
+        this._skipNextSnapshot = false;
+        return;
+      }
+
       // [FIX] Nếu có pending offline writes chưa push xong → KHÔNG áp data từ server
       // vì data server lúc này vẫn là phiên bản cũ (trước khi offline)
       if (this._hasPendingOfflineWrites) return;
@@ -258,6 +268,10 @@ const FirebaseSync = {
             if (srv.geminiKey)    localStorage.setItem('vocalearn_gemini_key',    srv.geminiKey);
             this._lastServerTs = srv.updatedAt?.seconds;
             this._needsPushOnLogin = false;
+            // [FIX] Gọi checkStreakExpiry với data chính xác trước khi return
+            window._firebaseDataLoaded = true;
+            if (typeof checkStreakExpiry === 'function') checkStreakExpiry();
+            window._firebaseDataLoaded = false;
             this._updateStatus('synced');
             this._rerender();
             return true;
@@ -319,8 +333,8 @@ const FirebaseSync = {
       }
 
       // Sau khi data Firebase đã load xong, kiểm tra streak expiry với data chính xác
+      // (chỉ chạy khi không return sớm từ nhánh !locHasData ở trên)
       if (typeof checkStreakExpiry === 'function') {
-        // Tạm thời cho phép reset (bỏ qua guard Firebase mode) bằng cách dùng flag
         window._firebaseDataLoaded = true;
         checkStreakExpiry();
         window._firebaseDataLoaded = false;
@@ -333,7 +347,10 @@ const FirebaseSync = {
       return true;
     } finally {
       this._isPulling = false;
-      setTimeout(() => this.startListening(), 100);
+      // [FIX2] Đánh dấu bỏ qua snapshot đầu tiên từ listener
+      // để tránh data vừa apply bị ghi đè bởi Firestore cache snapshot
+      this._skipNextSnapshot = true;
+      setTimeout(() => this.startListening(), 500);
     }
   },
 
