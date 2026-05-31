@@ -2974,13 +2974,33 @@ function renderChatPage() {
     document.getElementById('chatApiKeyResetBtn').onclick = () => {
       localStorage.removeItem('vocalearn_gemini_key');
       if (window.FirebaseSync) FirebaseSync.triggerSave();
-      renderChatPage();
+      // Re-render input form
+      bar.innerHTML = `
+        <span class="chat-apikey-icon">🔑</span>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem">Nhập Gemini API Key để sử dụng trợ lý AI</div>
+          <div style="font-size:0.8rem;color:var(--text3)">Lấy key miễn phí tại <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent5)">aistudio.google.com</a></div>
+        </div>
+        <input id="chatApiKeyInput" type="password" class="form-input" placeholder="AIza..." style="flex:1;min-width:0;max-width:320px;font-family:monospace"/>
+        <button class="btn-primary" id="chatApiKeySaveBtn" style="white-space:nowrap">Lưu key</button>
+      `;
+      document.getElementById('chatApiKeySaveBtn').onclick = () => {
+        const key = document.getElementById('chatApiKeyInput').value.trim();
+        if (key.length < 10) { showNotif('Vui lòng nhập <strong>Gemini API Key</strong> hợp lệ!', '⚠️'); return; }
+        localStorage.setItem('vocalearn_gemini_key', key);
+        if (window.FirebaseSync) FirebaseSync.triggerSave();
+        renderChatPage();
+        showNotif('Đã lưu Gemini API Key thành công!', '✅');
+      };
+      document.getElementById('chatApiKeyInput').onkeydown = e => {
+        if (e.key === 'Enter') document.getElementById('chatApiKeySaveBtn').click();
+      };
     };
   } else {
     document.getElementById('chatApiKeySaveBtn').onclick = () => {
       const key = document.getElementById('chatApiKeyInput').value.trim();
-      if (!key.startsWith('AIza')) {
-        showNotif('API Key không hợp lệ. Gemini key phải bắt đầu bằng <strong>AIza</strong>', '⚠️');
+      if (key.length < 10) {
+        showNotif('Vui lòng nhập <strong>Gemini API Key</strong> hợp lệ!', '⚠️');
         return;
       }
       localStorage.setItem('vocalearn_gemini_key', key);
