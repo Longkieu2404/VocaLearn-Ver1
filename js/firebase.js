@@ -9,22 +9,18 @@ const FIREBASE_CONFIG = {
   measurementId:     "G-8PEK5H6Z71"
 };
 
-// ===== KHỞI TẠO FIREBASE =====
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   initializeFirestore, persistentLocalCache, persistentSingleTabManager,
-  doc, getDoc, getDocFromServer, setDoc, onSnapshot, serverTimestamp,
-  enableNetwork, disableNetwork
+  doc, getDocFromServer, setDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 
-// Dùng persistentLocalCache thay enableIndexedDbPersistence (đã deprecated)
-// → tự động cache offline vào IndexedDB, không cần gọi thêm gì
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
 });
@@ -43,32 +39,26 @@ const FirebaseAuth = {
     }
   },
 
-  async signOut() {
-    await signOut(auth);
-  },
+  async signOut() { await signOut(auth); },
 
   getUser() { return auth.currentUser; },
 
-  onStateChange(callback) {
-    return onAuthStateChanged(auth, callback);
-  }
+  onStateChange(cb) { return onAuthStateChanged(auth, cb); }
 };
 
 // ===== FIRESTORE SYNC =====
 const FirebaseSync = {
-  _saveTimer:        null,
-  _isSyncing:        false,
-  _isPulling:        false,
-  _unsubSnapshot:    null,
-  _lastServerTs:     null,
-  _needsPushOnLogin: false,
-  _isOnline:         navigator.onLine,
-  // [FIX] Track xem có thay đổi offline chưa được sync lên không
+  _saveTimer:               null,
+  _isSyncing:               false,
+  _isPulling:               false,
+  _unsubSnapshot:           null,
+  _isOnline:                navigator.onLine,
   _hasPendingOfflineWrites: false,
-  // [FIX2] Timestamp khi pull() hoàn thành. Listener sẽ bỏ qua MỌI snapshot
-  // trong vòng 5 giây sau pull để tránh Firestore cache/echo ghi đè data đúng.
-  _pullCompletedAt: 0,
-  PULL_GUARD_MS: 5000,
+  // Sau pull(), chặn listener GUARD_MS ms để tránh echo Firestore ghi đè data đúng
+  _pullCompletedAt:         0,
+  GUARD_MS:                 8000,
+  // Chống pull() chạy song song (onAuthStateChanged có thể bắn nhiều lần)
+  _pullPromise:             null,
 
   _userDocRef() {
     const user = auth.currentUser;
@@ -76,67 +66,23 @@ const FirebaseSync = {
     return doc(db, "users", user.uid);
   },
 
-  // ── Ghi data từ Firestore vào localStorage (không qua Storage wrapper) ────
+  // Ghi thẳng server data vào localStorage, không merge
   _applyToLocal(data) {
-    if (data.sets         !== undefined) localStorage.setItem('vocalearn_sets',           JSON.stringify(data.sets));
-    if (data.progress     !== undefined) localStorage.setItem('vocalearn_progress',       JSON.stringify(data.progress));
-    if (data.stats        !== undefined) {
-      // Merge stats.daily VÀ stats.dailyCards: giữ lại dữ liệu local, không để server ghi đè
-      try {
-        const localStats  = JSON.parse(localStorage.getItem('vocalearn_stats')) || { daily: {}, dailyCards: {}, sessions: [] };
-        const serverStats = data.stats;
-        // Merge daily counts (local thắng nếu cùng ngày)
-        const mergedDaily = Object.assign({}, serverStats.daily || {}, localStats.daily || {});
-        // Merge dailyCards (ID arrays): gộp union của cả 2 phía cho mỗi ngày
-        const mergedDailyCards = Object.assign({}, serverStats.dailyCards || {});
-        const localDailyCards = localStats.dailyCards || {};
-        Object.keys(localDailyCards).forEach(date => {
-          const srvIds = new Set(mergedDailyCards[date] || []);
-          (localDailyCards[date] || []).forEach(id => srvIds.add(id));
-          mergedDailyCards[date] = [...srvIds];
-          // Đảm bảo daily count khớp với số ID thực tế
-          mergedDaily[date] = mergedDailyCards[date].length;
-        });
-        const mergedStats = { ...serverStats, daily: mergedDaily, dailyCards: mergedDailyCards };
-        localStorage.setItem('vocalearn_stats', JSON.stringify(mergedStats));
-      } catch { localStorage.setItem('vocalearn_stats', JSON.stringify(data.stats)); }
-    }
-    if (data.streak       !== undefined) {
-      // Merge streak: so sánh lastDate, count, VÀ rebuild từ stats.daily để phục hồi streak bị mất
-      try {
-        const localStreak  = JSON.parse(localStorage.getItem('vocalearn_streak')) || { count: 0, lastDate: null };
-        const serverStreak = data.streak;
-        // So sánh theo lastDate trước (ngày gần hơn = đáng tin hơn), rồi mới theo count
-        const locDate = localStreak.lastDate || '';
-        const srvDate = serverStreak.lastDate || '';
-        let best;
-        if (locDate > srvDate) best = localStreak;
-        else if (srvDate > locDate) best = serverStreak;
-        else best = (localStreak.count >= serverStreak.count) ? localStreak : serverStreak;
-        // Rebuild streak từ stats.daily để phục hồi trường hợp streak bị reset sai
-        const mergedStatsRaw = localStorage.getItem('vocalearn_stats');
-        if (mergedStatsRaw) {
-          try {
-            const daily = JSON.parse(mergedStatsRaw).daily || {};
-            const rebuilt = FirebaseSync._rebuildStreak(daily);
-            if (rebuilt.count > best.count) best = rebuilt;
-          } catch {}
-        }
-        localStorage.setItem('vocalearn_streak', JSON.stringify(best));
-      } catch { localStorage.setItem('vocalearn_streak', JSON.stringify(data.streak)); }
-    }
-    if (data.username     !== undefined) localStorage.setItem('vocalearn_username',       data.username);
-    if (data.trash        !== undefined) localStorage.setItem('vocalearn_trash',          JSON.stringify(data.trash));
-    if (data.chatSessions !== undefined) localStorage.setItem('vocalearn_chat_sessions',  JSON.stringify(data.chatSessions));
-    if (data.geminiKey    !== undefined) localStorage.setItem('vocalearn_gemini_key',     data.geminiKey);
+    if (data.sets         !== undefined) localStorage.setItem('vocalearn_sets',          JSON.stringify(data.sets));
+    if (data.progress     !== undefined) localStorage.setItem('vocalearn_progress',      JSON.stringify(data.progress));
+    if (data.stats        !== undefined) localStorage.setItem('vocalearn_stats',         JSON.stringify(data.stats));
+    if (data.streak       !== undefined) localStorage.setItem('vocalearn_streak',        JSON.stringify(data.streak));
+    if (data.username     !== undefined) localStorage.setItem('vocalearn_username',      data.username);
+    if (data.trash        !== undefined) localStorage.setItem('vocalearn_trash',         JSON.stringify(data.trash));
+    if (data.chatSessions !== undefined) localStorage.setItem('vocalearn_chat_sessions', JSON.stringify(data.chatSessions));
+    if (data.geminiKey    !== undefined) localStorage.setItem('vocalearn_gemini_key',    data.geminiKey);
   },
 
-  // ── Xóa toàn bộ dữ liệu local ────────────────────────────────────────────
   _clearLocal() {
-    localStorage.setItem('vocalearn_sets',      JSON.stringify([]));
-    localStorage.setItem('vocalearn_progress',  JSON.stringify({}));
-    localStorage.setItem('vocalearn_stats',     JSON.stringify({ daily: {}, sessions: [] }));
-    localStorage.setItem('vocalearn_streak',    JSON.stringify({ count: 0, lastDate: null }));
+    localStorage.setItem('vocalearn_sets',     JSON.stringify([]));
+    localStorage.setItem('vocalearn_progress', JSON.stringify({}));
+    localStorage.setItem('vocalearn_stats',    JSON.stringify({ daily: {}, dailyCards: {}, sessions: [] }));
+    localStorage.setItem('vocalearn_streak',   JSON.stringify({ count: 0, lastDate: null }));
     localStorage.removeItem('vocalearn_trash');
     localStorage.removeItem('vocalearn_username');
     localStorage.removeItem('vocalearn_chat_sessions');
@@ -144,86 +90,66 @@ const FirebaseSync = {
     localStorage.removeItem('vocalearn_gemini_models');
   },
 
-  // ── Re-render toàn bộ UI sau khi áp data mới ─────────────────────────────
   _rerender() {
     if (typeof renderHome       === 'function') renderHome();
     if (typeof updateStreak     === 'function') updateStreak();
     if (typeof updateTrashBadge === 'function') updateTrashBadge();
   },
 
-  // Rebuild streak bằng cách đếm ngày liên tiếp có dữ liệu trong stats.daily
   _rebuildStreak(daily) {
-    const toStr = (d) => {
-      return d.getFullYear() + '-' +
-        String(d.getMonth()+1).padStart(2,'0') + '-' +
-        String(d.getDate()).padStart(2,'0');
-    };
-    // Thử đếm từ hôm nay
-    let d = new Date(); let count = 0;
+    const toStr = d => d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+    let d = new Date(), count = 0;
     while (daily[toStr(d)] > 0) { count++; d.setDate(d.getDate()-1); }
     if (count > 0) return { count, lastDate: toStr(new Date()) };
-    // Nếu hôm nay chưa học, thử từ hôm qua (streak vẫn hợp lệ)
     d = new Date(); d.setDate(d.getDate()-1);
     while (daily[toStr(d)] > 0) { count++; d.setDate(d.getDate()-1); }
-    const lastDate = count > 0 ? toStr(new Date(Date.now() - 86400000)) : null;
-    return { count, lastDate };
+    return { count, lastDate: count > 0 ? toStr(new Date(Date.now()-86400000)) : null };
   },
 
-  // ── Lắng nghe real-time thay đổi từ Firestore ────────────────────────────
+  // ── Real-time listener ────────────────────────────────────────────────────
   startListening() {
     this.stopListening();
     const ref = this._userDocRef();
     if (!ref) return;
 
-    this._unsubSnapshot = onSnapshot(ref, (snap) => {
-      // Bỏ qua khi đang pull (tránh render 2 lần)
+    this._unsubSnapshot = onSnapshot(ref, snap => {
       if (this._isPulling) return;
       if (!snap.exists()) return;
-
-      // [FIX2] Bỏ qua mọi snapshot trong vòng PULL_GUARD_MS sau khi pull() xong.
-      // Các snapshot ngay sau pull là Firestore cache/echo — không phải thay đổi thật.
-      if (Date.now() - this._pullCompletedAt < this.PULL_GUARD_MS) return;
-
-      // [FIX] Nếu có pending offline writes chưa push xong → KHÔNG áp data từ server
-      // vì data server lúc này vẫn là phiên bản cũ (trước khi offline)
+      // Chặn echo ngay sau pull
+      if (Date.now() - this._pullCompletedAt < this.GUARD_MS) return;
+      // Có pending offline writes → không cho server ghi đè
       if (this._hasPendingOfflineWrites) return;
-
-      // Bỏ qua data từ cache local khi đang online
+      // Bỏ qua Firestore local cache khi online
       if (snap.metadata.fromCache && this._isOnline) return;
-
-      // Chỉ xử lý data đến từ server thật (không phải write pending của mình)
+      // Bỏ qua write pending của chính mình
       if (snap.metadata.hasPendingWrites) return;
 
-      const data = snap.data();
-
-      // So sánh updatedAt để tránh áp lại đúng data mình vừa push
-      const newTs = data.updatedAt?.seconds;
-      if (this._lastServerTs && newTs && newTs <= this._lastServerTs) return;
-      this._lastServerTs = newTs;
-
-      this._applyToLocal(data);
+      // Đây là update thật từ thiết bị khác
+      this._applyToLocal(snap.data());
       this._updateStatus('synced');
       this._rerender();
-    }, (err) => {
-      if (err.code === 'unavailable') {
-        this._updateStatus('offline');
-      } else {
-        console.error("Listener lỗi:", err);
-        this._updateStatus('error');
-      }
+    }, err => {
+      if (err.code === 'unavailable') this._updateStatus('offline');
+      else { console.error("Listener lỗi:", err); this._updateStatus('error'); }
     });
   },
 
   stopListening() {
-    if (this._unsubSnapshot) {
-      this._unsubSnapshot();
-      this._unsubSnapshot = null;
-    }
+    if (this._unsubSnapshot) { this._unsubSnapshot(); this._unsubSnapshot = null; }
     clearTimeout(this._saveTimer);
   },
 
-  // ── Pull: kéo data từ Firestore về, rồi bắt đầu real-time listener ───────
-  async pull() {
+  // ── pull(): public — chống chạy song song ────────────────────────────────
+  pull() {
+    if (this._pullPromise) return this._pullPromise;
+    this._pullPromise = this._doPull().finally(() => { this._pullPromise = null; });
+    return this._pullPromise;
+  },
+
+  // ── _doPull(): toàn bộ logic sync khi đăng nhập ──────────────────────────
+  async _doPull() {
     const ref  = this._userDocRef();
     const user = auth.currentUser;
     if (!ref || !user) return false;
@@ -231,186 +157,142 @@ const FirebaseSync = {
     this.stopListening();
     this._isPulling = true;
 
-    const ownerUid            = localStorage.getItem('vocalearn_owner_uid');
-    const isFirstLoginOnDevice = !ownerUid;
-    const localBelongsToOther  = !!(ownerUid && ownerUid !== user.uid);
-
-    if (isFirstLoginOnDevice) this._needsPushOnLogin = true;
-    if (localBelongsToOther)  { this._clearLocal(); this._needsPushOnLogin = false; }
-
-    localStorage.setItem('vocalearn_owner_uid', user.uid);
-
     try {
       this._updateStatus('syncing');
+
+      const ownerUid           = localStorage.getItem('vocalearn_owner_uid');
+      const isFirstOnDevice    = !ownerUid;
+      const belongsToOtherUser = !!(ownerUid && ownerUid !== user.uid);
+
+      // Trước khi làm gì, lưu local sets gốc (dùng cho merge sau nếu cần)
+      const localSetsBeforePull    = Storage.getSets();
+      const localProgressBeforePull = Storage.getProgress();
+
+      // Nếu thiết bị của người dùng khác → xóa local
+      if (belongsToOtherUser) {
+        this._clearLocal();
+      }
+
+      // Đánh dấu owner
+      localStorage.setItem('vocalearn_owner_uid', user.uid);
+
+      // Lấy data từ server thật (không dùng Firestore IndexedDB cache)
       const snap = await getDocFromServer(ref);
 
-      if (this._needsPushOnLogin) {
-        // Lần đầu đăng nhập trên thiết bị này: ưu tiên local, merge rồi push
-        if (snap.exists()) {
-          const srv     = snap.data();
-          const srvSets = srv.sets || [];
-          const locSets = Storage.getSets();
-          const locIds  = new Set(locSets.map(s => s.id));
+      if (!snap.exists()) {
+        // Tài khoản chưa có data trên server → đẩy local lên nếu có
+        if (localSetsBeforePull.length > 0) await this._rawPush();
+        return true;
+      }
 
-          const locHasData = locSets.length > 0 || Object.keys(Storage.getProgress()).length > 0;
+      const srv = snap.data();
 
-          if (!locHasData) {
-            // Local trống → pull thẳng từ server, không push lên
-            if (srv.sets)         localStorage.setItem('vocalearn_sets',          JSON.stringify(srv.sets));
-            if (srv.progress)     localStorage.setItem('vocalearn_progress',      JSON.stringify(srv.progress));
-            if (srv.stats)        localStorage.setItem('vocalearn_stats',         JSON.stringify(srv.stats));
-            if (srv.streak)       localStorage.setItem('vocalearn_streak',        JSON.stringify(srv.streak));
-            if (srv.trash)        localStorage.setItem('vocalearn_trash',         JSON.stringify(srv.trash));
-            if (srv.username)     localStorage.setItem('vocalearn_username',      srv.username);
-            if (srv.chatSessions) localStorage.setItem('vocalearn_chat_sessions', JSON.stringify(srv.chatSessions));
-            if (srv.geminiKey)    localStorage.setItem('vocalearn_gemini_key',    srv.geminiKey);
-            this._lastServerTs = srv.updatedAt?.seconds;
-            this._needsPushOnLogin = false;
-            // [FIX] Gọi checkStreakExpiry với data chính xác trước khi return
-            window._firebaseDataLoaded = true;
-            if (typeof checkStreakExpiry === 'function') checkStreakExpiry();
-            window._firebaseDataLoaded = false;
-            this._updateStatus('synced');
-            this._rerender();
-            return true;
+      // ── Lần đầu đăng nhập trên thiết bị này (tài khoản cũ có data server) ──
+      if (isFirstOnDevice || belongsToOtherUser) {
+        // Luôn ưu tiên server data cho sets, progress, streak, stats, v.v.
+        this._applyToLocal(srv);
+
+        // Nếu trước pull có sets local (người dùng tạo trước khi đăng nhập)
+        // → merge thêm vào mà không làm mất server data
+        if (localSetsBeforePull.length > 0 && !belongsToOtherUser) {
+          const srvIds    = new Set((srv.sets || []).map(s => s.id));
+          const onlyLocal = localSetsBeforePull.filter(s => !srvIds.has(s.id));
+          if (onlyLocal.length > 0) {
+            const merged = [...(srv.sets || []), ...onlyLocal];
+            localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
+            // Merge progress: server thắng, bổ sung local những key chưa có
+            const mergedProg = Object.assign({}, localProgressBeforePull, srv.progress || {});
+            localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
+            // Push merged data lên server
+            await this._rawPush();
           }
-
-          // Local có data → merge cả 2 phía, rồi push lên
-          const merged = [...locSets, ...srvSets.filter(s => !locIds.has(s.id))];
-          const mergedProg = Object.assign({}, srv.progress || {}, Storage.getProgress());
-          const locStreak = Storage.getStreak();
-          const srvStreak = srv.streak || { count: 0, lastDate: null };
-          const locDate2 = locStreak.lastDate || '';
-          const srvDate2 = srvStreak.lastDate || '';
-          let mergedStreak;
-          if (locDate2 > srvDate2)      mergedStreak = locStreak;
-          else if (srvDate2 > locDate2) mergedStreak = srvStreak;
-          else mergedStreak = (locStreak.count >= srvStreak.count) ? locStreak : srvStreak;
-          const locStats = Storage.getStats();
-          const srvStats = srv.stats || { daily: {}, dailyCards: {}, sessions: [] };
-          const mergedDaily = Object.assign({}, srvStats.daily || {}, locStats.daily || {});
-          const mergedDailyCards2 = Object.assign({}, srvStats.dailyCards || {});
-          const locDailyCards = locStats.dailyCards || {};
-          Object.keys(locDailyCards).forEach(date => {
-            const srvIds = new Set(mergedDailyCards2[date] || []);
-            (locDailyCards[date] || []).forEach(id => srvIds.add(id));
-            mergedDailyCards2[date] = [...srvIds];
-            mergedDaily[date] = mergedDailyCards2[date].length;
-          });
-          const mergedStats = { ...srvStats, daily: mergedDaily, dailyCards: mergedDailyCards2 };
-          // Fix: khai báo mergedStats trước khi dùng để rebuild streak
-          const rebuiltOnLogin = FirebaseSync._rebuildStreak(mergedStats.daily || {});
-          if (rebuiltOnLogin.count > mergedStreak.count) mergedStreak = rebuiltOnLogin;
-
-          localStorage.setItem('vocalearn_sets',     JSON.stringify(merged));
-          localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
-          localStorage.setItem('vocalearn_streak',   JSON.stringify(mergedStreak));
-          localStorage.setItem('vocalearn_stats',    JSON.stringify(mergedStats));
-          this._lastServerTs = srv.updatedAt?.seconds;
         }
-        await this.push();
-        this._needsPushOnLogin = false;
 
-      } else if (!snap.exists()) {
-        // Document chưa tồn tại → push local lên
-        await this.push();
+        return true;
+      }
 
-      } else if (this._hasPendingOfflineWrites) {
-        // [FIX] Có thay đổi offline chưa sync → PUSH local lên, không pull về
-        // Đây là trường hợp: đang offline → thay đổi dữ liệu → có mạng trở lại
-        console.log('[VocaLearn] Có pending offline writes → push local lên Firebase');
-        await this.push();
-        // push() sẽ reset _hasPendingOfflineWrites về false
-
+      // ── Thiết bị đã đăng nhập trước ────────────────────────────────────────
+      if (this._hasPendingOfflineWrites) {
+        // Có thay đổi offline chưa sync → push lên, không kéo về
+        await this._rawPush();
       } else {
-        // Trường hợp bình thường (không có thay đổi offline):
-        // pull data mới nhất từ Firebase về
-        const data = snap.data();
-        this._lastServerTs = data.updatedAt?.seconds;
-        this._applyToLocal(data);
+        // Bình thường: kéo data mới nhất từ server về
+        this._applyToLocal(srv);
       }
 
-      // Sau khi data Firebase đã load xong, kiểm tra streak expiry với data chính xác
-      // (chỉ chạy khi không return sớm từ nhánh !locHasData ở trên)
-      if (typeof checkStreakExpiry === 'function') {
-        window._firebaseDataLoaded = true;
-        checkStreakExpiry();
-        window._firebaseDataLoaded = false;
-      }
-      this._updateStatus('synced');
       return true;
+
     } catch (e) {
-      console.error('Lỗi pull:', e);
+      console.error('[VocaLearn] Lỗi pull:', e);
       this._updateStatus('offline');
       return true;
     } finally {
-      this._isPulling = false;
-      // [FIX2] Ghi timestamp pull xong để listener bỏ qua echo trong 5 giây
+      this._isPulling    = false;
       this._pullCompletedAt = Date.now();
+      this._updateStatus('synced');
+      window._firebaseDataLoaded = true;
+      if (typeof checkStreakExpiry === 'function') checkStreakExpiry();
+      window._firebaseDataLoaded = false;
       setTimeout(() => this.startListening(), 500);
     }
   },
 
-  // ── Push: đẩy data local lên Firestore ───────────────────────────────────
-  async push() {
+  // ── _rawPush(): push trực tiếp, KHÔNG qua Storage patch ──────────────────
+  // (Storage patch sẽ gọi triggerSave() → vòng lặp)
+  async _rawPush() {
     const ref = this._userDocRef();
     if (!ref || this._isSyncing) return false;
     this._isSyncing = true;
     try {
-      this._updateStatus('syncing');
-      const data = {
+      await setDoc(ref, {
         sets:         Storage.getSets(),
         progress:     Storage.getProgress(),
         stats:        Storage.getStats(),
         streak:       Storage.getStreak(),
         trash:        Trash.getAll(),
-        username:     localStorage.getItem('vocalearn_username')               || '',
+        username:     localStorage.getItem('vocalearn_username')                || '',
         chatSessions: JSON.parse(localStorage.getItem('vocalearn_chat_sessions') || '[]'),
-        geminiKey:    localStorage.getItem('vocalearn_gemini_key')             || '',
+        geminiKey:    localStorage.getItem('vocalearn_gemini_key')              || '',
         updatedAt:    serverTimestamp(),
         version:      3
-      };
-      await setDoc(ref, data, { merge: true });
-      // [FIX] Push thành công → reset flag pending offline writes
+      }, { merge: true });
       this._hasPendingOfflineWrites = false;
-      // Reset guard để listener nhận updates từ thiết bị khác sau khi push xong
-      this._pullCompletedAt = 0;
-      this._updateStatus('synced');
+      this._pullCompletedAt = 0; // reset guard sau push để listener nhận updates từ thiết bị khác
       return true;
     } catch (e) {
-      console.error("Lỗi push:", e);
-      this._updateStatus('offline');
+      console.error('[VocaLearn] Lỗi push:', e);
       return false;
     } finally {
       this._isSyncing = false;
     }
   },
 
-  // ── Debounce push sau mỗi thay đổi ───────────────────────────────────────
+  // push() công khai — dùng bởi nút Sync và triggerSave
+  async push() {
+    const ok = await this._rawPush();
+    this._updateStatus(ok ? 'synced' : 'offline');
+    return ok;
+  },
+
+  // Debounce save khi người dùng thay đổi data
   triggerSave() {
     if (!auth.currentUser) return;
-
-    // [FIX] Đánh dấu có pending write ngay khi người dùng thay đổi dữ liệu.
-    // Flag này sẽ bảo vệ dữ liệu offline: khi có mạng trở lại, pull() sẽ
-    // PUSH local lên thay vì ghi đè bằng data cũ từ Firebase.
     this._hasPendingOfflineWrites = true;
-
     this._updateStatus(this._isOnline ? 'pending' : 'offline');
     clearTimeout(this._saveTimer);
     this._saveTimer = setTimeout(() => this.push(), 2000);
   },
 
-  // ── Cập nhật trạng thái sync trên UI ─────────────────────────────────────
   _updateStatus(state) {
     const el = document.getElementById('autosaveStatus');
     if (!el) return;
     const map = {
-      off:     { icon: '☁️', text: 'Chưa đăng nhập',              cls: '' },
-      offline: { icon: '📴', text: 'Offline — sync khi có mạng',  cls: 'autosave-pending' },
-      pending: { icon: '⏳', text: 'Đang chờ đồng bộ...',         cls: 'autosave-pending' },
-      syncing: { icon: '🔄', text: 'Đang đồng bộ...',             cls: 'autosave-pending' },
-      synced:  { icon: '✅', text: 'Đã đồng bộ Firebase',         cls: 'autosave-ok'      },
-      error:   { icon: '❌', text: 'Lỗi đồng bộ',                 cls: 'autosave-err'     }
+      off:     { icon: '☁️', text: 'Chưa đăng nhập',             cls: '' },
+      offline: { icon: '📴', text: 'Offline — sync khi có mạng', cls: 'autosave-pending' },
+      pending: { icon: '⏳', text: 'Đang chờ đồng bộ...',        cls: 'autosave-pending' },
+      syncing: { icon: '🔄', text: 'Đang đồng bộ...',            cls: 'autosave-pending' },
+      synced:  { icon: '✅', text: 'Đã đồng bộ Firebase',        cls: 'autosave-ok'      },
+      error:   { icon: '❌', text: 'Lỗi đồng bộ',                cls: 'autosave-err'     }
     };
     const s = map[state] || map.off;
     el.innerHTML = `<span>${s.icon}</span><span>${s.text}</span>`;
@@ -428,41 +310,25 @@ const _origSaveStats    = Storage.saveStats.bind(Storage);
 const _origSaveStreak   = Storage.saveStreak.bind(Storage);
 const _origTrashSave    = Trash._save.bind(Trash);
 
-Storage.saveSets     = (v) => { _origSaveSets(v);     FirebaseSync.triggerSave(); };
-Storage.saveProgress = (v) => { _origSaveProgress(v); FirebaseSync.triggerSave(); };
-Storage.saveStats    = (v) => { _origSaveStats(v);    FirebaseSync.triggerSave(); };
-Storage.saveStreak   = (v) => { _origSaveStreak(v);   FirebaseSync.triggerSave(); };
-Trash._save          = (v) => { _origTrashSave(v);    FirebaseSync.triggerSave(); };
+Storage.saveSets     = v => { _origSaveSets(v);     FirebaseSync.triggerSave(); };
+Storage.saveProgress = v => { _origSaveProgress(v); FirebaseSync.triggerSave(); };
+Storage.saveStats    = v => { _origSaveStats(v);    FirebaseSync.triggerSave(); };
+Storage.saveStreak   = v => { _origSaveStreak(v);   FirebaseSync.triggerSave(); };
+Trash._save          = v => { _origTrashSave(v);    FirebaseSync.triggerSave(); };
 
-// ===== NETWORK RECONNECT: auto push offline data trước, rồi mới startListening =====
+// ===== NETWORK RECONNECT =====
 window.addEventListener('online', async () => {
-  console.log('[VocaLearn] Network online — đồng bộ lại...');
   FirebaseSync._isOnline = true;
   FirebaseSync._updateStatus('syncing');
-
   if (!auth.currentUser) return;
-
-  // [FIX] Nếu có pending offline writes → push ngay lập tức (không qua debounce)
-  // trước khi pull() để đảm bảo data local được lưu lên Firebase
-  if (FirebaseSync._hasPendingOfflineWrites) {
-    console.log('[VocaLearn] Pushing offline changes to Firebase...');
-    await FirebaseSync.push();
-  }
-
-  // Sau khi push xong (hoặc không có pending writes), pull() sẽ xử lý đúng
+  if (FirebaseSync._hasPendingOfflineWrites) await FirebaseSync.push();
   const ok = await FirebaseSync.pull();
-  if (ok) {
-    if (typeof renderHome       === 'function') renderHome();
-    if (typeof updateStreak     === 'function') updateStreak();
-    if (typeof updateTrashBadge === 'function') updateTrashBadge();
-  }
+  if (ok) FirebaseSync._rerender();
 });
 
 window.addEventListener('offline', () => {
-  console.log('[VocaLearn] Network offline.');
   FirebaseSync._isOnline = false;
   FirebaseSync._updateStatus('offline');
-  // Không stopListening() — Firestore SDK tự xử lý offline queue
 });
 
 // Gọi setupFirebaseUI sau khi DOM sẵn sàng
