@@ -266,16 +266,15 @@ const FirebaseSync = {
           const srv     = snap.data();
           const srvSets = srv.sets || [];
           const locSets = Storage.getSets();
+          const locProgress = Storage.getProgress();
 
-          // Nếu local trống (xóa cache) mà server có data → ưu tiên server hoàn toàn
-          const localIsEmpty = locSets.length === 0 &&
-            Object.keys(Storage.getProgress()).length === 0;
+          // Kiểm tra local có dữ liệu thật không (không tính sample sets)
+          const localHasRealData = locSets.length > 0 ||
+            Object.keys(locProgress).length > 0;
 
-          if (localIsEmpty) {
-            // Local trống (xóa cache / thiết bị mới) mà server có data
-            // → Pull toàn bộ từ server, KHÔNG push local trống lên ghi đè
+          if (!localHasRealData) {
+            // Local trống → pull toàn bộ từ server, KHÔNG push lên
             this._lastServerTs = srv.updatedAt?.seconds;
-            // Ghi thẳng từng field từ server vào local (bypass merge vì local trống)
             if (srv.sets)         localStorage.setItem('vocalearn_sets',          JSON.stringify(srv.sets));
             if (srv.progress)     localStorage.setItem('vocalearn_progress',      JSON.stringify(srv.progress));
             if (srv.stats)        localStorage.setItem('vocalearn_stats',         JSON.stringify(srv.stats));
@@ -284,49 +283,54 @@ const FirebaseSync = {
             if (srv.username)     localStorage.setItem('vocalearn_username',      srv.username);
             if (srv.chatSessions) localStorage.setItem('vocalearn_chat_sessions', JSON.stringify(srv.chatSessions));
             if (srv.geminiKey)    localStorage.setItem('vocalearn_gemini_key',    srv.geminiKey);
-            this._needsPushOnLogin = false;
-            this._hasPendingOfflineWrites = false;
-            this._updateStatus('synced');
-            this._rerender();
-            return true;
+          } else {
+            // Local có data → merge: server bổ sung thêm, local thắng nếu trùng
+            const locIds  = new Set(locSets.map(s => s.id));
+            const merged  = [...locSets, ...srvSets.filter(s => !locIds.has(s.id))];
+            const mergedProg = Object.assign({}, srv.progress || {}, locProgress);
+
+            const locStreak = Storage.getStreak();
+            const srvStreak = srv.streak || { count: 0, lastDate: null };
+            const locDate2  = locStreak.lastDate || '';
+            const srvDate2  = srvStreak.lastDate || '';
+            let mergedStreak;
+            if (locDate2 > srvDate2)      mergedStreak = locStreak;
+            else if (srvDate2 > locDate2) mergedStreak = srvStreak;
+            else mergedStreak = (locStreak.count >= srvStreak.count) ? locStreak : srvStreak;
+
+            const locStats = Storage.getStats();
+            const srvStats = srv.stats || { daily: {}, dailyCards: {}, sessions: [] };
+            const mergedDaily = Object.assign({}, srvStats.daily || {}, locStats.daily || {});
+            const mergedDailyCards2 = Object.assign({}, srvStats.dailyCards || {});
+            const locDailyCards = locStats.dailyCards || {};
+            Object.keys(locDailyCards).forEach(date => {
+              const srvIds = new Set(mergedDailyCards2[date] || []);
+              (locDailyCards[date] || []).forEach(id => srvIds.add(id));
+              mergedDailyCards2[date] = [...srvIds];
+              mergedDaily[date] = mergedDailyCards2[date].length;
+            });
+            const mergedStats = { ...srvStats, daily: mergedDaily, dailyCards: mergedDailyCards2 };
+            const rebuiltOnLogin = FirebaseSync._rebuildStreak(mergedStats.daily || {});
+            if (rebuiltOnLogin.count > mergedStreak.count) mergedStreak = rebuiltOnLogin;
+
+            localStorage.setItem('vocalearn_sets',     JSON.stringify(merged));
+            localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
+            localStorage.setItem('vocalearn_streak',   JSON.stringify(mergedStreak));
+            localStorage.setItem('vocalearn_stats',    JSON.stringify(mergedStats));
+
+            // Push merge lên Firebase sau khi merge
+            this._lastServerTs = srv.updatedAt?.seconds;
+            await this.push();
           }
-
-          const locIds  = new Set(locSets.map(s => s.id));
-          const merged = [...locSets, ...srvSets.filter(s => !locIds.has(s.id))];
-          const mergedProg = Object.assign({}, srv.progress || {}, Storage.getProgress());
-          const locStreak = Storage.getStreak();
-          const srvStreak = srv.streak || { count: 0, lastDate: null };
-          const locDate2 = locStreak.lastDate || '';
-          const srvDate2 = srvStreak.lastDate || '';
-          let mergedStreak;
-          if (locDate2 > srvDate2) mergedStreak = locStreak;
-          else if (srvDate2 > locDate2) mergedStreak = srvStreak;
-          else mergedStreak = (locStreak.count >= srvStreak.count) ? locStreak : srvStreak;
-          // Rebuild từ stats để phục hồi streak bị reset sai
-          const rebuiltOnLogin = FirebaseSync._rebuildStreak(mergedStats.daily || {});
-          if (rebuiltOnLogin.count > mergedStreak.count) mergedStreak = rebuiltOnLogin;
-          // Merge stats.daily VÀ dailyCards: gộp dữ liệu cả 2 phía, local thắng nếu trùng ngày
-          const locStats = Storage.getStats();
-          const srvStats = srv.stats || { daily: {}, dailyCards: {}, sessions: [] };
-          const mergedDaily = Object.assign({}, srvStats.daily || {}, locStats.daily || {});
-          const mergedDailyCards2 = Object.assign({}, srvStats.dailyCards || {});
-          const locDailyCards = locStats.dailyCards || {};
-          Object.keys(locDailyCards).forEach(date => {
-            const srvIds = new Set(mergedDailyCards2[date] || []);
-            (locDailyCards[date] || []).forEach(id => srvIds.add(id));
-            mergedDailyCards2[date] = [...srvIds];
-            mergedDaily[date] = mergedDailyCards2[date].length;
-          });
-          const mergedStats = { ...srvStats, daily: mergedDaily, dailyCards: mergedDailyCards2 };
-
-          localStorage.setItem('vocalearn_sets',     JSON.stringify(merged));
-          localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
-          localStorage.setItem('vocalearn_streak',   JSON.stringify(mergedStreak));
-          localStorage.setItem('vocalearn_stats',    JSON.stringify(mergedStats));
-          this._lastServerTs = srv.updatedAt?.seconds;
+        } else {
+          // Chưa có data trên Firebase → push local lên
+          await this.push();
         }
-        await this.push();
         this._needsPushOnLogin = false;
+        this._hasPendingOfflineWrites = false;
+        this._updateStatus('synced');
+        this._rerender();
+        return true;
 
       } else if (!snap.exists()) {
         // Document chưa tồn tại → push local lên
