@@ -3756,9 +3756,10 @@ async function generateFlashcardsFromChat(offerId, topic) {
     prompt = `Dựa trên hội thoại sau, tạo 10 từ vựng tiếng Anh phù hợp nhất, dành cho học sinh lớp 6 Việt Nam:\n\n${recentHistory}\n\nTrả về JSON thuần (không markdown, không backtick), định dạng:\n{"setName":"Tên bộ thẻ ngắn gọn","cards":[{"word":"...","phonetic":"/.../","meaning":"...","example":"..."}]}`;
   }
 
-  const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash-lite-001'];
+  let dynamicModels2 = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b'];
+  try { dynamicModels2 = await GeminiModels.getModels(apiKey); } catch(e) {}
   let data = null;
-  for (const model of MODELS) {
+  for (const model of dynamicModels2) {
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -3773,10 +3774,14 @@ async function generateFlashcardsFromChat(offerId, topic) {
       );
       const json = await response.json();
       if (!json.error) { data = json; break; }
-      if (json.error.code === 429) continue;
-      throw new Error(json.error.message);
+      const errCode = json.error.code;
+      const errMsg = json.error.message || '';
+      if (errCode === 429 || errCode === 404 || errCode === 400 ||
+          errMsg.includes('quota') || errMsg.includes('not found') || errMsg.includes('RESOURCE_EXHAUSTED')) continue;
+      throw new Error(errMsg);
     } catch(e) {
-      if (e.message && (e.message.includes('429') || e.message.includes('quota'))) continue;
+      if (e.message && (e.message.includes('429') || e.message.includes('quota') ||
+          e.message.includes('not found') || e.message.includes('404'))) continue;
       break;
     }
   }
@@ -3785,7 +3790,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   if (loadingRemove) loadingRemove.remove();
 
   if (!data) {
-    appendErrorBubble('❌ Không thể tạo bộ thẻ. Vui lòng thử lại sau.');
+    appendErrorBubble(friendlyAIError('quota exceeded'));
     return;
   }
 
