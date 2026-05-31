@@ -74,28 +74,8 @@ const FirebaseSync = {
 
   // ── Ghi data từ Firestore vào localStorage (không qua Storage wrapper) ────
   _applyToLocal(data) {
-    // Merge sets: gộp server + local, không ghi đè bộ thẻ local bằng server cũ hơn
-    if (data.sets !== undefined) {
-      try {
-        const srvSets = data.sets || [];
-        const locSets = JSON.parse(localStorage.getItem('vocalearn_sets') || '[]');
-        // Tạo map theo id, local thắng nếu trùng id (local luôn mới hơn)
-        const map = {};
-        srvSets.forEach(s => { map[s.id] = s; });
-        locSets.forEach(s => { map[s.id] = s; }); // local ghi đè server nếu trùng
-        const merged = Object.values(map);
-        localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
-      } catch { localStorage.setItem('vocalearn_sets', JSON.stringify(data.sets)); }
-    }
-    // Merge progress: local thắng nếu trùng key
-    if (data.progress !== undefined) {
-      try {
-        const srvProg = data.progress || {};
-        const locProg = JSON.parse(localStorage.getItem('vocalearn_progress') || '{}');
-        const merged = Object.assign({}, srvProg, locProg);
-        localStorage.setItem('vocalearn_progress', JSON.stringify(merged));
-      } catch { localStorage.setItem('vocalearn_progress', JSON.stringify(data.progress)); }
-    }
+    if (data.sets         !== undefined) localStorage.setItem('vocalearn_sets',           JSON.stringify(data.sets));
+    if (data.progress     !== undefined) localStorage.setItem('vocalearn_progress',       JSON.stringify(data.progress));
     if (data.stats        !== undefined) {
       // Merge stats.daily VÀ stats.dailyCards: giữ lại dữ liệu local, không để server ghi đè
       try {
@@ -141,11 +121,7 @@ const FirebaseSync = {
         localStorage.setItem('vocalearn_streak', JSON.stringify(best));
       } catch { localStorage.setItem('vocalearn_streak', JSON.stringify(data.streak)); }
     }
-    // Chỉ ghi đè username nếu local đang trống (tránh mất tên vừa đặt)
-    if (data.username !== undefined) {
-      const localName = localStorage.getItem('vocalearn_username') || '';
-      if (!localName) localStorage.setItem('vocalearn_username', data.username);
-    }
+    if (data.username     !== undefined) localStorage.setItem('vocalearn_username',       data.username);
     if (data.trash        !== undefined) localStorage.setItem('vocalearn_trash',          JSON.stringify(data.trash));
     if (data.chatSessions !== undefined) localStorage.setItem('vocalearn_chat_sessions',  JSON.stringify(data.chatSessions));
     if (data.geminiKey    !== undefined) localStorage.setItem('vocalearn_gemini_key',     data.geminiKey);
@@ -261,20 +237,17 @@ const FirebaseSync = {
       const snap = await getDocFromServer(ref);
 
       if (this._needsPushOnLogin) {
-        // Lần đầu đăng nhập trên thiết bị này (hoặc sau khi xóa cache)
+        // Lần đầu đăng nhập trên thiết bị này: ưu tiên local, merge rồi push
         if (snap.exists()) {
           const srv     = snap.data();
           const srvSets = srv.sets || [];
           const locSets = Storage.getSets();
-          const locProgress = Storage.getProgress();
+          const locIds  = new Set(locSets.map(s => s.id));
 
-          // Kiểm tra local có dữ liệu thật không (không tính sample sets)
-          const localHasRealData = locSets.length > 0 ||
-            Object.keys(locProgress).length > 0;
+          const locHasData = locSets.length > 0 || Object.keys(Storage.getProgress()).length > 0;
 
-          if (!localHasRealData) {
-            // Local trống → pull toàn bộ từ server, KHÔNG push lên
-            this._lastServerTs = srv.updatedAt?.seconds;
+          if (!locHasData) {
+            // Local trống → pull thẳng từ server, không push lên
             if (srv.sets)         localStorage.setItem('vocalearn_sets',          JSON.stringify(srv.sets));
             if (srv.progress)     localStorage.setItem('vocalearn_progress',      JSON.stringify(srv.progress));
             if (srv.stats)        localStorage.setItem('vocalearn_stats',         JSON.stringify(srv.stats));
@@ -283,54 +256,48 @@ const FirebaseSync = {
             if (srv.username)     localStorage.setItem('vocalearn_username',      srv.username);
             if (srv.chatSessions) localStorage.setItem('vocalearn_chat_sessions', JSON.stringify(srv.chatSessions));
             if (srv.geminiKey)    localStorage.setItem('vocalearn_gemini_key',    srv.geminiKey);
-          } else {
-            // Local có data → merge: server bổ sung thêm, local thắng nếu trùng
-            const locIds  = new Set(locSets.map(s => s.id));
-            const merged  = [...locSets, ...srvSets.filter(s => !locIds.has(s.id))];
-            const mergedProg = Object.assign({}, srv.progress || {}, locProgress);
-
-            const locStreak = Storage.getStreak();
-            const srvStreak = srv.streak || { count: 0, lastDate: null };
-            const locDate2  = locStreak.lastDate || '';
-            const srvDate2  = srvStreak.lastDate || '';
-            let mergedStreak;
-            if (locDate2 > srvDate2)      mergedStreak = locStreak;
-            else if (srvDate2 > locDate2) mergedStreak = srvStreak;
-            else mergedStreak = (locStreak.count >= srvStreak.count) ? locStreak : srvStreak;
-
-            const locStats = Storage.getStats();
-            const srvStats = srv.stats || { daily: {}, dailyCards: {}, sessions: [] };
-            const mergedDaily = Object.assign({}, srvStats.daily || {}, locStats.daily || {});
-            const mergedDailyCards2 = Object.assign({}, srvStats.dailyCards || {});
-            const locDailyCards = locStats.dailyCards || {};
-            Object.keys(locDailyCards).forEach(date => {
-              const srvIds = new Set(mergedDailyCards2[date] || []);
-              (locDailyCards[date] || []).forEach(id => srvIds.add(id));
-              mergedDailyCards2[date] = [...srvIds];
-              mergedDaily[date] = mergedDailyCards2[date].length;
-            });
-            const mergedStats = { ...srvStats, daily: mergedDaily, dailyCards: mergedDailyCards2 };
-            const rebuiltOnLogin = FirebaseSync._rebuildStreak(mergedStats.daily || {});
-            if (rebuiltOnLogin.count > mergedStreak.count) mergedStreak = rebuiltOnLogin;
-
-            localStorage.setItem('vocalearn_sets',     JSON.stringify(merged));
-            localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
-            localStorage.setItem('vocalearn_streak',   JSON.stringify(mergedStreak));
-            localStorage.setItem('vocalearn_stats',    JSON.stringify(mergedStats));
-
-            // Push merge lên Firebase sau khi merge
             this._lastServerTs = srv.updatedAt?.seconds;
-            await this.push();
+            this._needsPushOnLogin = false;
+            this._updateStatus('synced');
+            this._rerender();
+            return true;
           }
-        } else {
-          // Chưa có data trên Firebase → push local lên
-          await this.push();
+
+          // Local có data → merge cả 2 phía, rồi push lên
+          const merged = [...locSets, ...srvSets.filter(s => !locIds.has(s.id))];
+          const mergedProg = Object.assign({}, srv.progress || {}, Storage.getProgress());
+          const locStreak = Storage.getStreak();
+          const srvStreak = srv.streak || { count: 0, lastDate: null };
+          const locDate2 = locStreak.lastDate || '';
+          const srvDate2 = srvStreak.lastDate || '';
+          let mergedStreak;
+          if (locDate2 > srvDate2)      mergedStreak = locStreak;
+          else if (srvDate2 > locDate2) mergedStreak = srvStreak;
+          else mergedStreak = (locStreak.count >= srvStreak.count) ? locStreak : srvStreak;
+          const locStats = Storage.getStats();
+          const srvStats = srv.stats || { daily: {}, dailyCards: {}, sessions: [] };
+          const mergedDaily = Object.assign({}, srvStats.daily || {}, locStats.daily || {});
+          const mergedDailyCards2 = Object.assign({}, srvStats.dailyCards || {});
+          const locDailyCards = locStats.dailyCards || {};
+          Object.keys(locDailyCards).forEach(date => {
+            const srvIds = new Set(mergedDailyCards2[date] || []);
+            (locDailyCards[date] || []).forEach(id => srvIds.add(id));
+            mergedDailyCards2[date] = [...srvIds];
+            mergedDaily[date] = mergedDailyCards2[date].length;
+          });
+          const mergedStats = { ...srvStats, daily: mergedDaily, dailyCards: mergedDailyCards2 };
+          // Fix: khai báo mergedStats trước khi dùng để rebuild streak
+          const rebuiltOnLogin = FirebaseSync._rebuildStreak(mergedStats.daily || {});
+          if (rebuiltOnLogin.count > mergedStreak.count) mergedStreak = rebuiltOnLogin;
+
+          localStorage.setItem('vocalearn_sets',     JSON.stringify(merged));
+          localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
+          localStorage.setItem('vocalearn_streak',   JSON.stringify(mergedStreak));
+          localStorage.setItem('vocalearn_stats',    JSON.stringify(mergedStats));
+          this._lastServerTs = srv.updatedAt?.seconds;
         }
+        await this.push();
         this._needsPushOnLogin = false;
-        this._hasPendingOfflineWrites = false;
-        this._updateStatus('synced');
-        this._rerender();
-        return true;
 
       } else if (!snap.exists()) {
         // Document chưa tồn tại → push local lên
@@ -339,6 +306,7 @@ const FirebaseSync = {
       } else if (this._hasPendingOfflineWrites) {
         // [FIX] Có thay đổi offline chưa sync → PUSH local lên, không pull về
         // Đây là trường hợp: đang offline → thay đổi dữ liệu → có mạng trở lại
+        console.log('[VocaLearn] Có pending offline writes → push local lên Firebase');
         await this.push();
         // push() sẽ reset _hasPendingOfflineWrites về false
 
@@ -452,6 +420,7 @@ Trash._save          = (v) => { _origTrashSave(v);    FirebaseSync.triggerSave()
 
 // ===== NETWORK RECONNECT: auto push offline data trước, rồi mới startListening =====
 window.addEventListener('online', async () => {
+  console.log('[VocaLearn] Network online — đồng bộ lại...');
   FirebaseSync._isOnline = true;
   FirebaseSync._updateStatus('syncing');
 
@@ -460,6 +429,7 @@ window.addEventListener('online', async () => {
   // [FIX] Nếu có pending offline writes → push ngay lập tức (không qua debounce)
   // trước khi pull() để đảm bảo data local được lưu lên Firebase
   if (FirebaseSync._hasPendingOfflineWrites) {
+    console.log('[VocaLearn] Pushing offline changes to Firebase...');
     await FirebaseSync.push();
   }
 
@@ -473,6 +443,7 @@ window.addEventListener('online', async () => {
 });
 
 window.addEventListener('offline', () => {
+  console.log('[VocaLearn] Network offline.');
   FirebaseSync._isOnline = false;
   FirebaseSync._updateStatus('offline');
   // Không stopListening() — Firestore SDK tự xử lý offline queue
