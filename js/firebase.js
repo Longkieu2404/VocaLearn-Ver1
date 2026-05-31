@@ -272,10 +272,20 @@ const FirebaseSync = {
             Object.keys(Storage.getProgress()).length === 0;
 
           if (localIsEmpty) {
-            // Pull toàn bộ từ server, không push local trống lên
-            this._applyToLocal(srv);
+            // Local trống (xóa cache / thiết bị mới) mà server có data
+            // → Pull toàn bộ từ server, KHÔNG push local trống lên ghi đè
             this._lastServerTs = srv.updatedAt?.seconds;
+            // Ghi thẳng từng field từ server vào local (bypass merge vì local trống)
+            if (srv.sets)         localStorage.setItem('vocalearn_sets',          JSON.stringify(srv.sets));
+            if (srv.progress)     localStorage.setItem('vocalearn_progress',      JSON.stringify(srv.progress));
+            if (srv.stats)        localStorage.setItem('vocalearn_stats',         JSON.stringify(srv.stats));
+            if (srv.streak)       localStorage.setItem('vocalearn_streak',        JSON.stringify(srv.streak));
+            if (srv.trash)        localStorage.setItem('vocalearn_trash',         JSON.stringify(srv.trash));
+            if (srv.username)     localStorage.setItem('vocalearn_username',      srv.username);
+            if (srv.chatSessions) localStorage.setItem('vocalearn_chat_sessions', JSON.stringify(srv.chatSessions));
+            if (srv.geminiKey)    localStorage.setItem('vocalearn_gemini_key',    srv.geminiKey);
             this._needsPushOnLogin = false;
+            this._hasPendingOfflineWrites = false;
             this._updateStatus('synced');
             this._rerender();
             return true;
