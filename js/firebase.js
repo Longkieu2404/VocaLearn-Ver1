@@ -74,8 +74,28 @@ const FirebaseSync = {
 
   // ── Ghi data từ Firestore vào localStorage (không qua Storage wrapper) ────
   _applyToLocal(data) {
-    if (data.sets         !== undefined) localStorage.setItem('vocalearn_sets',           JSON.stringify(data.sets));
-    if (data.progress     !== undefined) localStorage.setItem('vocalearn_progress',       JSON.stringify(data.progress));
+    // Merge sets: gộp server + local, không ghi đè bộ thẻ local bằng server cũ hơn
+    if (data.sets !== undefined) {
+      try {
+        const srvSets = data.sets || [];
+        const locSets = JSON.parse(localStorage.getItem('vocalearn_sets') || '[]');
+        // Tạo map theo id, local thắng nếu trùng id (local luôn mới hơn)
+        const map = {};
+        srvSets.forEach(s => { map[s.id] = s; });
+        locSets.forEach(s => { map[s.id] = s; }); // local ghi đè server nếu trùng
+        const merged = Object.values(map);
+        localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
+      } catch { localStorage.setItem('vocalearn_sets', JSON.stringify(data.sets)); }
+    }
+    // Merge progress: local thắng nếu trùng key
+    if (data.progress !== undefined) {
+      try {
+        const srvProg = data.progress || {};
+        const locProg = JSON.parse(localStorage.getItem('vocalearn_progress') || '{}');
+        const merged = Object.assign({}, srvProg, locProg);
+        localStorage.setItem('vocalearn_progress', JSON.stringify(merged));
+      } catch { localStorage.setItem('vocalearn_progress', JSON.stringify(data.progress)); }
+    }
     if (data.stats        !== undefined) {
       // Merge stats.daily VÀ stats.dailyCards: giữ lại dữ liệu local, không để server ghi đè
       try {
