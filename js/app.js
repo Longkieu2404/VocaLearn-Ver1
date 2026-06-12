@@ -152,7 +152,7 @@ function setupLoginScreen() {
       btnGoogle.disabled = true;
       btnGoogle.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> ⏳ Đang đăng nhập...';
       const user = await window.FirebaseAuth.signIn();
-      if (!user && !window.FirebaseAuth._isMobile()) {
+      if (!user && !window.FirebaseAuth._isSafariIOS()) {
         btnGoogle.disabled = false;
         btnGoogle.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> Đăng nhập bằng Google';
         showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
@@ -208,7 +208,7 @@ function showLoginScreen() {
     btnGoogle2.disabled = true;
     btnGoogle2.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> ⏳ Đang đăng nhập...';
     const user = await window.FirebaseAuth.signIn();
-    if (!user && !window.FirebaseAuth._isMobile()) {
+    if (!user && !window.FirebaseAuth._isSafariIOS()) {
       btnGoogle2.disabled = false;
       btnGoogle2.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> Đăng nhập bằng Google';
       showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
@@ -3979,16 +3979,41 @@ function setupFirebaseUI() {
   }
 
   // ── Theo dõi trạng thái đăng nhập ─────────────────────────────────────────
+  // Firebase Auth trên mobile fire onAuthStateChanged(null) lần đầu trước khi
+  // resolve session thật → cần bỏ qua lần null đầu tiên nếu đang expect có session.
+  let _authResolved = false;
+
   FirebaseAuth.onStateChange(async (user) => {
+    // Lần đầu tiên callback fire
+    if (!_authResolved) {
+      _authResolved = true;
+      // Nếu user = null nhưng trước đó đã đăng nhập (auth_mode = 'google'),
+      // Firebase có thể đang khởi tạo session → bỏ qua lần null này.
+      if (!user && localStorage.getItem('vocalearn_auth_mode') === 'google') {
+        // Không làm gì — chờ lần fire tiếp theo với user thật.
+        // Đặt timeout fallback: nếu sau 5s vẫn không có user → thực sự đã đăng xuất.
+        setTimeout(() => {
+          if (!FirebaseAuth.getUser()) {
+            localStorage.removeItem('vocalearn_auth_mode');
+            updateUI(null);
+            FirebaseSync.stopListening();
+            if (typeof showLoginScreen === 'function') showLoginScreen();
+          }
+        }, 5000);
+        return;
+      }
+    }
+
     updateUI(user);
     if (user) {
       localStorage.setItem('vocalearn_auth_mode', 'google');
 
-      // pull() kéo data từ Firestore về trước, sau đó mới render UI và ẩn login
+      // pull() kéo data từ Firestore về
+      // Ẩn login screen NGAY (không chờ pull xong) để tránh user thấy màn hình đăng nhập
+      if (typeof hideLoginScreen === 'function') hideLoginScreen();
+
       const ok = await FirebaseSync.pull();
       if (ok) {
-        // Ẩn màn hình đăng nhập SAU KHI data đã được apply vào localStorage
-        if (typeof hideLoginScreen === 'function') hideLoginScreen();
         renderHome();
         updateStreak();
         updateTrashBadge();
@@ -4004,7 +4029,7 @@ function setupFirebaseUI() {
     const user = await FirebaseAuth.signIn();
     // Trên mobile: signIn() dùng redirect → page sẽ tự reload, không cần reset button
     // Trên desktop: popup trả về user hoặc null
-    if (user === null && !FirebaseAuth._isMobile()) {
+    if (user === null && !FirebaseAuth._isSafariIOS()) {
       // Chỉ reset button nếu là desktop và thất bại
       btnLogin.disabled = false;
       btnLogin.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">Đăng nhập Google';

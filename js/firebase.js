@@ -11,81 +11,85 @@ const FIREBASE_CONFIG = {
 
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  initializeFirestore, persistentLocalCache, persistentSingleTabManager, persistentMultipleTabManager,
-  doc, getDocFromServer, setDoc, onSnapshot, serverTimestamp
+  getAuth, GoogleAuthProvider,
+  signInWithPopup, signInWithRedirect, getRedirectResult,
+  signOut, onAuthStateChanged,
+  indexedDBLocalPersistence, browserLocalPersistence,
+  initializeAuth
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc, getDoc, setDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app  = initializeApp(FIREBASE_CONFIG);
-const auth = getAuth(app);
+const app = initializeApp(FIREBASE_CONFIG);
 
-// Mobile browsers (Safari iOS, some Android) có thể lỗi với persistentSingleTabManager
-// do giới hạn IndexedDB. Dùng try/catch để fallback về memory cache nếu cần.
-let db;
+// ── Auth: ưu tiên IndexedDB (persist qua reload), fallback localStorage ──────
+// Đây là nguyên nhân "phải đăng nhập lại": getAuth() mặc định dùng IndexedDB
+// nhưng nếu IndexedDB lỗi trên mobile thì session bị mất.
+// initializeAuth với danh sách persistence giải quyết điều này.
+let auth;
 try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  auth = initializeAuth(app, {
+    persistence: [indexedDBLocalPersistence, browserLocalPersistence]
   });
 } catch (e) {
-  console.warn('[VocaLearn] Firestore persistentCache lỗi, dùng memory cache:', e);
-  db = initializeFirestore(app, {});
+  // initializeAuth chỉ gọi được 1 lần — nếu app đã init thì dùng getAuth
+  auth = getAuth(app);
 }
+
+// ── Firestore: dùng getFirestore() không có persistent cache ─────────────────
+// persistentLocalCache gây lỗi "already initialized" và các lỗi IndexedDB trên mobile.
+// getFirestore() đơn giản, stable, hoạt động tốt trên mọi platform.
+const db = getFirestore(app);
 
 // ===== AUTH =====
 const FirebaseAuth = {
   provider: new GoogleAuthProvider(),
 
-  // Detect mobile: dùng redirect thay popup vì popup bị chặn trên Safari iOS & nhiều Android browser
-  _isMobile() {
-    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
-           (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent)); // iPad iOS 13+
+  // Chỉ Safari iOS mới thực sự block popup — Chrome Android không cần redirect
+  _isSafariIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+           /Safari/i.test(navigator.userAgent) &&
+           !/Chrome|CriOS|FxiOS/i.test(navigator.userAgent);
   },
 
   async signIn() {
     try {
-      if (this._isMobile()) {
-        // Đặt cờ TRƯỚC khi redirect — app.js đọc cờ này khi load lại để ẩn login screen ngay
+      if (this._isSafariIOS()) {
         localStorage.setItem('vocalearn_pending_redirect', '1');
         await signInWithRedirect(auth, this.provider);
-        return null; // sẽ không tới đây, page redirect đi
+        return null;
       } else {
         const result = await signInWithPopup(auth, this.provider);
         return result.user;
       }
     } catch (e) {
       localStorage.removeItem('vocalearn_pending_redirect');
-      console.error("Đăng nhập thất bại:", e);
+      console.error("[VocaLearn] Đăng nhập thất bại:", e);
       return null;
     }
   },
 
-  // Gọi khi app khởi động để lấy kết quả redirect từ lần đăng nhập trước (mobile)
   async handleRedirectResult() {
     try {
       const result = await getRedirectResult(auth);
       if (result && result.user) {
-        console.log('[VocaLearn] Redirect sign-in thành công:', result.user.email);
-        // Set auth_mode ngay để setupLoginScreen biết đã đăng nhập
+        console.log('[VocaLearn] Redirect sign-in OK:', result.user.email);
         localStorage.setItem('vocalearn_auth_mode', 'google');
-        // Xóa cờ pending redirect
         localStorage.removeItem('vocalearn_pending_redirect');
-        // Ẩn login screen nếu vẫn còn trên DOM (trường hợp setupLoginScreen chạy trước)
-        if (typeof hideLoginScreen === 'function') hideLoginScreen();
         return result.user;
       }
     } catch (e) {
       console.error('[VocaLearn] getRedirectResult lỗi:', e);
-      localStorage.removeItem('vocalearn_pending_redirect');
     }
+    localStorage.removeItem('vocalearn_pending_redirect');
     return null;
   },
 
   async signOut() { await signOut(auth); },
-
-  getUser() { return auth.currentUser; },
-
+  getUser()       { return auth.currentUser; },
   onStateChange(cb) { return onAuthStateChanged(auth, cb); }
 };
 
@@ -97,10 +101,8 @@ const FirebaseSync = {
   _unsubSnapshot:           null,
   _isOnline:                navigator.onLine,
   _hasPendingOfflineWrites: false,
-  // Sau pull(), chặn listener GUARD_MS ms để tránh echo Firestore ghi đè data đúng
   _pullCompletedAt:         0,
   GUARD_MS:                 4000,
-  // Chống pull() chạy song song (onAuthStateChanged có thể bắn nhiều lần)
   _pullPromise:             null,
 
   _userDocRef() {
@@ -109,7 +111,6 @@ const FirebaseSync = {
     return doc(db, "users", user.uid);
   },
 
-  // Ghi thẳng server data vào localStorage, không merge
   _applyToLocal(data) {
     if (data.sets         !== undefined) localStorage.setItem('vocalearn_sets',          JSON.stringify(data.sets));
     if (data.progress     !== undefined) localStorage.setItem('vocalearn_progress',      JSON.stringify(data.progress));
@@ -143,19 +144,6 @@ const FirebaseSync = {
     }
   },
 
-  _rebuildStreak(daily) {
-    const toStr = d => d.getFullYear() + '-' +
-      String(d.getMonth()+1).padStart(2,'0') + '-' +
-      String(d.getDate()).padStart(2,'0');
-    let d = new Date(), count = 0;
-    while (daily[toStr(d)] > 0) { count++; d.setDate(d.getDate()-1); }
-    if (count > 0) return { count, lastDate: toStr(new Date()) };
-    d = new Date(); d.setDate(d.getDate()-1);
-    while (daily[toStr(d)] > 0) { count++; d.setDate(d.getDate()-1); }
-    return { count, lastDate: count > 0 ? toStr(new Date(Date.now()-86400000)) : null };
-  },
-
-  // ── Real-time listener ────────────────────────────────────────────────────
   startListening() {
     this.stopListening();
     const ref = this._userDocRef();
@@ -164,16 +152,11 @@ const FirebaseSync = {
     this._unsubSnapshot = onSnapshot(ref, snap => {
       if (this._isPulling) return;
       if (!snap.exists()) return;
-      // Chặn echo ngay sau pull
       if (Date.now() - this._pullCompletedAt < this.GUARD_MS) return;
-      // Có pending offline writes → không cho server ghi đè
       if (this._hasPendingOfflineWrites) return;
-      // Bỏ qua Firestore local cache khi online
       if (snap.metadata.fromCache && this._isOnline) return;
-      // Bỏ qua write pending của chính mình
       if (snap.metadata.hasPendingWrites) return;
 
-      // Đây là update thật từ thiết bị khác
       this._applyToLocal(snap.data());
       this._updateStatus('synced');
       this._rerender();
@@ -188,14 +171,12 @@ const FirebaseSync = {
     clearTimeout(this._saveTimer);
   },
 
-  // ── pull(): public — chống chạy song song ────────────────────────────────
   pull() {
     if (this._pullPromise) return this._pullPromise;
     this._pullPromise = this._doPull().finally(() => { this._pullPromise = null; });
     return this._pullPromise;
   },
 
-  // ── _doPull(): toàn bộ logic sync khi đăng nhập ──────────────────────────
   async _doPull() {
     const ref  = this._userDocRef();
     const user = auth.currentUser;
@@ -211,60 +192,45 @@ const FirebaseSync = {
       const isFirstOnDevice    = !ownerUid;
       const belongsToOtherUser = !!(ownerUid && ownerUid !== user.uid);
 
-      // Trước khi làm gì, lưu local sets gốc (dùng cho merge sau nếu cần)
-      const localSetsBeforePull    = Storage.getSets();
+      const localSetsBeforePull     = Storage.getSets();
       const localProgressBeforePull = Storage.getProgress();
 
-      // Nếu thiết bị của người dùng khác → xóa local
-      if (belongsToOtherUser) {
-        this._clearLocal();
-      }
+      if (belongsToOtherUser) this._clearLocal();
 
-      // Đánh dấu owner
       localStorage.setItem('vocalearn_owner_uid', user.uid);
 
-      // Lấy data từ server thật (không dùng Firestore IndexedDB cache)
-      const snap = await getDocFromServer(ref);
+      // Dùng getDoc() thay vì getDocFromServer() —
+      // getDocFromServer() fail ngay nếu Firestore chưa kết nối xong (mobile).
+      // getDoc() dùng cache nếu offline, server nếu online — an toàn hơn.
+      const snap = await getDoc(ref);
 
       if (!snap.exists()) {
-        // Tài khoản chưa có data trên server → đẩy local lên nếu có
         if (localSetsBeforePull.length > 0) await this._rawPush();
         return true;
       }
 
       const srv = snap.data();
 
-      // ── Lần đầu đăng nhập trên thiết bị này (tài khoản cũ có data server) ──
       if (isFirstOnDevice || belongsToOtherUser) {
-        // Luôn ưu tiên server data cho sets, progress, streak, stats, v.v.
         this._applyToLocal(srv);
-
-        // Nếu trước pull có sets local (người dùng tạo trước khi đăng nhập)
-        // → merge thêm vào mà không làm mất server data
         if (localSetsBeforePull.length > 0 && !belongsToOtherUser) {
           const srvIds    = new Set((srv.sets || []).map(s => s.id));
           const onlyLocal = localSetsBeforePull.filter(s => !srvIds.has(s.id));
           if (onlyLocal.length > 0) {
             const merged = [...(srv.sets || []), ...onlyLocal];
             localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
-            // Merge progress: server thắng, bổ sung local những key chưa có
             const mergedProg = Object.assign({}, localProgressBeforePull, srv.progress || {});
             localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
-            // Push merged data lên server
             await this._rawPush();
           }
         }
-
         return true;
       }
 
-      // ── Thiết bị đã đăng nhập trước ────────────────────────────────────────
       if (this._hasPendingOfflineWrites) {
-        // Có thay đổi local chưa sync → so sánh timestamp
-        const srvTs    = srv.updatedAt ? srv.updatedAt.toMillis() : 0;
-        const localTs  = parseInt(localStorage.getItem('vocalearn_local_updatedAt') || '0');
+        const srvTs   = srv.updatedAt ? srv.updatedAt.toMillis() : 0;
+        const localTs = parseInt(localStorage.getItem('vocalearn_local_updatedAt') || '0');
         if (srvTs > localTs) {
-          // Server mới hơn → apply server data trước, rồi push local sets mới tạo offline lên
           const localSets  = Storage.getSets();
           const srvSetIds  = new Set((srv.sets || []).map(s => s.id));
           const onlyLocal  = localSets.filter(s => !srvSetIds.has(s.id));
@@ -274,10 +240,8 @@ const FirebaseSync = {
             localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
           }
         }
-        // Dù server mới hơn hay không, vẫn push để đảm bảo data local được lưu
         await this._rawPush();
       } else {
-        // Bình thường: kéo data mới nhất từ server về
         this._applyToLocal(srv);
         if (srv.updatedAt) {
           localStorage.setItem('vocalearn_local_updatedAt', srv.updatedAt.toMillis().toString());
@@ -291,7 +255,7 @@ const FirebaseSync = {
       this._updateStatus('offline');
       return true;
     } finally {
-      this._isPulling    = false;
+      this._isPulling       = false;
       this._pullCompletedAt = Date.now();
       this._updateStatus('synced');
       window._firebaseDataLoaded = true;
@@ -301,8 +265,6 @@ const FirebaseSync = {
     }
   },
 
-  // ── _rawPush(): push trực tiếp, KHÔNG qua Storage patch ──────────────────
-  // (Storage patch sẽ gọi triggerSave() → vòng lặp)
   async _rawPush() {
     const ref = this._userDocRef();
     if (!ref || this._isSyncing) return false;
@@ -321,7 +283,6 @@ const FirebaseSync = {
         version:      3
       }, { merge: true });
       this._hasPendingOfflineWrites = false;
-      // Giữ guard ngắn 1.5s để tránh echo chính mình, sau đó listener nhận update từ thiết bị khác
       this._pullCompletedAt = Date.now() - (this.GUARD_MS - 1500);
       localStorage.setItem('vocalearn_local_updatedAt', Date.now().toString());
       return true;
@@ -333,14 +294,12 @@ const FirebaseSync = {
     }
   },
 
-  // push() công khai — dùng bởi nút Sync và triggerSave
   async push() {
     const ok = await this._rawPush();
     this._updateStatus(ok ? 'synced' : 'offline');
     return ok;
   },
 
-  // Debounce save khi người dùng thay đổi data
   triggerSave() {
     if (!auth.currentUser) return;
     this._hasPendingOfflineWrites = true;
@@ -366,7 +325,7 @@ const FirebaseSync = {
   }
 };
 
-// ===== PATCH Storage & Trash để tự động triggerSave =====
+// ===== PATCH Storage & Trash =====
 window.FirebaseAuth = FirebaseAuth;
 window.FirebaseSync = FirebaseSync;
 
@@ -397,11 +356,10 @@ window.addEventListener('offline', () => {
   FirebaseSync._updateStatus('offline');
 });
 
-// Gọi setupFirebaseUI sau khi DOM sẵn sàng
-// handleRedirectResult() phải được gọi TRƯỚC để xử lý kết quả đăng nhập redirect trên mobile
+// ===== INIT =====
 async function _initFirebase() {
+  // Xử lý kết quả redirect (mobile) trước khi setupFirebaseUI
   await FirebaseAuth.handleRedirectResult();
-  // Dọn cờ pending_redirect dù thành công hay không (tránh bị kẹt màn hình trống)
   localStorage.removeItem('vocalearn_pending_redirect');
   setupFirebaseUI();
 }
