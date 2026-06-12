@@ -24,9 +24,10 @@ import {
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 
-// Lưu session vào localStorage để persist qua reload kể cả khi IndexedDB bị lỗi trên mobile
-setPersistence(auth, browserLocalPersistence).catch(e =>
-  console.warn('[VocaLearn] setPersistence lỗi:', e)
+// setPersistence phải hoàn thành TRƯỚC khi gọi signInWithPopup/Redirect
+// Lưu promise để signIn() có thể await nó
+const _persistenceReady = setPersistence(auth, browserLocalPersistence).catch(e =>
+  console.warn('[VocaLearn] setPersistence lỗi (dùng default):', e)
 );
 
 // ── Firestore: dùng getFirestore() không có persistent cache ─────────────────
@@ -47,6 +48,8 @@ const FirebaseAuth = {
 
   async signIn() {
     try {
+      // Đảm bảo setPersistence đã xong trước khi gọi bất kỳ auth operation nào
+      await _persistenceReady;
       if (this._isSafariIOS()) {
         localStorage.setItem('vocalearn_pending_redirect', '1');
         await signInWithRedirect(auth, this.provider);
@@ -64,6 +67,7 @@ const FirebaseAuth = {
 
   async handleRedirectResult() {
     try {
+      await _persistenceReady;
       const result = await getRedirectResult(auth);
       if (result && result.user) {
         console.log('[VocaLearn] Redirect sign-in OK:', result.user.email);
