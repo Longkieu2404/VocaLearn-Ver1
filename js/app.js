@@ -17,9 +17,754 @@ const SET_TOPIC_EMOJI = {
 };
 const SET_TOPIC_EMOJI_FALLBACK = ['📚','📗','📘','📙','📕'];
 
+// ---- TOPIC ILLUSTRATION (SVG inline) ----
+const SET_TOPIC_SVG = {
+  sample_1: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <!-- Sky -->
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Sun -->
+    <circle cx="170" cy="22" r="16" fill="#FFD166" opacity="0.9"/>
+    <line x1="170" y1="2" x2="170" y2="8" stroke="#FFD166" stroke-width="2" stroke-linecap="round"/>
+    <line x1="170" y1="36" x2="170" y2="42" stroke="#FFD166" stroke-width="2" stroke-linecap="round"/>
+    <line x1="150" y1="22" x2="144" y2="22" stroke="#FFD166" stroke-width="2" stroke-linecap="round"/>
+    <line x1="190" y1="22" x2="196" y2="22" stroke="#FFD166" stroke-width="2" stroke-linecap="round"/>
+    <!-- Clouds -->
+    <ellipse cx="30" cy="18" rx="18" ry="9" fill="white" opacity="0.8"/>
+    <ellipse cx="46" cy="14" rx="14" ry="8" fill="white" opacity="0.8"/>
+    <ellipse cx="18" cy="16" rx="12" ry="7" fill="white" opacity="0.8"/>
+    <!-- Ground -->
+    <rect x="0" y="100" width="200" height="30" fill="#7EC850" rx="0"/>
+    <!-- Road -->
+    <rect x="70" y="100" width="60" height="30" fill="#c8b89a"/>
+    <rect x="96" y="103" width="8" height="8" fill="#fff" rx="2" opacity="0.7"/>
+    <rect x="96" y="116" width="8" height="8" fill="#fff" rx="2" opacity="0.7"/>
+    <!-- School building -->
+    <rect x="40" y="55" width="120" height="50" fill="#E8F4FD" rx="3"/>
+    <rect x="40" y="55" width="120" height="8" fill="#4ECDC4" rx="3"/>
+    <!-- Roof -->
+    <polygon points="30,55 100,20 170,55" fill="#FF6B6B"/>
+    <polygon points="35,55 100,24 165,55" fill="#FF8E8E"/>
+    <!-- Flag -->
+    <line x1="100" y1="10" x2="100" y2="25" stroke="#555" stroke-width="1.5"/>
+    <polygon points="100,10 112,14 100,18" fill="#FF6B6B"/>
+    <!-- Windows -->
+    <rect x="52" y="67" width="18" height="15" fill="#80CAED" rx="2"/>
+    <rect x="80" y="67" width="18" height="15" fill="#80CAED" rx="2"/>
+    <rect x="130" y="67" width="18" height="15" fill="#80CAED" rx="2"/>
+    <line x1="61" y1="67" x2="61" y2="82" stroke="white" stroke-width="1"/>
+    <line x1="52" y1="74" x2="70" y2="74" stroke="white" stroke-width="1"/>
+    <line x1="89" y1="67" x2="89" y2="82" stroke="white" stroke-width="1"/>
+    <line x1="80" y1="74" x2="98" y2="74" stroke="white" stroke-width="1"/>
+    <line x1="139" y1="67" x2="139" y2="82" stroke="white" stroke-width="1"/>
+    <line x1="130" y1="74" x2="148" y2="74" stroke="white" stroke-width="1"/>
+    <!-- Door -->
+    <rect x="88" y="82" width="24" height="23" fill="#D4845A" rx="2"/>
+    <circle cx="107" cy="94" r="2" fill="#gold"/>
+    <!-- Steps -->
+    <rect x="84" y="103" width="32" height="4" fill="#ccc" rx="1"/>
+    <!-- Bus -->
+    <rect x="10" y="83" width="36" height="20" fill="#FFD166" rx="4"/>
+    <rect x="12" y="86" width="8" height="8" fill="#80CAED" rx="1"/>
+    <rect x="24" y="86" width="8" height="8" fill="#80CAED" rx="1"/>
+    <circle cx="18" cy="104" r="4" fill="#555"/>
+    <circle cx="36" cy="104" r="4" fill="#555"/>
+    <!-- Trees -->
+    <rect x="158" y="85" width="5" height="18" fill="#8B6A3E"/>
+    <ellipse cx="160" cy="78" rx="14" ry="16" fill="#4CAF50"/>
+    <ellipse cx="160" cy="72" rx="10" ry="12" fill="#66BB6A"/>
+    <rect x="176" y="90" width="4" height="13" fill="#8B6A3E"/>
+    <ellipse cx="178" cy="84" rx="11" ry="13" fill="#4CAF50"/>
+  </svg>`,
+
+  sample_2: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Sky gradient effect -->
+    <circle cx="165" cy="20" r="14" fill="#FFD166" opacity="0.85"/>
+    <!-- Clouds -->
+    <ellipse cx="40" cy="20" rx="20" ry="9" fill="white" opacity="0.75"/>
+    <ellipse cx="55" cy="16" rx="14" ry="7" fill="white" opacity="0.75"/>
+    <!-- Ground -->
+    <rect x="0" y="98" width="200" height="32" fill="#6DBE47" rx="0"/>
+    <!-- Path -->
+    <ellipse cx="100" cy="105" rx="22" ry="6" fill="#D4B483" opacity="0.8"/>
+    <!-- House body -->
+    <rect x="52" y="62" width="96" height="42" fill="#FFF5E6" rx="4"/>
+    <!-- Roof -->
+    <polygon points="44,64 100,28 156,64" fill="#E05A3A"/>
+    <polygon points="48,64 100,32 152,64" fill="#FF7B5A"/>
+    <!-- Chimney -->
+    <rect x="120" y="35" width="12" height="20" fill="#C0402A"/>
+    <rect x="117" y="33" width="18" height="5" fill="#C0402A" rx="1"/>
+    <!-- Smoke -->
+    <path d="M126 33 Q124 24 128 18 Q132 12 129 6" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+    <!-- Door -->
+    <rect x="88" y="80" width="24" height="24" fill="#A0522D" rx="3"/>
+    <rect x="88" y="80" width="24" height="3" fill="#8B4513" rx="2"/>
+    <circle cx="107" cy="92" r="2" fill="#FFD700"/>
+    <!-- Windows -->
+    <rect x="58" y="70" width="22" height="18" fill="#A8D8F0" rx="3"/>
+    <rect x="120" y="70" width="22" height="18" fill="#A8D8F0" rx="3"/>
+    <line x1="69" y1="70" x2="69" y2="88" stroke="white" stroke-width="1.5"/>
+    <line x1="58" y1="79" x2="80" y2="79" stroke="white" stroke-width="1.5"/>
+    <line x1="131" y1="70" x2="131" y2="88" stroke="white" stroke-width="1.5"/>
+    <line x1="120" y1="79" x2="142" y2="79" stroke="white" stroke-width="1.5"/>
+    <!-- Flower garden -->
+    <rect x="56" y="96" width="4" height="6" fill="#5D4037"/>
+    <circle cx="58" cy="94" r="5" fill="#FF6B9D"/>
+    <circle cx="55" cy="92" r="3.5" fill="#FF85AD"/>
+    <rect x="140" y="96" width="4" height="6" fill="#5D4037"/>
+    <circle cx="142" cy="94" r="5" fill="#FFD166"/>
+    <circle cx="145" cy="92" r="3.5" fill="#FFE08A"/>
+    <!-- Trees -->
+    <rect x="22" y="82" width="5" height="18" fill="#8B6A3E"/>
+    <ellipse cx="24" cy="74" rx="14" ry="15" fill="#4CAF50"/>
+    <ellipse cx="24" cy="68" rx="10" ry="11" fill="#66BB6A"/>
+    <rect x="170" y="85" width="5" height="15" fill="#8B6A3E"/>
+    <ellipse cx="172" cy="77" rx="13" ry="14" fill="#4CAF50"/>
+    <!-- Fence -->
+    <rect x="38" y="95" width="3" height="10" fill="#DEB887" rx="1"/>
+    <rect x="46" y="95" width="3" height="10" fill="#DEB887" rx="1"/>
+    <rect x="38" y="97" width="11" height="2.5" fill="#DEB887" rx="1"/>
+    <rect x="148" y="95" width="3" height="10" fill="#DEB887" rx="1"/>
+    <rect x="156" y="95" width="3" height="10" fill="#DEB887" rx="1"/>
+    <rect x="148" y="97" width="11" height="2.5" fill="#DEB887" rx="1"/>
+  </svg>`,
+
+  sample_3: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Background park -->
+    <rect x="0" y="90" width="200" height="40" fill="#7EC850" rx="0"/>
+    <!-- Bench -->
+    <rect x="75" y="102" width="50" height="5" fill="#A0522D" rx="2"/>
+    <rect x="78" y="107" width="4" height="8" fill="#8B4513"/>
+    <rect x="118" y="107" width="4" height="8" fill="#8B4513"/>
+    <!-- Tree left -->
+    <rect x="18" y="78" width="5" height="20" fill="#8B6A3E"/>
+    <ellipse cx="20" cy="68" rx="18" ry="20" fill="#4CAF50"/>
+    <ellipse cx="20" cy="60" rx="13" ry="15" fill="#66BB6A"/>
+    <!-- Tree right -->
+    <rect x="175" y="80" width="5" height="18" fill="#8B6A3E"/>
+    <ellipse cx="177" cy="70" rx="16" ry="18" fill="#4CAF50"/>
+    <!-- Kids - 3 characters -->
+    <!-- Kid 1 (left - blue) -->
+    <circle cx="68" cy="56" r="11" fill="#FFD5A8"/>
+    <path d="M58 56 Q65 70 78 68 Q72 58 68 56Z" fill="#4A90D9"/>
+    <rect x="60" y="68" width="7" height="14" fill="#4A90D9" rx="2"/>
+    <rect x="70" y="68" width="7" height="14" fill="#4A90D9" rx="2"/>
+    <path d="M62 90 L65 90" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M73 90 L76 90" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M57 63 L52 72" stroke="#FFD5A8" stroke-width="4" stroke-linecap="round"/>
+    <path d="M79 63 L84 72" stroke="#FFD5A8" stroke-width="4" stroke-linecap="round"/>
+    <!-- Hair kid 1 -->
+    <path d="M58 52 Q65 44 78 48 Q78 52 68 50 Q60 50 58 52Z" fill="#4A3000"/>
+    <!-- Kid 2 (middle - pink) -->
+    <circle cx="100" cy="54" r="12" fill="#FFD5A8"/>
+    <path d="M89 55 Q96 70 111 68 Q105 58 100 55Z" fill="#FF6B9D"/>
+    <rect x="91" y="68" width="8" height="14" fill="#FF6B9D" rx="2"/>
+    <rect x="101" y="68" width="8" height="14" fill="#FF6B9D" rx="2"/>
+    <path d="M93 90 L96 90" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M105 90 L108 90" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M89 61 L83 70" stroke="#FFD5A8" stroke-width="4" stroke-linecap="round"/>
+    <path d="M111 61 L117 70" stroke="#FFD5A8" stroke-width="4" stroke-linecap="round"/>
+    <!-- Smile k2 -->
+    <path d="M95 60 Q100 65 105 60" fill="none" stroke="#c06040" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Eyes k2 -->
+    <circle cx="96" cy="55" r="2" fill="#333"/>
+    <circle cx="104" cy="55" r="2" fill="#333"/>
+    <circle cx="97" cy="54.5" r="0.8" fill="white"/>
+    <circle cx="105" cy="54.5" r="0.8" fill="white"/>
+    <!-- Hair k2 -->
+    <path d="M89 50 Q100 40 111 48 Q111 54 100 50 Q90 50 89 50Z" fill="#222"/>
+    <!-- Pigtails -->
+    <path d="M89 50 Q82 46 84 40 Q87 44 90 46Z" fill="#222"/>
+    <path d="M111 50 Q118 46 116 40 Q113 44 110 46Z" fill="#222"/>
+    <!-- Kid 3 (right - green) -->
+    <circle cx="132" cy="56" r="11" fill="#FFD5A8"/>
+    <path d="M122 56 Q129 70 142 68 Q136 58 132 56Z" fill="#4CAF50"/>
+    <rect x="124" y="68" width="7" height="14" fill="#4CAF50" rx="2"/>
+    <rect x="134" y="68" width="7" height="14" fill="#4CAF50" rx="2"/>
+    <path d="M126 90 L129 90" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M137 90 L140 90" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M122 63 L116 72" stroke="#FFD5A8" stroke-width="4" stroke-linecap="round"/>
+    <path d="M142 63 L148 72" stroke="#FFD5A8" stroke-width="4" stroke-linecap="round"/>
+    <!-- Hair k3 -->
+    <path d="M122 52 Q132 43 142 48 Q142 52 132 50 Q123 50 122 52Z" fill="#C67C3A"/>
+    <!-- Eyes k1 -->
+    <circle cx="64" cy="57" r="2" fill="#333"/>
+    <circle cx="72" cy="57" r="2" fill="#333"/>
+    <!-- Eyes k3 -->
+    <circle cx="128" cy="57" r="2" fill="#333"/>
+    <circle cx="136" cy="57" r="2" fill="#333"/>
+    <!-- Smiles -->
+    <path d="M62 62 Q68 67 74 62" fill="none" stroke="#c06040" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M127 62 Q132 67 137 62" fill="none" stroke="#c06040" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Hearts and stars floating -->
+    <text x="148" y="40" font-size="12" opacity="0.7">💕</text>
+    <text x="38" y="45" font-size="10" opacity="0.6">⭐</text>
+  </svg>`,
+
+  sample_4: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Sky -->
+    <circle cx="170" cy="22" r="13" fill="#FFD166" opacity="0.85"/>
+    <!-- Ground -->
+    <rect x="0" y="96" width="200" height="34" fill="#7EC850"/>
+    <!-- Road -->
+    <rect x="0" y="100" width="200" height="12" fill="#9E9E9E"/>
+    <rect x="0" y="104" width="200" height="4" fill="#BDBDBD" opacity="0.5"/>
+    <!-- Dashes on road -->
+    <rect x="20" y="105" width="15" height="2" fill="white" opacity="0.8"/>
+    <rect x="50" y="105" width="15" height="2" fill="white" opacity="0.8"/>
+    <rect x="80" y="105" width="15" height="2" fill="white" opacity="0.8"/>
+    <rect x="110" y="105" width="15" height="2" fill="white" opacity="0.8"/>
+    <rect x="140" y="105" width="15" height="2" fill="white" opacity="0.8"/>
+    <rect x="170" y="105" width="15" height="2" fill="white" opacity="0.8"/>
+    <!-- House 1 (left, red roof) -->
+    <rect x="8" y="68" width="42" height="32" fill="#FFF5E6" rx="2"/>
+    <polygon points="4,69 29,46 54,69" fill="#E05A3A"/>
+    <rect x="16" y="76" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="32" y="76" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="20" y="82" width="8" height="18" fill="#A0522D" rx="1"/>
+    <!-- House 2 (mid-left, blue) -->
+    <rect x="60" y="62" width="36" height="38" fill="#E8F4FD" rx="2"/>
+    <polygon points="56,63 78,40 100,63" fill="#2979FF"/>
+    <rect x="64" y="70" width="10" height="9" fill="#FFEB3B" rx="1"/>
+    <rect x="80" y="70" width="10" height="9" fill="#FFEB3B" rx="1"/>
+    <rect x="67" y="80" width="9" height="20" fill="#5D4037" rx="1"/>
+    <!-- Shop / Taller building (center) -->
+    <rect x="100" y="52" width="42" height="48" fill="#E8E0FF" rx="2"/>
+    <rect x="100" y="52" width="42" height="10" fill="#7C4DFF" rx="2"/>
+    <rect x="106" y="62" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="126" y="62" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="106" y="75" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="126" y="75" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="112" y="86" width="10" height="14" fill="#5D4037" rx="1"/>
+    <!-- House 3 (right, green roof) -->
+    <rect x="150" y="65" width="42" height="35" fill="#FFF5E6" rx="2"/>
+    <polygon points="146,66 171,42 196,66" fill="#4CAF50"/>
+    <rect x="156" y="73" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="174" y="73" width="10" height="9" fill="#A8D8F0" rx="1"/>
+    <rect x="162" y="82" width="8" height="18" fill="#A0522D" rx="1"/>
+    <!-- Street lights -->
+    <rect x="50" y="78" width="3" height="22" fill="#607D8B"/>
+    <circle cx="51" cy="77" r="5" fill="#FFEE58" opacity="0.9"/>
+    <rect x="144" y="78" width="3" height="22" fill="#607D8B"/>
+    <circle cx="145" cy="77" r="5" fill="#FFEE58" opacity="0.9"/>
+    <!-- Clouds -->
+    <ellipse cx="30" cy="18" rx="18" ry="8" fill="white" opacity="0.75"/>
+    <ellipse cx="45" cy="14" rx="13" ry="7" fill="white" opacity="0.75"/>
+    <ellipse cx="100" cy="22" rx="14" ry="7" fill="white" opacity="0.6"/>
+  </svg>`,
+
+  sample_5: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Sky -->
+    <circle cx="30" cy="22" r="14" fill="#FFD166" opacity="0.85"/>
+    <!-- Clouds -->
+    <ellipse cx="130" cy="18" rx="22" ry="10" fill="white" opacity="0.75"/>
+    <ellipse cx="148" cy="14" rx="16" ry="8" fill="white" opacity="0.75"/>
+    <ellipse cx="165" cy="20" rx="14" ry="7" fill="white" opacity="0.65"/>
+    <!-- Water / Lake -->
+    <ellipse cx="100" cy="110" rx="90" ry="25" fill="#64B5F6" opacity="0.7"/>
+    <ellipse cx="100" cy="112" rx="85" ry="20" fill="#42A5F5" opacity="0.5"/>
+    <!-- Reflection shimmer -->
+    <line x1="65" y1="108" x2="80" y2="106" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <line x1="115" y1="110" x2="135" y2="108" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <!-- Mountain big (center) -->
+    <polygon points="60,95 100,30 140,95" fill="#78909C"/>
+    <polygon points="60,95 100,35 140,95" fill="#90A4AE"/>
+    <!-- Snow cap -->
+    <polygon points="87,56 100,30 113,56 100,52" fill="white"/>
+    <!-- Mountain left -->
+    <polygon points="0,95 38,50 76,95" fill="#546E7A"/>
+    <polygon points="0,95 38,54 76,95" fill="#607D8B"/>
+    <polygon points="30,68 38,50 46,68 38,65" fill="white" opacity="0.8"/>
+    <!-- Mountain right -->
+    <polygon points="124,95 162,48 200,95" fill="#546E7A"/>
+    <polygon points="124,95 162,52 200,95" fill="#607D8B"/>
+    <polygon points="155,67 162,48 169,67 162,64" fill="white" opacity="0.8"/>
+    <!-- Forests on mountains -->
+    <ellipse cx="72" cy="88" rx="10" ry="9" fill="#2E7D32"/>
+    <ellipse cx="85" cy="90" rx="9" ry="8" fill="#388E3C"/>
+    <ellipse cx="115" cy="90" rx="9" ry="8" fill="#388E3C"/>
+    <ellipse cx="128" cy="88" rx="10" ry="9" fill="#2E7D32"/>
+    <!-- Foreground trees -->
+    <rect x="14" y="82" width="4" height="16" fill="#5D4037"/>
+    <ellipse cx="16" cy="75" rx="11" ry="13" fill="#2E7D32"/>
+    <ellipse cx="16" cy="68" rx="8" ry="10" fill="#43A047"/>
+    <rect x="180" y="84" width="4" height="14" fill="#5D4037"/>
+    <ellipse cx="182" cy="77" rx="10" ry="12" fill="#2E7D32"/>
+    <!-- Birds -->
+    <path d="M50 38 Q53 35 56 38" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M60 30 Q63 27 66 30" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M150 35 Q153 32 156 35" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+
+  sample_7: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Room background -->
+    <rect x="0" y="80" width="200" height="50" fill="#ECEFF1" rx="0"/>
+    <rect x="0" y="75" width="200" height="8" fill="#CFD8DC"/>
+    <!-- TV stand -->
+    <rect x="55" y="88" width="90" height="8" fill="#795548" rx="2"/>
+    <rect x="85" y="96" width="12" height="18" fill="#8D6E63" rx="2"/>
+    <rect x="103" y="96" width="12" height="18" fill="#8D6E63" rx="2"/>
+    <!-- TV body -->
+    <rect x="48" y="42" width="104" height="50" fill="#212121" rx="6"/>
+    <rect x="52" y="46" width="96" height="42" fill="#1565C0" rx="3"/>
+    <!-- TV screen content -->
+    <rect x="52" y="46" width="96" height="42" fill="#0D47A1" rx="3"/>
+    <circle cx="100" cy="65" r="14" fill="#1976D2" opacity="0.8"/>
+    <polygon points="94,58 112,65 94,72" fill="white"/>
+    <!-- TV details -->
+    <circle cx="140" cy="68" r="3" fill="#FF5722"/>
+    <rect x="82" y="91" width="36" height="2" fill="#424242" rx="1"/>
+    <!-- Remote control -->
+    <rect x="155" y="92" width="18" height="28" fill="#424242" rx="4"/>
+    <circle cx="164" cy="100" r="3" fill="#FF5722"/>
+    <rect x="158" y="106" width="4" height="2" fill="#666" rx="1"/>
+    <rect x="164" y="106" width="4" height="2" fill="#666" rx="1"/>
+    <rect x="158" y="110" width="4" height="2" fill="#666" rx="1"/>
+    <rect x="164" y="110" width="4" height="2" fill="#666" rx="1"/>
+    <!-- Antenna -->
+    <line x1="90" y1="42" x2="82" y2="28" stroke="#424242" stroke-width="2"/>
+    <line x1="110" y1="42" x2="118" y2="28" stroke="#424242" stroke-width="2"/>
+    <circle cx="82" cy="27" r="3" fill="#FF5722"/>
+    <circle cx="118" cy="27" r="3" fill="#FF5722"/>
+    <!-- Decoration plant -->
+    <rect x="18" y="95" width="5" height="20" fill="#795548"/>
+    <ellipse cx="20" cy="88" rx="14" ry="15" fill="#4CAF50"/>
+    <ellipse cx="20" cy="80" rx="10" ry="11" fill="#66BB6A"/>
+  </svg>`,
+
+  sample_8: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Stadium ground -->
+    <ellipse cx="100" cy="108" rx="90" ry="22" fill="#4CAF50"/>
+    <ellipse cx="100" cy="108" rx="78" ry="18" fill="#388E3C"/>
+    <!-- Field lines -->
+    <ellipse cx="100" cy="108" rx="50" ry="12" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+    <line x1="100" y1="96" x2="100" y2="120" stroke="white" stroke-width="1.5" opacity="0.6"/>
+    <rect x="82" y="100" width="36" height="16" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+    <!-- Football / Soccer ball -->
+    <circle cx="100" cy="72" r="22" fill="white"/>
+    <circle cx="100" cy="72" r="22" fill="none" stroke="#333" stroke-width="1.5"/>
+    <!-- Pentagon patches -->
+    <polygon points="100,54 108,60 106,70 94,70 92,60" fill="#212121"/>
+    <polygon points="100,90 108,84 115,88 113,98 87,98 85,88 92,84" fill="#212121" opacity="0.5"/>
+    <polygon points="80,62 88,56 92,60 88,70 78,68" fill="#212121"/>
+    <polygon points="120,62 112,56 108,60 112,70 122,68" fill="#212121"/>
+    <!-- Motion lines -->
+    <line x1="130" y1="56" x2="145" y2="48" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <line x1="134" y1="64" x2="151" y2="62" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <line x1="130" y1="72" x2="146" y2="76" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <!-- Stars -->
+    <text x="24" y="38" font-size="14" opacity="0.8">⭐</text>
+    <text x="158" y="36" font-size="12" opacity="0.7">🏆</text>
+    <text x="42" y="52" font-size="10" opacity="0.6">✨</text>
+    <!-- Goal post -->
+    <rect x="168" y="75" width="3" height="30" fill="#FFD700"/>
+    <rect x="180" y="75" width="3" height="30" fill="#FFD700"/>
+    <rect x="168" y="75" width="15" height="3" fill="#FFD700"/>
+  </svg>`,
+
+  sample_9: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Sky gradient with clouds -->
+    <ellipse cx="50" cy="18" rx="24" ry="10" fill="white" opacity="0.7"/>
+    <ellipse cx="150" cy="14" rx="20" ry="9" fill="white" opacity="0.65"/>
+    <circle cx="168" cy="20" r="12" fill="#FFD166" opacity="0.85"/>
+    <!-- Ground / city base -->
+    <rect x="0" y="100" width="200" height="30" fill="#78909C"/>
+    <rect x="0" y="96" width="200" height="6" fill="#546E7A"/>
+    <!-- Road -->
+    <rect x="0" y="102" width="200" height="10" fill="#607D8B"/>
+    <!-- Road stripes -->
+    <rect x="15" y="105" width="12" height="2" fill="white" opacity="0.7"/>
+    <rect x="45" y="105" width="12" height="2" fill="white" opacity="0.7"/>
+    <rect x="90" y="105" width="12" height="2" fill="white" opacity="0.7"/>
+    <rect x="130" y="105" width="12" height="2" fill="white" opacity="0.7"/>
+    <rect x="170" y="105" width="12" height="2" fill="white" opacity="0.7"/>
+    <!-- Skyscraper 1 (left tall) -->
+    <rect x="8" y="40" width="28" height="60" fill="#455A64" rx="2"/>
+    <rect x="8" y="40" width="28" height="6" fill="#546E7A" rx="2"/>
+    <!-- Windows s1 -->
+    <rect x="12" y="50" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="22" y="50" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="12" y="60" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="22" y="60" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="12" y="70" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="22" y="70" width="6" height="5" fill="#A5D6A7" rx="1" opacity="0.9"/>
+    <rect x="12" y="80" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="22" y="80" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <!-- Skyscraper 2 (short) -->
+    <rect x="40" y="62" width="22" height="38" fill="#546E7A" rx="2"/>
+    <rect x="42" y="66" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="51" y="66" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="42" y="74" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="51" y="74" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="42" y="82" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="51" y="82" width="5" height="4" fill="#A5D6A7" rx="1" opacity="0.9"/>
+    <!-- Skyscraper 3 (tallest center) -->
+    <rect x="68" y="28" width="34" height="72" fill="#37474F" rx="2"/>
+    <rect x="68" y="28" width="34" height="7" fill="#455A64" rx="2"/>
+    <rect x="82" y="21" width="6" height="10" fill="#455A64" rx="1"/>
+    <circle cx="85" cy="20" r="3" fill="#FF5722"/>
+    <!-- Windows s3 -->
+    <rect x="73" y="38" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="83" y="38" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="93" y="38" width="5" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="73" y="48" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="83" y="48" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="93" y="48" width="5" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="73" y="58" width="6" height="5" fill="#A5D6A7" rx="1" opacity="0.9"/>
+    <rect x="83" y="58" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="73" y="68" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="83" y="68" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="73" y="78" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="83" y="78" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <!-- Skyscraper 4 -->
+    <rect x="108" y="50" width="26" height="50" fill="#455A64" rx="2"/>
+    <rect x="112" y="56" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="121" y="56" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="112" y="64" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="121" y="64" width="5" height="4" fill="#A5D6A7" rx="1" opacity="0.9"/>
+    <rect x="112" y="72" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="121" y="72" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="112" y="80" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <!-- Skyscraper 5 (right) -->
+    <rect x="142" y="44" width="30" height="56" fill="#546E7A" rx="2"/>
+    <rect x="142" y="44" width="30" height="7" fill="#607D8B" rx="2"/>
+    <rect x="147" y="54" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="158" y="54" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="147" y="63" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="158" y="63" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="147" y="72" width="6" height="5" fill="#A5D6A7" rx="1" opacity="0.9"/>
+    <rect x="158" y="72" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="147" y="81" width="6" height="5" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="158" y="81" width="6" height="5" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <!-- Skyscraper 6 (far right) -->
+    <rect x="176" y="58" width="24" height="42" fill="#455A64" rx="2"/>
+    <rect x="180" y="64" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="189" y="64" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+    <rect x="180" y="74" width="5" height="4" fill="#A5D6A7" rx="1" opacity="0.9"/>
+    <rect x="189" y="74" width="5" height="4" fill="#FFD166" rx="1" opacity="0.9"/>
+    <rect x="180" y="84" width="5" height="4" fill="#64B5F6" rx="1" opacity="0.9"/>
+  </svg>`,
+
+  sample_10: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Futuristic sky -->
+    <circle cx="30" cy="20" r="12" fill="#CE93D8" opacity="0.8"/>
+    <circle cx="28" cy="18" r="4" fill="white" opacity="0.3"/>
+    <!-- Stars/dots -->
+    <circle cx="80" cy="12" r="1.5" fill="#CE93D8" opacity="0.8"/>
+    <circle cx="130" cy="8" r="1" fill="white" opacity="0.7"/>
+    <circle cx="160" cy="16" r="2" fill="#90CAF9" opacity="0.8"/>
+    <circle cx="185" cy="10" r="1.5" fill="#CE93D8" opacity="0.7"/>
+    <!-- Ground with solar panels -->
+    <rect x="0" y="100" width="200" height="30" fill="#B2DFDB"/>
+    <rect x="20" y="105" width="30" height="18" fill="#80CBC4" rx="2"/>
+    <rect x="22" y="105" width="13" height="18" fill="#4DB6AC" opacity="0.8"/>
+    <rect x="36" y="105" width="12" height="18" fill="#26A69A" opacity="0.8"/>
+    <!-- House of the future -->
+    <!-- Main floating/elevated body -->
+    <rect x="48" y="58" width="104" height="46" fill="#E0F7FA" rx="6"/>
+    <!-- Flat roof with solar panels -->
+    <rect x="44" y="50" width="112" height="10" fill="#B2EBF2" rx="3"/>
+    <rect x="52" y="52" width="20" height="6" fill="#29B6F6" rx="1"/>
+    <rect x="76" y="52" width="20" height="6" fill="#0288D1" rx="1"/>
+    <rect x="100" y="52" width="20" height="6" fill="#29B6F6" rx="1"/>
+    <rect x="124" y="52" width="20" height="6" fill="#0288D1" rx="1"/>
+    <!-- Large smart windows -->
+    <rect x="54" y="64" width="30" height="24" fill="#81D4FA" rx="3"/>
+    <rect x="116" y="64" width="30" height="24" fill="#81D4FA" rx="3"/>
+    <!-- Screen effect on windows -->
+    <rect x="56" y="66" width="10" height="6" fill="#0288D1" rx="1" opacity="0.7"/>
+    <rect x="70" y="66" width="10" height="6" fill="#29B6F6" rx="1" opacity="0.7"/>
+    <rect x="56" y="75" width="26" height="2" fill="#4FC3F7" opacity="0.6"/>
+    <rect x="56" y="80" width="20" height="2" fill="#4FC3F7" opacity="0.5"/>
+    <!-- Smart door -->
+    <rect x="88" y="70" width="24" height="34" fill="#B2EBF2" rx="4"/>
+    <rect x="88" y="70" width="24" height="6" fill="#29B6F6" rx="3"/>
+    <circle cx="107" cy="87" r="2.5" fill="#29B6F6"/>
+    <circle cx="107" cy="87" r="1.5" fill="#E0F7FA"/>
+    <!-- Support pillars -->
+    <rect x="56" y="98" width="8" height="20" fill="#B0BEC5" rx="2"/>
+    <rect x="136" y="98" width="8" height="20" fill="#B0BEC5" rx="2"/>
+    <!-- Hover effect lines -->
+    <ellipse cx="100" cy="118" rx="50" ry="5" fill="#80CBC4" opacity="0.5"/>
+    <!-- Drone -->
+    <rect x="152" y="38" width="20" height="8" fill="#78909C" rx="3"/>
+    <line x1="152" y1="40" x2="144" y2="34" stroke="#90A4AE" stroke-width="2"/>
+    <line x1="172" y1="40" x2="180" y2="34" stroke="#90A4AE" stroke-width="2"/>
+    <circle cx="144" cy="33" r="3" fill="#CFD8DC"/>
+    <circle cx="180" cy="33" r="3" fill="#CFD8DC"/>
+    <circle cx="161" cy="42" r="2" fill="#29B6F6" opacity="0.8"/>
+    <!-- Flying car hint -->
+    <ellipse cx="30" cy="72" rx="18" ry="8" fill="#90A4AE" rx="4"/>
+    <rect x="18" y="67" width="24" height="8" fill="#B0BEC5" rx="4"/>
+    <ellipse cx="22" cy="75" rx="4" ry="2" fill="#78909C"/>
+    <ellipse cx="38" cy="75" rx="4" ry="2" fill="#78909C"/>
+    <line x1="12" y1="69" x2="8" y2="65" stroke="#90A4AE" stroke-width="2"/>
+    <line x1="18" y1="71" x2="6" y2="71" stroke="#90A4AE" stroke-width="1.5"/>
+  </svg>`,
+
+  sample_11: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Sky with sun -->
+    <circle cx="170" cy="22" r="18" fill="#FFD166" opacity="0.85"/>
+    <circle cx="170" cy="22" r="13" fill="#FFE082"/>
+    <!-- Clouds -->
+    <ellipse cx="40" cy="20" rx="22" ry="10" fill="white" opacity="0.75"/>
+    <ellipse cx="58" cy="16" rx="16" ry="8" fill="white" opacity="0.75"/>
+    <!-- Ground -->
+    <rect x="0" y="95" width="200" height="35" fill="#4CAF50"/>
+    <ellipse cx="100" cy="95" rx="100" ry="5" fill="#66BB6A"/>
+    <!-- Recycling symbol -->
+    <circle cx="100" cy="60" r="24" fill="#E8F5E9" opacity="0.6"/>
+    <path d="M100 40 L112 58 L88 58 Z" fill="#4CAF50" opacity="0.9"/>
+    <path d="M116 68 L100 78 L88 58 L100 58 Z" fill="#388E3C" opacity="0.8"/>
+    <path d="M84 68 L100 78 L112 58 L100 58 Z" fill="#2E7D32" opacity="0.7"/>
+    <!-- Trees various -->
+    <rect x="16" y="72" width="5" height="26" fill="#5D4037"/>
+    <ellipse cx="18" cy="62" rx="16" ry="18" fill="#2E7D32"/>
+    <ellipse cx="18" cy="54" rx="12" ry="13" fill="#43A047"/>
+    <rect x="32" y="80" width="4" height="18" fill="#5D4037"/>
+    <ellipse cx="34" cy="72" rx="12" ry="14" fill="#388E3C"/>
+    <!-- Windmill -->
+    <rect x="156" y="60" width="5" height="40" fill="#90A4AE"/>
+    <circle cx="158" cy="60" r="4" fill="#78909C"/>
+    <!-- Blades -->
+    <line x1="158" y1="60" x2="158" y2="40" stroke="#B0BEC5" stroke-width="4" stroke-linecap="round"/>
+    <line x1="158" y1="60" x2="174" y2="70" stroke="#B0BEC5" stroke-width="4" stroke-linecap="round"/>
+    <line x1="158" y1="60" x2="142" y2="70" stroke="#B0BEC5" stroke-width="4" stroke-linecap="round"/>
+    <!-- Solar panel -->
+    <rect x="130" y="72" width="22" height="14" fill="#1565C0" rx="2"/>
+    <rect x="130" y="72" width="10" height="14" fill="#1976D2" opacity="0.8"/>
+    <rect x="130" y="72" width="22" height="2" fill="#42A5F5" opacity="0.5"/>
+    <rect x="130" y="78" width="22" height="2" fill="#42A5F5" opacity="0.5"/>
+    <rect x="140" y="72" width="2" height="14" fill="#42A5F5" opacity="0.5"/>
+    <rect x="130" y="86" width="22" height="3" fill="#90A4AE" rx="1"/>
+    <!-- Flowers -->
+    <circle cx="62" cy="100" r="5" fill="#FF80AB"/>
+    <circle cx="58" cy="96" r="4" fill="#FF4081"/>
+    <circle cx="66" cy="96" r="4" fill="#FF80AB"/>
+    <rect x="61" y="100" width="2" height="8" fill="#388E3C"/>
+    <circle cx="80" cy="98" r="5" fill="#FFD166"/>
+    <circle cx="76" cy="94" r="4" fill="#FFCA28"/>
+    <circle cx="84" cy="94" r="4" fill="#FFD166"/>
+    <rect x="79" y="98" width="2" height="10" fill="#388E3C"/>
+    <!-- Birds -->
+    <path d="M44 36 Q47 33 50 36" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M56 28 Q59 25 62 28" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M110 32 Q113 29 116 32" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+
+  sample_12: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Futuristic lab background -->
+    <rect x="0" y="95" width="200" height="35" fill="#1A237E" opacity="0.3"/>
+    <!-- Grid floor -->
+    <line x1="0" y1="110" x2="200" y2="110" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="0" y1="120" x2="200" y2="120" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="30" y1="95" x2="30" y2="130" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="60" y1="95" x2="60" y2="130" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="90" y1="95" x2="90" y2="130" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="120" y1="95" x2="120" y2="130" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="150" y1="95" x2="150" y2="130" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <line x1="180" y1="95" x2="180" y2="130" stroke="#3F51B5" stroke-width="0.5" opacity="0.4"/>
+    <!-- Robot body -->
+    <rect x="72" y="52" width="56" height="48" fill="#ECEFF1" rx="8"/>
+    <rect x="72" y="52" width="56" height="48" fill="none" stroke="#90A4AE" stroke-width="2" rx="8"/>
+    <!-- Robot head -->
+    <rect x="78" y="28" width="44" height="28" fill="#B0BEC5" rx="6"/>
+    <rect x="78" y="28" width="44" height="28" fill="none" stroke="#78909C" stroke-width="1.5" rx="6"/>
+    <!-- Neck -->
+    <rect x="90" y="54" width="20" height="6" fill="#90A4AE" rx="2"/>
+    <!-- Eyes -->
+    <rect x="86" y="36" width="14" height="10" fill="#1565C0" rx="3"/>
+    <rect x="100" y="36" width="14" height="10" fill="#1565C0" rx="3"/>
+    <circle cx="93" cy="41" r="4" fill="#29B6F6"/>
+    <circle cx="107" cy="41" r="4" fill="#29B6F6"/>
+    <circle cx="93" cy="41" r="2" fill="#0288D1"/>
+    <circle cx="107" cy="41" r="2" fill="#0288D1"/>
+    <!-- Antenna -->
+    <rect x="98" y="18" width="4" height="12" fill="#78909C"/>
+    <circle cx="100" cy="17" r="4" fill="#FF5722"/>
+    <circle cx="100" cy="17" r="2" fill="#FFCCBC"/>
+    <!-- Mouth/speaker -->
+    <rect x="86" y="50" width="28" height="4" fill="#607D8B" rx="2"/>
+    <rect x="89" y="51" width="4" height="2" fill="#29B6F6" rx="1"/>
+    <rect x="95" y="51" width="4" height="2" fill="#29B6F6" rx="1"/>
+    <rect x="101" y="51" width="4" height="2" fill="#29B6F6" rx="1"/>
+    <rect x="107" y="51" width="4" height="2" fill="#29B6F6" rx="1"/>
+    <!-- Chest panel -->
+    <rect x="80" y="62" width="40" height="28" fill="#CFD8DC" rx="4"/>
+    <rect x="84" y="66" width="14" height="10" fill="#1565C0" rx="2"/>
+    <rect x="102" y="66" width="14" height="10" fill="#1565C0" rx="2"/>
+    <!-- Buttons on chest -->
+    <circle cx="87" cy="82" r="3" fill="#FF5722"/>
+    <circle cx="95" cy="82" r="3" fill="#4CAF50"/>
+    <circle cx="103" cy="82" r="3" fill="#FFD166"/>
+    <circle cx="111" cy="82" r="3" fill="#29B6F6"/>
+    <!-- Heart indicator -->
+    <text x="86" y="77" font-size="7" fill="#4FC3F7">❤</text>
+    <text x="104" y="77" font-size="7" fill="#FFD166">⚙</text>
+    <!-- Arms -->
+    <rect x="44" y="58" width="30" height="12" fill="#B0BEC5" rx="6"/>
+    <rect x="126" y="58" width="30" height="12" fill="#B0BEC5" rx="6"/>
+    <circle cx="44" cy="64" r="7" fill="#90A4AE"/>
+    <circle cx="156" cy="64" r="7" fill="#90A4AE"/>
+    <!-- Hand fingers hint -->
+    <rect x="34" y="61" width="5" height="6" fill="#78909C" rx="2"/>
+    <rect x="34" y="55" width="5" height="6" fill="#78909C" rx="2"/>
+    <rect x="161" y="61" width="5" height="6" fill="#78909C" rx="2"/>
+    <rect x="161" y="55" width="5" height="6" fill="#78909C" rx="2"/>
+    <!-- Legs -->
+    <rect x="82" y="98" width="14" height="22" fill="#90A4AE" rx="4"/>
+    <rect x="104" y="98" width="14" height="22" fill="#90A4AE" rx="4"/>
+    <!-- Feet -->
+    <rect x="79" y="116" width="20" height="8" fill="#78909C" rx="3"/>
+    <rect x="101" y="116" width="20" height="8" fill="#78909C" rx="3"/>
+    <!-- Floating particles / circuit lines -->
+    <circle cx="30" cy="50" r="3" fill="#29B6F6" opacity="0.7"/>
+    <circle cx="18" cy="38" r="2" fill="#7C4DFF" opacity="0.6"/>
+    <circle cx="45" cy="35" r="2" fill="#29B6F6" opacity="0.5"/>
+    <line x1="18" y1="38" x2="30" y2="50" stroke="#29B6F6" stroke-width="1" opacity="0.4"/>
+    <circle cx="172" cy="48" r="3" fill="#29B6F6" opacity="0.7"/>
+    <circle cx="185" cy="36" r="2" fill="#7C4DFF" opacity="0.6"/>
+    <line x1="172" y1="48" x2="185" y2="36" stroke="#29B6F6" stroke-width="1" opacity="0.4"/>
+  </svg>`,
+
+  sample_6: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <!-- Night sky with stars -->
+    <circle cx="30" cy="18" r="5" fill="#FFD166" opacity="0.9"/>
+    <circle cx="25" cy="14" r="2" fill="white" opacity="0.5"/>
+    <circle cx="38" cy="22" r="1.5" fill="white" opacity="0.4"/>
+    <!-- Stars -->
+    <circle cx="80" cy="15" r="1.5" fill="#FFD166" opacity="0.8"/>
+    <circle cx="120" cy="10" r="1" fill="white" opacity="0.7"/>
+    <circle cx="150" cy="18" r="2" fill="#FFD166" opacity="0.7"/>
+    <circle cx="170" cy="12" r="1.5" fill="white" opacity="0.6"/>
+    <circle cx="190" cy="20" r="1" fill="#FFD166" opacity="0.5"/>
+    <!-- Ground -->
+    <rect x="0" y="98" width="200" height="32" fill="#4CAF50"/>
+    <!-- Lanterns hanging -->
+    <!-- Left lantern string -->
+    <line x1="0" y1="28" x2="60" y2="38" stroke="#C62828" stroke-width="1.5" opacity="0.8"/>
+    <line x1="60" y1="38" x2="130" y2="30" stroke="#C62828" stroke-width="1.5" opacity="0.8"/>
+    <line x1="130" y1="30" x2="200" y2="38" stroke="#C62828" stroke-width="1.5" opacity="0.8"/>
+    <!-- Lantern 1 -->
+    <ellipse cx="22" cy="42" rx="8" ry="11" fill="#E53935"/>
+    <rect x="19" y="38" width="6" height="3" fill="#FFD700" rx="1"/>
+    <rect x="19" y="51" width="6" height="3" fill="#FFD700" rx="1"/>
+    <line x1="25" y1="54" x2="25" y2="60" stroke="#FFD700" stroke-width="1.5"/>
+    <line x1="22" y1="54" x2="22" y2="60" stroke="#FFD700" stroke-width="1.5"/>
+    <!-- Lantern 2 -->
+    <ellipse cx="60" cy="48" rx="8" ry="11" fill="#E53935"/>
+    <rect x="57" y="44" width="6" height="3" fill="#FFD700" rx="1"/>
+    <rect x="57" y="57" width="6" height="3" fill="#FFD700" rx="1"/>
+    <line x1="63" y1="60" x2="63" y2="66" stroke="#FFD700" stroke-width="1.5"/>
+    <line x1="60" y1="60" x2="60" y2="66" stroke="#FFD700" stroke-width="1.5"/>
+    <!-- Lantern 3 (big center) -->
+    <ellipse cx="100" cy="50" rx="12" ry="16" fill="#C62828"/>
+    <rect x="94" y="44" width="12" height="4" fill="#FFD700" rx="1"/>
+    <rect x="94" y="62" width="12" height="4" fill="#FFD700" rx="1"/>
+    <text x="96" y="57" font-size="10" fill="#FFD700" font-weight="bold">福</text>
+    <line x1="104" y1="66" x2="104" y2="74" stroke="#FFD700" stroke-width="1.5"/>
+    <line x1="100" y1="66" x2="100" y2="74" stroke="#FFD700" stroke-width="1.5"/>
+    <!-- Lantern 4 -->
+    <ellipse cx="140" cy="46" rx="8" ry="11" fill="#E53935"/>
+    <rect x="137" y="42" width="6" height="3" fill="#FFD700" rx="1"/>
+    <rect x="137" y="55" width="6" height="3" fill="#FFD700" rx="1"/>
+    <!-- Lantern 5 -->
+    <ellipse cx="178" cy="44" rx="8" ry="11" fill="#E53935"/>
+    <rect x="175" y="40" width="6" height="3" fill="#FFD700" rx="1"/>
+    <rect x="175" y="53" width="6" height="3" fill="#FFD700" rx="1"/>
+    <!-- Dragon simplified -->
+    <path d="M30 88 Q50 78 70 82 Q90 86 110 80 Q130 74 150 80 Q165 84 175 78" fill="none" stroke="#FF6B6B" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="28" cy="88" r="7" fill="#FF6B6B"/>
+    <circle cx="26" cy="85" r="3" fill="#FFD700"/>
+    <!-- Peach blossoms / flowers -->
+    <circle cx="18" cy="100" r="5" fill="#FF80AB" opacity="0.8"/>
+    <circle cx="14" cy="96" r="4" fill="#F48FB1" opacity="0.7"/>
+    <circle cx="22" cy="96" r="4" fill="#FF80AB" opacity="0.7"/>
+    <rect x="17" y="100" width="2" height="8" fill="#5D4037"/>
+    <circle cx="180" cy="100" r="5" fill="#FF80AB" opacity="0.8"/>
+    <circle cx="176" cy="96" r="4" fill="#F48FB1" opacity="0.7"/>
+    <circle cx="184" cy="96" r="4" fill="#FF80AB" opacity="0.7"/>
+    <rect x="179" y="100" width="2" height="8" fill="#5D4037"/>
+    <!-- Fireworks -->
+    <circle cx="155" cy="22" r="2" fill="#FFD700"/>
+    <line x1="155" y1="15" x2="155" y2="9" stroke="#FFD700" stroke-width="1.5"/>
+    <line x1="161" y1="17" x2="167" y2="13" stroke="#FF6B6B" stroke-width="1.5"/>
+    <line x1="162" y1="22" x2="168" y2="22" stroke="#4FC3F7" stroke-width="1.5"/>
+    <line x1="161" y1="27" x2="166" y2="32" stroke="#FFD700" stroke-width="1.5"/>
+    <line x1="149" y1="17" x2="143" y2="13" stroke="#FF80AB" stroke-width="1.5"/>
+    <line x1="148" y1="22" x2="142" y2="22" stroke="#A5D6A7" stroke-width="1.5"/>
+  </svg>`,
+};
+
+// Default SVG for user-created sets
+const SET_TOPIC_SVG_FALLBACK = [
+  // books stack green
+  `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <rect x="62" y="72" width="76" height="12" fill="#43A047" rx="3"/>
+    <rect x="56" y="60" width="88" height="12" fill="#66BB6A" rx="3"/>
+    <rect x="68" y="84" width="64" height="12" fill="#388E3C" rx="3"/>
+    <rect x="74" y="96" width="52" height="12" fill="#2E7D32" rx="3"/>
+    <rect x="64" y="48" width="72" height="12" fill="#81C784" rx="3"/>
+    <!-- Book spines -->
+    <rect x="62" y="72" width="6" height="12" fill="#2E7D32" rx="2"/>
+    <rect x="56" y="60" width="6" height="12" fill="#388E3C" rx="2"/>
+    <rect x="68" y="84" width="6" height="12" fill="#1B5E20" rx="2"/>
+    <rect x="74" y="96" width="6" height="12" fill="#2E7D32" rx="2"/>
+    <rect x="64" y="48" width="6" height="12" fill="#43A047" rx="2"/>
+    <!-- Pages lines -->
+    <line x1="75" y1="75" x2="130" y2="75" stroke="white" stroke-width="1" opacity="0.5"/>
+    <line x1="75" y1="79" x2="130" y2="79" stroke="white" stroke-width="1" opacity="0.5"/>
+    <line x1="70" y1="63" x2="136" y2="63" stroke="white" stroke-width="1" opacity="0.5"/>
+    <line x1="70" y1="67" x2="136" y2="67" stroke="white" stroke-width="1" opacity="0.5"/>
+    <text x="82" y="45" font-size="22" opacity="0.9">📚</text>
+  </svg>`,
+  // books stack red  
+  `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <rect x="62" y="72" width="76" height="12" fill="#E53935" rx="3"/>
+    <rect x="56" y="60" width="88" height="12" fill="#EF5350" rx="3"/>
+    <rect x="68" y="84" width="64" height="12" fill="#C62828" rx="3"/>
+    <rect x="74" y="96" width="52" height="12" fill="#B71C1C" rx="3"/>
+    <rect x="64" y="48" width="72" height="12" fill="#EF9A9A" rx="3"/>
+    <rect x="62" y="72" width="6" height="12" fill="#B71C1C" rx="2"/>
+    <rect x="56" y="60" width="6" height="12" fill="#C62828" rx="2"/>
+    <rect x="68" y="84" width="6" height="12" fill="#7F0000" rx="2"/>
+    <text x="82" y="45" font-size="22" opacity="0.9">📗</text>
+  </svg>`,
+  // books stack blue
+  `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="130" fill="transparent"/>
+    <rect x="62" y="72" width="76" height="12" fill="#1E88E5" rx="3"/>
+    <rect x="56" y="60" width="88" height="12" fill="#42A5F5" rx="3"/>
+    <rect x="68" y="84" width="64" height="12" fill="#1565C0" rx="3"/>
+    <rect x="74" y="96" width="52" height="12" fill="#0D47A1" rx="3"/>
+    <rect x="64" y="48" width="72" height="12" fill="#90CAF9" rx="3"/>
+    <rect x="62" y="72" width="6" height="12" fill="#0D47A1" rx="2"/>
+    <rect x="56" y="60" width="6" height="12" fill="#1565C0" rx="2"/>
+    <text x="82" y="45" font-size="22" opacity="0.9">📘</text>
+  </svg>`,
+];
+
 function getSetTopicEmoji(set) {
   if (SET_TOPIC_EMOJI[set.id]) return SET_TOPIC_EMOJI[set.id];
   return SET_TOPIC_EMOJI_FALLBACK[(set.colorIndex || 0) % SET_TOPIC_EMOJI_FALLBACK.length];
+}
+
+function getSetTopicSVG(set) {
+  if (SET_TOPIC_SVG[set.id]) return SET_TOPIC_SVG[set.id];
+  return SET_TOPIC_SVG_FALLBACK[(set.colorIndex || 0) % SET_TOPIC_SVG_FALLBACK.length];
 }
 
 // ---- STATE ----
@@ -587,7 +1332,7 @@ function createSetCard(set) {
   div.className = `set-card set-color-${set.colorIndex || 0}`;
   div.innerHTML = `
     <div class="set-card-thumb">
-      <span class="set-card-emoji">${getSetTopicEmoji(set)}</span>
+      <div class="set-card-img-wrap">${getSetTopicSVG(set)}</div>
     </div>
     <div class="set-card-body">
     <div class="set-card-name">${set.name}</div>
