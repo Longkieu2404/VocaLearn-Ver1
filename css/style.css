@@ -2608,10 +2608,10 @@ body {
   filter: none;
   z-index: 0;
 }
-[data-theme="light"] .accent-yellow::before { background: #fbe9b0; width: 140px; height: 140px; }
-[data-theme="light"] .accent-green::before  { background: #b7f2e0; width: 140px; height: 140px; }
-[data-theme="light"] .accent-blue::before   { background: #b3e3fa; width: 140px; height: 140px; }
-[data-theme="light"] .accent-pink::before   { background: #ffc0de; width: 150px; height: 150px; }
+[data-theme="light"] .accent-yellow::before { background: #fbe9b0; }
+[data-theme="light"] .accent-green::before  { background: #b7f2e0; }
+[data-theme="light"] .accent-blue::before   { background: #b3e3fa; }
+[data-theme="light"] .accent-pink::before   { background: #ffc0de; }
 
 /* Icon — larger, illustrative, vertically centered */
 [data-theme="light"] .stat-card::after {
