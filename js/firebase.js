@@ -56,7 +56,7 @@ const FirebaseSync = {
   _hasPendingOfflineWrites: false,
   // Sau pull(), chặn listener GUARD_MS ms để tránh echo Firestore ghi đè data đúng
   _pullCompletedAt:         0,
-  GUARD_MS:                 8000,
+  GUARD_MS:                 3000,
   // Chống pull() chạy song song (onAuthStateChanged có thể bắn nhiều lần)
   _pullPromise:             null,
 
@@ -213,11 +213,33 @@ const FirebaseSync = {
 
       // ── Thiết bị đã đăng nhập trước ────────────────────────────────────────
       if (this._hasPendingOfflineWrites) {
-        // Có thay đổi offline chưa sync → push lên, không kéo về
-        await this._rawPush();
+        // Có thay đổi local chưa sync → so sánh timestamp với server
+        const srvUpdatedAt = srv.updatedAt ? srv.updatedAt.toMillis() : 0;
+        const localUpdatedAt = parseInt(localStorage.getItem('vocalearn_local_updatedAt') || '0');
+        if (srvUpdatedAt > localUpdatedAt) {
+          // Server mới hơn → merge: server thắng về progress, nhưng giữ sets local mới
+          const srvSets = srv.sets || [];
+          const localSets = Storage.getSets();
+          const srvSetIds = new Set(srvSets.map(s => s.id));
+          // Các set chỉ có ở local (mới tạo offline) → thêm vào
+          const onlyLocal = localSets.filter(s => !srvSetIds.has(s.id));
+          this._applyToLocal(srv);
+          if (onlyLocal.length > 0) {
+            const merged = [...srvSets, ...onlyLocal];
+            localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
+          }
+          await this._rawPush();
+        } else {
+          // Local mới hơn hoặc bằng → push local lên
+          await this._rawPush();
+        }
       } else {
         // Bình thường: kéo data mới nhất từ server về
         this._applyToLocal(srv);
+        // Lưu timestamp server để so sánh sau
+        if (srv.updatedAt) {
+          localStorage.setItem('vocalearn_local_updatedAt', srv.updatedAt.toMillis().toString());
+        }
       }
 
       return true;
@@ -258,9 +280,15 @@ const FirebaseSync = {
       }, { merge: true });
       this._hasPendingOfflineWrites = false;
       this._pullCompletedAt = 0; // reset guard sau push để listener nhận updates từ thiết bị khác
+      localStorage.setItem('vocalearn_local_updatedAt', Date.now().toString());
       return true;
     } catch (e) {
       console.error('[VocaLearn] Lỗi push:', e);
+      // Nếu push thất bại do mất mạng, giữ flag để retry khi online lại
+      // Nếu push thất bại do lỗi khác (permission, v.v.) → reset flag tránh stuck
+      if (e.code !== 'unavailable' && e.code !== 'resource-exhausted') {
+        this._hasPendingOfflineWrites = false;
+      }
       return false;
     } finally {
       this._isSyncing = false;
