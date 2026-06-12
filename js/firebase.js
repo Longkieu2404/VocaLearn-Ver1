@@ -46,7 +46,8 @@ const FirebaseAuth = {
   async signIn() {
     try {
       if (this._isMobile()) {
-        // Redirect: trang sẽ reload, kết quả xử lý trong getRedirectResult() khi trang load lại
+        // Đặt cờ TRƯỚC khi redirect — app.js đọc cờ này khi load lại để ẩn login screen ngay
+        localStorage.setItem('vocalearn_pending_redirect', '1');
         await signInWithRedirect(auth, this.provider);
         return null; // sẽ không tới đây, page redirect đi
       } else {
@@ -54,6 +55,7 @@ const FirebaseAuth = {
         return result.user;
       }
     } catch (e) {
+      localStorage.removeItem('vocalearn_pending_redirect');
       console.error("Đăng nhập thất bại:", e);
       return null;
     }
@@ -65,10 +67,17 @@ const FirebaseAuth = {
       const result = await getRedirectResult(auth);
       if (result && result.user) {
         console.log('[VocaLearn] Redirect sign-in thành công:', result.user.email);
+        // Set auth_mode ngay để setupLoginScreen biết đã đăng nhập
+        localStorage.setItem('vocalearn_auth_mode', 'google');
+        // Xóa cờ pending redirect
+        localStorage.removeItem('vocalearn_pending_redirect');
+        // Ẩn login screen nếu vẫn còn trên DOM (trường hợp setupLoginScreen chạy trước)
+        if (typeof hideLoginScreen === 'function') hideLoginScreen();
         return result.user;
       }
     } catch (e) {
       console.error('[VocaLearn] getRedirectResult lỗi:', e);
+      localStorage.removeItem('vocalearn_pending_redirect');
     }
     return null;
   },
@@ -390,14 +399,15 @@ window.addEventListener('offline', () => {
 
 // Gọi setupFirebaseUI sau khi DOM sẵn sàng
 // handleRedirectResult() phải được gọi TRƯỚC để xử lý kết quả đăng nhập redirect trên mobile
+async function _initFirebase() {
+  await FirebaseAuth.handleRedirectResult();
+  // Dọn cờ pending_redirect dù thành công hay không (tránh bị kẹt màn hình trống)
+  localStorage.removeItem('vocalearn_pending_redirect');
+  setupFirebaseUI();
+}
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', async () => {
-    await FirebaseAuth.handleRedirectResult();
-    setupFirebaseUI();
-  });
+  document.addEventListener('DOMContentLoaded', _initFirebase);
 } else {
-  (async () => {
-    await FirebaseAuth.handleRedirectResult();
-    setupFirebaseUI();
-  })();
+  _initFirebase();
 }

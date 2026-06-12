@@ -128,6 +128,13 @@ function setupLoginScreen() {
     return;
   }
 
+  // Đang quay về sau redirect Google (mobile) — ẩn login ngay, chờ firebase.js xử lý
+  if (localStorage.getItem('vocalearn_pending_redirect') === '1') {
+    screen.classList.add('hide');
+    setTimeout(() => screen.remove(), 400);
+    return;
+  }
+
   // Nút offline
   const btnOffline = document.getElementById('btnLoginOffline');
   if (btnOffline) {
