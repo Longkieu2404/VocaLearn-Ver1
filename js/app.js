@@ -1,5 +1,27 @@
 // ===== VOCALEARN MAIN APP =====
 
+// ---- TOPIC THUMBNAIL EMOJI (theo bộ thẻ mẫu) ----
+const SET_TOPIC_EMOJI = {
+  sample_1: '🏫',  // My New School
+  sample_2: '🏠',  // My Home
+  sample_3: '🧑‍🤝‍🧑', // My Friends
+  sample_4: '🏘️', // My Neighbourhood
+  sample_5: '🏞️', // Natural Wonders
+  sample_6: '🧧',  // Our Tet Holiday
+  sample_7: '📺',  // Television
+  sample_8: '⚽',  // Sports and Games
+  sample_9: '🏙️', // Cities of the World
+  sample_10: '🏡', // Our Houses in the Future
+  sample_11: '🌱', // Our Greener World
+  sample_12: '🤖', // Robots
+};
+const SET_TOPIC_EMOJI_FALLBACK = ['📚','📗','📘','📙','📕'];
+
+function getSetTopicEmoji(set) {
+  if (SET_TOPIC_EMOJI[set.id]) return SET_TOPIC_EMOJI[set.id];
+  return SET_TOPIC_EMOJI_FALLBACK[(set.colorIndex || 0) % SET_TOPIC_EMOJI_FALLBACK.length];
+}
+
 // ---- STATE ----
 let currentPage = 'home';
 let editingSetId = null;
@@ -557,6 +579,10 @@ function createSetCard(set) {
   const div = document.createElement('div');
   div.className = `set-card set-color-${set.colorIndex || 0}`;
   div.innerHTML = `
+    <div class="set-card-thumb">
+      <span class="set-card-emoji">${getSetTopicEmoji(set)}</span>
+    </div>
+    <div class="set-card-body">
     <div class="set-card-name">${set.name}</div>
     <div class="set-card-count">${total} từ vựng</div>
     <div class="set-card-progress">
@@ -570,6 +596,7 @@ function createSetCard(set) {
     <div class="set-card-actions">
       <button class="sca-btn sca-study" title="Học thẻ">🎴 Học</button>
       <button class="sca-btn sca-quiz" title="Kiểm tra">🧠 Kiểm tra</button>
+    </div>
     </div>
   `;
   div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
