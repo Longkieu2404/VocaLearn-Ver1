@@ -14,30 +14,20 @@ import { initializeApp }
 import {
   getAuth, GoogleAuthProvider,
   signInWithPopup, signInWithRedirect, getRedirectResult,
-  signOut, onAuthStateChanged,
-  indexedDBLocalPersistence, browserLocalPersistence,
-  initializeAuth
+  signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore,
   doc, getDoc, setDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app = initializeApp(FIREBASE_CONFIG);
+const app  = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
 
-// ── Auth: ưu tiên IndexedDB (persist qua reload), fallback localStorage ──────
-// Đây là nguyên nhân "phải đăng nhập lại": getAuth() mặc định dùng IndexedDB
-// nhưng nếu IndexedDB lỗi trên mobile thì session bị mất.
-// initializeAuth với danh sách persistence giải quyết điều này.
-let auth;
-try {
-  auth = initializeAuth(app, {
-    persistence: [indexedDBLocalPersistence, browserLocalPersistence]
-  });
-} catch (e) {
-  // initializeAuth chỉ gọi được 1 lần — nếu app đã init thì dùng getAuth
-  auth = getAuth(app);
-}
+// Lưu session vào localStorage để persist qua reload kể cả khi IndexedDB bị lỗi trên mobile
+setPersistence(auth, browserLocalPersistence).catch(e =>
+  console.warn('[VocaLearn] setPersistence lỗi:', e)
+);
 
 // ── Firestore: dùng getFirestore() không có persistent cache ─────────────────
 // persistentLocalCache gây lỗi "already initialized" và các lỗi IndexedDB trên mobile.
