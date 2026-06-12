@@ -145,7 +145,7 @@ function setupLoginScreen() {
       btnGoogle.disabled = true;
       btnGoogle.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> ⏳ Đang đăng nhập...';
       const user = await window.FirebaseAuth.signIn();
-      if (!user) {
+      if (!user && !window.FirebaseAuth._isMobile()) {
         btnGoogle.disabled = false;
         btnGoogle.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> Đăng nhập bằng Google';
         showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
@@ -201,7 +201,7 @@ function showLoginScreen() {
     btnGoogle2.disabled = true;
     btnGoogle2.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> ⏳ Đang đăng nhập...';
     const user = await window.FirebaseAuth.signIn();
-    if (!user) {
+    if (!user && !window.FirebaseAuth._isMobile()) {
       btnGoogle2.disabled = false;
       btnGoogle2.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> Đăng nhập bằng Google';
       showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
@@ -3995,9 +3995,14 @@ function setupFirebaseUI() {
     btnLogin.disabled = true;
     btnLogin.textContent = '⏳ Đang đăng nhập...';
     const user = await FirebaseAuth.signIn();
-    btnLogin.disabled = false;
-    btnLogin.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">Đăng nhập Google';
-    if (!user) showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
+    // Trên mobile: signIn() dùng redirect → page sẽ tự reload, không cần reset button
+    // Trên desktop: popup trả về user hoặc null
+    if (user === null && !FirebaseAuth._isMobile()) {
+      // Chỉ reset button nếu là desktop và thất bại
+      btnLogin.disabled = false;
+      btnLogin.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">Đăng nhập Google';
+      showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
+    }
   });
 
   btnLogout.addEventListener('click', async () => {

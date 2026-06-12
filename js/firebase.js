@@ -11,32 +11,66 @@ const FIREBASE_CONFIG = {
 
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  initializeFirestore, persistentLocalCache, persistentSingleTabManager,
+  initializeFirestore, persistentLocalCache, persistentSingleTabManager, persistentMultipleTabManager,
   doc, getDocFromServer, setDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
-});
+// Mobile browsers (Safari iOS, some Android) có thể lỗi với persistentSingleTabManager
+// do giới hạn IndexedDB. Dùng try/catch để fallback về memory cache nếu cần.
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  console.warn('[VocaLearn] Firestore persistentCache lỗi, dùng memory cache:', e);
+  db = initializeFirestore(app, {});
+}
 
 // ===== AUTH =====
 const FirebaseAuth = {
   provider: new GoogleAuthProvider(),
 
+  // Detect mobile: dùng redirect thay popup vì popup bị chặn trên Safari iOS & nhiều Android browser
+  _isMobile() {
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+           (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent)); // iPad iOS 13+
+  },
+
   async signIn() {
     try {
-      const result = await signInWithPopup(auth, this.provider);
-      return result.user;
+      if (this._isMobile()) {
+        // Redirect: trang sẽ reload, kết quả xử lý trong getRedirectResult() khi trang load lại
+        await signInWithRedirect(auth, this.provider);
+        return null; // sẽ không tới đây, page redirect đi
+      } else {
+        const result = await signInWithPopup(auth, this.provider);
+        return result.user;
+      }
     } catch (e) {
       console.error("Đăng nhập thất bại:", e);
       return null;
     }
+  },
+
+  // Gọi khi app khởi động để lấy kết quả redirect từ lần đăng nhập trước (mobile)
+  async handleRedirectResult() {
+    try {
+      const result = await getRedirectResult(auth);
+      if (result && result.user) {
+        console.log('[VocaLearn] Redirect sign-in thành công:', result.user.email);
+        return result.user;
+      }
+    } catch (e) {
+      console.error('[VocaLearn] getRedirectResult lỗi:', e);
+    }
+    return null;
   },
 
   async signOut() { await signOut(auth); },
@@ -355,8 +389,15 @@ window.addEventListener('offline', () => {
 });
 
 // Gọi setupFirebaseUI sau khi DOM sẵn sàng
+// handleRedirectResult() phải được gọi TRƯỚC để xử lý kết quả đăng nhập redirect trên mobile
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setupFirebaseUI());
+  document.addEventListener('DOMContentLoaded', async () => {
+    await FirebaseAuth.handleRedirectResult();
+    setupFirebaseUI();
+  });
 } else {
-  setupFirebaseUI();
+  (async () => {
+    await FirebaseAuth.handleRedirectResult();
+    setupFirebaseUI();
+  })();
 }
