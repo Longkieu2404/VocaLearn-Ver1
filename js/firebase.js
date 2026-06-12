@@ -94,6 +94,11 @@ const FirebaseSync = {
     if (typeof renderHome       === 'function') renderHome();
     if (typeof updateStreak     === 'function') updateStreak();
     if (typeof updateTrashBadge === 'function') updateTrashBadge();
+    // Nếu đang ở trang sets, re-render luôn
+    const pageSets = document.getElementById('page-sets');
+    if (pageSets && pageSets.classList.contains('active')) {
+      if (typeof renderSetsPage === 'function') renderSetsPage();
+    }
   },
 
   _rebuildStreak(daily) {
@@ -279,7 +284,8 @@ const FirebaseSync = {
         version:      3
       }, { merge: true });
       this._hasPendingOfflineWrites = false;
-      this._pullCompletedAt = 0; // reset guard sau push để listener nhận updates từ thiết bị khác
+      // Đặt guard ngắn (1s) sau push để tránh echo chính mình, nhưng vẫn nhận updates từ thiết bị khác
+      this._pullCompletedAt = Date.now() - (this.GUARD_MS - 1000);
       localStorage.setItem('vocalearn_local_updatedAt', Date.now().toString());
       return true;
     } catch (e) {

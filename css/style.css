@@ -275,9 +275,10 @@ body {
 .stat-card::before {
   content: ''; position: absolute;
   top: -20px; right: -20px;
-  width: 80px; height: 80px;
+  width: 70px; height: 70px;
   border-radius: 50%;
-  opacity: 0.15;
+  opacity: 0.12;
+  filter: blur(8px);
   z-index: 0;
 }
 .accent-yellow::before { background: var(--yellow); }
