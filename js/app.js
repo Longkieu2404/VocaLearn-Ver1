@@ -67,8 +67,15 @@ async function triggerAiThumb(name, suffix = '') {
   _aiCurrentName[suffix] = name;
   if (_aiSvgCache[name]) { showAiThumb(_aiSvgCache[name], suffix); return; }
   setAiThumbLoading(true, suffix);
+  // Hiển thị trạng thái 2 bước: viết prompt → tạo ảnh
+  const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  if (apiKey) {
+    setAiThumbStatus('🧠 Gemini đang phân tích chủ đề...', 'loading', suffix);
+  } else {
+    setAiThumbStatus('🎨 AI đang tạo hình minh họa...', 'loading', suffix);
+  }
   try {
-    const thumb = await generateTopicThumb(name);
+    const thumb = await generateTopicThumb(name, (msg, type) => setAiThumbStatus(msg, type, suffix));
     _aiSvgCache[name] = thumb;
     showAiThumb(thumb, suffix);
     setAiThumbStatus('✅ AI đã tạo xong hình minh họa!', 'success', suffix);
@@ -81,7 +88,7 @@ async function triggerAiThumb(name, suffix = '') {
 }
 
 // Thử tạo ảnh minh họa thật bằng model ảnh của Gemini, nếu không được sẽ rơi về vẽ SVG
-async function generateTopicThumb(topic) {
+async function generateTopicThumb(topic, onStatus) {
   // Thứ tự ưu tiên:
   // 1. Pollinations AI (miễn phí, không cần API key, ảnh chất lượng cao)
   // 2. Imagen 3 (cần Gemini API key + billing)
@@ -90,7 +97,7 @@ async function generateTopicThumb(topic) {
 
   // Pollinations không cần API key — thử trước tiên, không phụ thuộc vào key
   try {
-    return await generatePollinationsImage(topic);
+    return await generatePollinationsImage(topic, onStatus);
   } catch (e) {
     console.warn('[Thumb] Pollinations failed:', e.message, '→ trying Gemini image...');
   }
@@ -113,8 +120,66 @@ async function generateTopicThumb(topic) {
 // ---- Pollinations AI: tạo ảnh thật miễn phí, không cần billing ----
 // API: https://image.pollinations.ai/prompt/{prompt}?params
 // Trả về ảnh JPEG thật, chất lượng cao, không cần API key
-async function generatePollinationsImage(topic) {
-  const prompt = buildImagePrompt(topic);
+// ---- Dùng Gemini text để viết prompt ảnh chuyên nghiệp cho Pollinations ----
+// Gemini text API miễn phí (không cần billing), hiểu tiếng Việt tốt
+// → Tạo ra prompt tiếng Anh rất chi tiết, đúng chủ đề hơn prompt tĩnh
+async function buildGeminiImagePrompt(topic) {
+  const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  if (!apiKey) return null; // Không có key → dùng prompt tĩnh
+
+  const systemMsg = `You are an expert prompt engineer for AI image generation (Stable Diffusion / FLUX model).
+Your task: given a Vietnamese or English topic name, write a detailed English image generation prompt.
+
+RULES:
+- Output ONLY the prompt text. No explanation, no preamble, no quotes.
+- The prompt must clearly and specifically describe the scene for that topic.
+- Style must be: soft children's digital illustration, warm pastel palette, storybook art style similar to high-quality Google educational app card covers.
+- The main subject must be large, centered, clearly recognizable as the topic.
+- Include: specific objects/characters related to the topic, background setting, lighting, mood.
+- End with: "children's educational illustration, warm pastel colors, soft gradients, gentle shadows, vibrant cheerful, 16:9 wide composition, no text, no letters"`;
+
+  const userMsg = `Topic: "${topic}"
+Write a detailed image generation prompt for this topic. The image will be used as a cover thumbnail for a children's English vocabulary flashcard set.`;
+
+  try {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemMsg }] },
+          contents: [{ parts: [{ text: userMsg }] }],
+          generationConfig: { temperature: 0.8, maxOutputTokens: 300 }
+        })
+      }
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
+    if (text && text.length > 20) {
+      console.log('[GeminiPrompt] Generated prompt:', text.substring(0, 100) + '...');
+      return text;
+    }
+  } catch (e) {
+    console.warn('[GeminiPrompt] Failed:', e.message);
+  }
+  return null;
+}
+
+async function generatePollinationsImage(topic, onStatus) {
+  // Ưu tiên dùng Gemini để viết prompt thông minh hơn (nếu có key)
+  // Nếu không có key hoặc Gemini lỗi → fallback về prompt tĩnh
+  let prompt;
+  try {
+    const geminiPrompt = await buildGeminiImagePrompt(topic);
+    if (geminiPrompt) {
+      if (onStatus) onStatus('🎨 Đang tạo ảnh với Pollinations AI...', 'loading');
+    }
+    prompt = geminiPrompt || buildImagePrompt(topic);
+  } catch(e) {
+    prompt = buildImagePrompt(topic);
+  }
   const encodedPrompt = encodeURIComponent(prompt);
 
   // Thử models theo thứ tự chất lượng:
