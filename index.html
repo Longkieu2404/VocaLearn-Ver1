@@ -985,6 +985,20 @@
     <div class="modal-body">
       <label class="form-label">Tên bộ thẻ</label>
       <input type="text" class="form-input" id="setNameInput" placeholder="VD: Unit 1 – Greetings"/>
+      <!-- AI thumbnail preview -->
+      <div class="ai-thumb-row" id="aiThumbRow">
+        <div class="ai-thumb-preview" id="aiThumbPreview">
+          <div class="ai-thumb-placeholder" id="aiThumbPlaceholder">
+            <span class="ai-thumb-icon">&#127912;</span>
+            <span class="ai-thumb-hint">AI sẽ tự vẽ hình minh họa theo chủ đề</span>
+          </div>
+        </div>
+        <div class="ai-thumb-info">
+          <div class="ai-thumb-label">Hình minh họa AI</div>
+          <div class="ai-thumb-sublabel" id="aiThumbStatus">Nhập tên bộ thẻ để AI tự tạo hình ảnh</div>
+          <button class="ai-regen-btn" id="aiRegenBtn" onclick="regenAiThumb()" style="display:none">&#128260; Vẽ lại</button>
+        </div>
+      </div>
       <label class="form-label">Màu sắc</label>
       <div class="color-picker" id="colorPicker"></div>
       <label class="form-label">Danh sách từ <small>(mỗi dòng: từ tiếng Anh | phiên âm | nghĩa | ví dụ)</small></label>
