@@ -752,13 +752,13 @@ function createSetCard(set) {
     const wrap = document.createElement('div');
     wrap.className = 'set-card-mobile-wrap set-color-' + (set.colorIndex || 0);
     const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
-    const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' dang hoc</span>' : '';
+    const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' đang học</span>' : '';
     wrap.innerHTML = `
       <div class="set-card-mobile">
         <div class="sc-mobile-thumb">${getSetTopicSVG(set)}</div>
         <div class="sc-mobile-body">
           <div class="sc-mobile-name">${set.name}</div>
-          <div class="sc-mobile-count">${total} tu vung</div>
+          <div class="sc-mobile-count">${total} từ vựng</div>
           <div class="sc-mobile-progress">
             <div class="sc-mobile-progress-track">
               <div class="sc-mobile-progress-learning" style="width:${pctMastered+pctLearning}%"></div>
@@ -766,14 +766,14 @@ function createSetCard(set) {
             </div>
           </div>
           <div class="sc-mobile-meta">
-            <span class="sc-mobile-meta-left">${mastered}/${total} da thuoc${learningBadge}</span>
+            <span class="sc-mobile-meta-left">${mastered}/${total} đã thuộc${learningBadge}</span>
             <span class="sc-mobile-pct" style="color:${pctColor}">${pctMastered}%</span>
           </div>
         </div>
       </div>
       <div class="sc-mobile-actions">
-        <button class="sc-mobile-btn sc-btn-study">&#127956; Hoc</button>
-        <button class="sc-mobile-btn sc-btn-quiz">&#129504; Kiem tra</button>
+        <button class="sc-mobile-btn sc-btn-study">&#127956; Học</button>
+        <button class="sc-mobile-btn sc-btn-quiz">&#129504; Kiểm tra</button>
       </div>`;
     wrap.querySelector('.set-card-mobile').addEventListener('click', () => openDetailModal(set.id));
     wrap.querySelector('.sc-btn-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
@@ -790,18 +790,18 @@ function createSetCard(set) {
     </div>
     <div class="set-card-body">
       <div class="set-card-name">${set.name}</div>
-      <div class="set-card-count">${total} tu vung</div>
+      <div class="set-card-count">${total} từ vựng</div>
       <div class="set-card-progress">
         <div class="set-card-progress-fill" style="width:${pctMastered+pctLearning}%;opacity:0.5;background:var(--yellow);position:absolute"></div>
         <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
       </div>
       <div class="set-card-meta">
-        <span>${mastered}/${total} da thuoc${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' dang hoc</span>' : ''}</span>
+        <span>${mastered}/${total} đã thuộc${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' đang học</span>' : ''}</span>
         <span style="color:var(--green)">${pctMastered}%</span>
       </div>
       <div class="set-card-actions">
-        <button class="sca-btn sca-study" title="Hoc the">&#127956; Hoc</button>
-        <button class="sca-btn sca-quiz" title="Kiem tra">&#129504; Kiem tra</button>
+        <button class="sca-btn sca-study" title="Học thẻ">&#127956; Học</button>
+        <button class="sca-btn sca-quiz" title="Kiểm tra">&#129504; Kiểm tra</button>
       </div>
     </div>`;
   div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
@@ -822,7 +822,7 @@ function createUserSetCardMobile(set) {
     <div class="sc-mini-thumb">${set.customSvg ? '<div style="width:100%;height:100%;overflow:hidden">' + set.customSvg + '</div>' : '<span class="sc-mini-emoji">' + getSetTopicEmoji(set) + '</span>'}</div>
     <div class="sc-mini-body">
       <div class="sc-mini-name">${set.name}</div>
-      <div class="sc-mini-count">${total} tu vung</div>
+      <div class="sc-mini-count">${total} từ vựng</div>
       <div class="sc-mini-progress"><div class="sc-mini-fill" style="width:${pctMastered}%;background:${pctMastered===100?'var(--green)':pctMastered>=50?'var(--yellow)':'var(--accent)'}"></div></div>
       <div class="sc-mini-meta"><span>${mastered}/${total}</span><span style="color:${pctColor};font-weight:600">${pctMastered}%</span></div>
     </div>`;
