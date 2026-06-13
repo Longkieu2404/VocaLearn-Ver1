@@ -118,11 +118,16 @@ async function generatePollinationsImage(topic) {
 
   // Thử 2 model theo thứ tự: flux (đẹp nhất) → turbo (nhanh hơn)
   const models = ['flux', 'turbo'];
+  const negativePrompt = buildNegativePrompt();
+  const encodedNegative = encodeURIComponent(negativePrompt);
 
   for (const model of models) {
     try {
       const seed = Math.floor(Math.random() * 999999);
-      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=500&model=${model}&nologo=true&seed=${seed}&enhance=true&safe=false`;
+      // negative: loại bỏ những thứ không mong muốn (ảnh thật, chữ, nền tối...)
+      // enhance: Pollinations tự động cải thiện prompt
+      // width=1280&height=800: tỉ lệ 16:9 độ phân giải cao
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=800&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}`;
 
       // Pollinations có thể mất 15-40s để generate, đặt timeout 45s
       const controller = new AbortController();
@@ -161,17 +166,87 @@ const GEMINI_IMAGE_MODELS = [
   'gemini-2.0-flash-exp'
 ];
 
-// Prompt cho Imagen 3 / Gemini image models
+// Map từ khóa topic → visual cues cụ thể để FLUX hiểu đúng chủ đề
+function getTopicVisualHints(topic) {
+  const t = topic.toLowerCase();
+  const hints = [
+    // Tiếng Anh lớp 6 - các chủ đề phổ biến
+    { keys: ['school', 'trường', 'học'],
+      vis: 'school building with colorful facade, yellow school bus, children with backpacks, classroom with desks and chalkboard' },
+    { keys: ['home', 'house', 'nhà', 'gia đình'],
+      vis: 'cozy cottage house with red roof, garden with flowers, white picket fence, sunny front yard' },
+    { keys: ['friend', 'bạn bè', 'people', 'người'],
+      vis: 'group of diverse smiling children waving, colorful clothing, sunny park background' },
+    { keys: ['neighbour', 'neighborhood', 'khu phố', 'phố'],
+      vis: 'colorful row of shops and houses on a street, market stalls, friendly neighborhood scene' },
+    { keys: ['nature', 'natural', 'wonder', 'thiên nhiên', 'núi'],
+      vis: 'majestic snow-capped mountains, waterfall, lush green valley, dramatic sky' },
+    { keys: ['tet', 'tết', 'lunar', 'holiday', 'lễ hội', 'new year'],
+      vis: 'red lanterns hanging, golden peach blossom tree, dragon decorations, red envelopes, festive celebration' },
+    { keys: ['fruit', 'trái cây', 'food', 'thức ăn', 'eat'],
+      vis: 'colorful fresh fruits arranged beautifully: apples oranges bananas strawberries grapes, market stall' },
+    { keys: ['animal', 'động vật', 'pet', 'thú cưng', 'zoo'],
+      vis: 'cute cartoon animals: lion elephant giraffe rabbit, savanna or jungle background' },
+    { keys: ['sport', 'thể thao', 'game', 'play'],
+      vis: 'children playing football soccer on green field, sports equipment, active outdoor scene' },
+    { keys: ['travel', 'du lịch', 'trip', 'vacation'],
+      vis: 'airplane flying over world map landmarks, Eiffel Tower Big Ben tropical beach, suitcase' },
+    { keys: ['color', 'màu sắc', 'colour', 'art'],
+      vis: 'rainbow colors palette, paint brushes, colorful art supplies, painting canvas' },
+    { keys: ['weather', 'thời tiết', 'season', 'mùa'],
+      vis: 'four seasons collage: sunny summer beach, snowy winter, autumn leaves, spring flowers' },
+    { keys: ['body', 'cơ thể', 'health', 'sức khỏe'],
+      vis: 'friendly cartoon human body diagram, colorful organs, healthy children exercising' },
+    { keys: ['cloth', 'quần áo', 'fashion', 'wear', 'dress'],
+      vis: 'colorful clothing items on display: dresses shirts shoes hats, fashion boutique' },
+    { keys: ['technology', 'thiết bị', 'device', 'smart', 'phone', 'computer'],
+      vis: 'modern gadgets: smartphone tablet laptop smartwatch, colorful tech icons on digital background' },
+    { keys: ['city', 'thành phố', 'town', 'urban'],
+      vis: 'colorful city skyline with tall buildings, busy street, cars and buses, daytime scene' },
+    { keys: ['ocean', 'sea', 'biển', 'fish', 'marine'],
+      vis: 'underwater ocean scene with colorful coral reef, tropical fish, sea turtle, bright blue water' },
+    { keys: ['music', 'âm nhạc', 'song', 'instrument'],
+      vis: 'musical instruments: guitar piano violin trumpet, colorful music notes floating around' },
+    { keys: ['number', 'số', 'math', 'toán'],
+      vis: 'colorful number blocks and math symbols, children learning with abacus and counting toys' },
+    { keys: ['alphabet', 'letter', 'chữ cái', 'abc'],
+      vis: "colorful alphabet letters A to Z arranged playfully, children's learning blocks" },
+  ];
+
+  for (const h of hints) {
+    if (h.keys.some(k => t.includes(k))) {
+      return h.vis;
+    }
+  }
+  // Generic fallback: describe topic visually
+  return `iconic visual representation of ${topic}, recognizable objects and characters related to ${topic}`;
+}
+
+// Prompt tối ưu cho FLUX model (Pollinations AI) và Imagen 3
+// FLUX hoạt động tốt nhất với: subject cụ thể + style tag + quality booster
 function buildImagePrompt(topic) {
+  const visualHints = getTopicVisualHints(topic);
   return (
-    `${topic}, children's educational illustration, ` +
-    `cartoon flat design, thick black outlines, vibrant colors, ` +
-    `"${topic}" as the large unmistakable main subject centered in foreground, ` +
-    `complete illustrated scene with sky background and ground, ` +
-    `Duolingo-style, Khan Academy Kids style, picture book illustration, ` +
-    `warm cheerful palette, golden yellow coral red sky blue leafy green, ` +
-    `16:9 wide landscape, multiple depth layers, high detail, ` +
-    `no text no letters no numbers no watermarks no borders`
+    `${visualHints}, ` +
+    `children's educational illustration for "${topic}" vocabulary set, ` +
+    `2D cartoon art style, bold clean black outlines, flat colors with soft shading, ` +
+    `bright vivid cheerful colors, warm golden lighting, ` +
+    `complete illustrated scene with fluffy white clouds in blue sky, green grass ground, ` +
+    `multiple depth layers background to foreground, ` +
+    `Duolingo app art style, storybook illustration, Khan Academy Kids quality, ` +
+    `wide 16:9 landscape composition, high detail, colorful and inviting, ` +
+    `masterpiece quality illustration`
+  );
+}
+
+// Negative prompt cho FLUX - loại bỏ những thứ không mong muốn
+function buildNegativePrompt() {
+  return (
+    `text, letters, numbers, watermark, logo, signature, border, frame, ` +
+    `photo, photography, realistic photo, 3d render, CGI, ` +
+    `blurry, low quality, bad anatomy, ugly, distorted, ` +
+    `abstract, geometric shapes only, minimalist, clip art, ` +
+    `dark background, black background, scary, violent`
   );
 }
 
