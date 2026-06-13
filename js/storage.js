@@ -20,7 +20,12 @@ const Storage = {
     catch { return []; }
   },
   saveSets(sets) {
-    localStorage.setItem(this.KEY_SETS, JSON.stringify(sets));
+    try {
+      localStorage.setItem(this.KEY_SETS, JSON.stringify(sets));
+    } catch (e) {
+      console.error('Storage.saveSets failed:', e);
+      throw new Error('STORAGE_QUOTA_EXCEEDED');
+    }
     if (typeof AutoSave !== 'undefined') AutoSave.triggerSave();
   },
   getProgress() {

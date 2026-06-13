@@ -4281,10 +4281,11 @@ body.game-fullscreen #detDone {
     position: relative;
     overflow: hidden;
   }
-  .sc-mobile-thumb svg {
+  .sc-mobile-thumb svg, .sc-mobile-thumb img {
     width: 100%;
     height: 100%;
     display: block;
+    object-fit: cover;
   }
   .set-color-0 .sc-mobile-thumb { background: linear-gradient(135deg, #ffb3b3, #ffd580); }
   .set-color-1 .sc-mobile-thumb { background: linear-gradient(135deg, #80e6c8, #80d4f5); }
@@ -4530,10 +4531,11 @@ body.game-fullscreen #detDone {
   justify-content: center;
   position: relative;
 }
-.ai-thumb-preview svg {
+.ai-thumb-preview svg, .ai-thumb-preview img {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: cover;
 }
 
 /* Placeholder khi chưa có ảnh */

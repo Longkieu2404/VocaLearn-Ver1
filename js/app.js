@@ -68,12 +68,12 @@ async function triggerAiThumb(name, suffix = '') {
   if (_aiSvgCache[name]) { showAiThumb(_aiSvgCache[name], suffix); return; }
   setAiThumbLoading(true, suffix);
   try {
-    const svg = await generateTopicSVG(name);
-    _aiSvgCache[name] = svg;
-    showAiThumb(svg, suffix);
+    const thumb = await generateTopicThumb(name);
+    _aiSvgCache[name] = thumb;
+    showAiThumb(thumb, suffix);
     setAiThumbStatus('\u2705 AI da tao xong hinh minh hoa!', 'success', suffix);
   } catch(e) {
-    console.error('AI SVG error:', e);
+    console.error('AI thumb error:', e);
     if (e.message === 'NO_API_KEY') {
       setAiThumbStatus('🔑 Hãy nhập Gemini API Key để AI tự vẽ ảnh chủ đề.', 'error', suffix);
     } else {
@@ -84,8 +84,97 @@ async function triggerAiThumb(name, suffix = '') {
   }
 }
 
-async function generateTopicSVG(topic) {
+// Thử tạo ảnh minh họa thật bằng model ảnh của Gemini, nếu không được sẽ rơi về vẽ SVG
+async function generateTopicThumb(topic) {
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  try {
+    return await generateTopicImage(topic, apiKey);
+  } catch (e) {
+    console.warn('Image-gen failed, fallback to SVG:', e.message);
+    return await generateTopicSVG(topic, apiKey);
+  }
+}
+
+// ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (Nano Banana) ----
+const GEMINI_IMAGE_MODELS = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
+
+async function generateTopicImage(topic, apiKey) {
+  const prompt = 'Create a vibrant, friendly digital illustration in a semi-realistic flat cartoon style, soft warm lighting, rich colors, for the cover thumbnail of an English vocabulary flashcard set about: "' + topic + '". Wide landscape composition, no text, no letters, no numbers, no watermark, no logo, no border, no frame.';
+
+  let lastError = null;
+  for (const model of GEMINI_IMAGE_MODELS) {
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '16:9' } }
+          })
+        }
+      );
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        lastError = errJson.error?.message || `HTTP ${resp.status}`;
+        if (resp.status === 429 || resp.status === 404 || resp.status === 400 ||
+            lastError.includes('quota') || lastError.includes('Quota') ||
+            lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED') ||
+            lastError.includes('NOT_FOUND') || lastError.includes('does not support')) continue;
+        throw new Error(lastError);
+      }
+      const data = await resp.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
+      if (!imgPart) { lastError = 'No image in response'; continue; }
+      const { mimeType, data: b64 } = imgPart.inlineData;
+      const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
+      return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
+    } catch (e) {
+      lastError = e.message;
+      if (e.message.includes('quota') || e.message.includes('Quota') ||
+          e.message.includes('429') || e.message.includes('not found')) continue;
+      throw e;
+    }
+  }
+  throw new Error(lastError || 'Cannot generate image');
+}
+
+// Nén & resize ảnh base64 về JPEG nhỏ (vừa thumbnail) để tiết kiệm dung lượng lưu trữ
+function compressImageDataUrl(srcDataUrl, maxW = 320, maxH = 208, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = maxW;
+        canvas.height = maxH;
+        const ctx = canvas.getContext('2d');
+        const srcRatio = img.width / img.height;
+        const dstRatio = maxW / maxH;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (srcRatio > dstRatio) {
+          sw = img.height * dstRatio;
+          sx = (img.width - sw) / 2;
+        } else {
+          sh = img.width / dstRatio;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, maxW, maxH);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error('Cannot load generated image'));
+    img.src = srcDataUrl;
+  });
+}
+
+// ---- Vẽ SVG minh họa bằng Gemini (dùng khi model ảnh không khả dụng) ----
+async function generateTopicSVG(topic, apiKey) {
+  apiKey = apiKey || localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) throw new Error('NO_API_KEY');
 
   const prompt = 'You are an expert SVG illustrator for a children vocabulary flashcard app. Create a colorful, cute, flat-design SVG illustration for a flashcard set about: "' + topic + '". Requirements: Output ONLY raw SVG code, nothing else, no markdown, no backticks, no explanation. viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg". First child must be <rect width="200" height="130" fill="transparent"/>. Flat design, cheerful, child-friendly. Include 4-7 relevant objects. Bright saturated colors, no dark backgrounds. NO text or label elements inside SVG. Use only rect, circle, ellipse, polygon, path shapes. Keep entire SVG under 4000 characters.';
@@ -181,8 +270,8 @@ function regenAiThumb(suffix = '') {
 
 function getAiThumbSvg(suffix = '') {
   const preview = document.getElementById('aiThumbPreview' + suffix);
-  const svgEl = preview ? preview.querySelector('svg') : null;
-  return svgEl ? svgEl.outerHTML : null;
+  const el = preview ? preview.querySelector('svg, img') : null;
+  return el ? el.outerHTML : null;
 }
 
 // ---- STATE ----
@@ -967,7 +1056,15 @@ function saveSet() {
     };
     sets.push(newSet);
   }
-  Storage.saveSets(sets);
+  try {
+    Storage.saveSets(sets);
+  } catch (e) {
+    if (e.message === 'STORAGE_QUOTA_EXCEEDED') {
+      showNotif('⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ hoặc bỏ ảnh AI rồi thử lại.', '💾');
+      return;
+    }
+    throw e;
+  }
   closeCreateModal();
   if (currentPage === 'sets') renderSetsPage();
   else renderHome();
@@ -2449,7 +2546,15 @@ function saveAISet() {
   const sets = Storage.getSets();
   const aiSvg = getAiThumbSvg('2');
   sets.push({ id: setId, name, colorIndex: aiSelectedColor, cards, ...(aiSvg ? { customSvg: aiSvg } : {}) });
-  Storage.saveSets(sets);
+  try {
+    Storage.saveSets(sets);
+  } catch (e) {
+    if (e.message === 'STORAGE_QUOTA_EXCEEDED') {
+      showNotif('⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ rồi thử lại.', '💾');
+      return;
+    }
+    throw e;
+  }
   closeAIModal();
   navigateTo('sets');
   renderSetsPage();
