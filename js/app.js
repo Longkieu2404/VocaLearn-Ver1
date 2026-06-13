@@ -87,33 +87,43 @@ async function triggerAiThumb(name, suffix = '') {
   }
 }
 
-// Thử tạo ảnh minh họa thật bằng model ảnh của Gemini, nếu không được sẽ rơi về vẽ SVG
+// Tạo ảnh minh họa thật cho bộ thẻ
+// Thứ tự ưu tiên khi có Gemini key:
+//   1. Gemini Flash image generation (hiểu chủ đề tốt nhất, đúng chủ đề)
+//   2. Pollinations AI (miễn phí, fallback khi Gemini lỗi)
+//   3. SVG fallback (cuối cùng)
+// Khi không có key:
+//   1. Pollinations AI
+//   2. SVG fallback
 async function generateTopicThumb(topic, onStatus) {
-  // Thứ tự ưu tiên:
-  // 1. Pollinations AI (miễn phí, không cần API key, ảnh chất lượng cao)
-  // 2. Imagen 3 (cần Gemini API key + billing)
-  // 3. Gemini Flash image generation (cần Gemini API key)
-  // 4. SVG fallback (cuối cùng)
-
-  // Pollinations không cần API key — thử trước tiên, không phụ thuộc vào key
-  try {
-    return await generatePollinationsImage(topic, onStatus);
-  } catch (e) {
-    console.warn('[Thumb] Pollinations failed:', e.message, '→ trying Gemini image...');
-  }
-
-  // Gemini fallback chỉ khi có API key
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
-  if (!apiKey) {
-    // Pollinations đã thất bại và không có key → dùng SVG thuần không cần key
-    return await generateTopicSVGNoKey(topic);
-  }
 
-  try {
-    return await generateTopicImage(topic, apiKey);
-  } catch (e) {
-    console.warn('[Thumb] Gemini image failed:', e.message, '→ fallback SVG');
+  if (apiKey) {
+    // Có key → ưu tiên Gemini Flash (tạo ảnh đúng chủ đề hơn Pollinations)
+    if (onStatus) onStatus('🧠 Gemini đang tạo hình minh họa...', 'loading');
+    try {
+      return await generateTopicImage(topic, apiKey);
+    } catch (e) {
+      console.warn('[Thumb] Gemini image failed:', e.message, '→ trying Pollinations...');
+      if (onStatus) onStatus('🎨 Đang thử Pollinations AI...', 'loading');
+    }
+    // Gemini thất bại → thử Pollinations
+    try {
+      return await generatePollinationsImage(topic, onStatus);
+    } catch (e) {
+      console.warn('[Thumb] Pollinations failed:', e.message, '→ fallback SVG');
+    }
+    // Cả hai thất bại → SVG bằng Gemini text
     return await generateTopicSVG(topic, apiKey);
+  } else {
+    // Không có key → Pollinations (miễn phí)
+    if (onStatus) onStatus('🎨 AI đang tạo hình minh họa...', 'loading');
+    try {
+      return await generatePollinationsImage(topic, onStatus);
+    } catch (e) {
+      console.warn('[Thumb] Pollinations failed:', e.message, '→ SVG fallback');
+      return await generateTopicSVGNoKey(topic);
+    }
   }
 }
 
@@ -329,12 +339,25 @@ function buildNegativePrompt() {
   );
 }
 
-async function generateTopicImage(topic, apiKey) {
-  const prompt = buildImagePrompt(topic);
+// Xây dựng prompt ngắn gọn, rõ ràng cho Gemini image model
+// Gemini hiểu ngữ cảnh tốt → không cần prompt dài, tập trung vào chủ đề
+function buildGeminiImageDirectPrompt(topic) {
+  const visualHints = getTopicVisualHints(topic);
+  return (
+    `Create a children's educational illustration for the topic "${topic}". ` +
+    `Scene: ${visualHints}. ` +
+    `Style: soft digital illustration, warm pastel colors, storybook art similar to Google educational app covers. ` +
+    `Wide 16:9 landscape composition. Main subject large, centered, clearly recognizable. ` +
+    `Friendly, cheerful, child-friendly. No text, no letters, no numbers anywhere in the image.`
+  );
+}
 
+async function generateTopicImage(topic, apiKey) {
+  // Dùng prompt riêng tối ưu cho Gemini (ngắn gọn, rõ chủ đề)
+  const prompt = buildGeminiImageDirectPrompt(topic);
   let lastError = null;
 
-  // --- Thử Imagen 3 trước (chất lượng ảnh thật nhất) ---
+  // --- Thử Imagen 3 trước (chất lượng ảnh thật nhất, cần billing) ---
   try {
     const imagenResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
@@ -352,18 +375,20 @@ async function generateTopicImage(topic, apiKey) {
       const b64 = imagenData.predictions?.[0]?.bytesBase64Encoded;
       const mimeType = imagenData.predictions?.[0]?.mimeType || 'image/png';
       if (b64) {
+        console.log('[Gemini] Imagen 3 success!');
         const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
         return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
       }
     }
   } catch (e) {
     lastError = e.message;
-    // Không throw - fallback xuống Gemini Flash
+    console.warn('[Gemini] Imagen 3 failed:', e.message);
   }
 
-  // --- Fallback: Gemini 2.0 Flash với IMAGE modality ---
+  // --- Gemini 2.0 Flash image generation (miễn phí, không cần billing) ---
   for (const model of GEMINI_IMAGE_MODELS) {
     try {
+      console.log(`[Gemini] Trying model: ${model}`);
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
@@ -393,6 +418,7 @@ async function generateTopicImage(topic, apiKey) {
       const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
       if (!imgPart) { lastError = 'No image in response'; continue; }
       const { mimeType, data: b64 } = imgPart.inlineData;
+      console.log(`[Gemini] ${model} success!`);
       const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
       return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
     } catch (e) {
