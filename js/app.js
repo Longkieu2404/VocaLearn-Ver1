@@ -729,18 +729,12 @@ function renderSetsPage() {
   const grid = document.getElementById('mySetsPage');
   const empty = document.getElementById('emptySets');
   grid.innerHTML = '';
+  grid.classList.remove('sc-mini-grid');
   if (sets.length === 0) {
     empty.style.display = 'flex';
   } else {
     empty.style.display = 'none';
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      grid.classList.add('sc-mini-grid');
-      sets.forEach(s => grid.appendChild(createUserSetCardMobile(s)));
-    } else {
-      grid.classList.remove('sc-mini-grid');
-      sets.forEach(s => grid.appendChild(createSetCard(s)));
-    }
+    sets.forEach(s => grid.appendChild(createSetCard(s)));
   }
 }
 
