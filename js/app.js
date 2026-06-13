@@ -98,12 +98,56 @@ async function generateTopicThumb(topic) {
 }
 
 // ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (Nano Banana) ----
-const GEMINI_IMAGE_MODELS = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
+// Thứ tự ưu tiên: Imagen 3 (chất lượng cao nhất) → Gemini 2.0 Flash Exp → Gemini 2.0 Flash
+const GEMINI_IMAGE_MODELS = [
+  'gemini-2.0-flash-exp',
+  'gemini-2.0-flash-preview-image-generation',
+  'gemini-2.0-flash'
+];
+
+// Tạo prompt ảnh thật giống phong cách Google AI Studio
+function buildImagePrompt(topic) {
+  return `A beautiful, highly detailed digital illustration for an English vocabulary flashcard set cover about "${topic}". ` +
+    `Style: vibrant children's educational illustration, warm and inviting atmosphere, soft natural lighting, ` +
+    `rich saturated colors, semi-realistic with slightly stylized friendly characters and objects, ` +
+    `clean professional composition, cheerful and engaging mood. ` +
+    `Wide 16:9 landscape format, no text, no letters, no numbers, no watermarks, no borders, no frames. ` +
+    `High detail, professional quality illustration suitable for educational app.`;
+}
 
 async function generateTopicImage(topic, apiKey) {
-  const prompt = 'Create a vibrant, friendly digital illustration in a semi-realistic flat cartoon style, soft warm lighting, rich colors, for the cover thumbnail of an English vocabulary flashcard set about: "' + topic + '". Wide landscape composition, no text, no letters, no numbers, no watermark, no logo, no border, no frame.';
+  const prompt = buildImagePrompt(topic);
 
   let lastError = null;
+
+  // --- Thử Imagen 3 trước (chất lượng ảnh thật nhất) ---
+  try {
+    const imagenResp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt: prompt }],
+          parameters: { sampleCount: 1, aspectRatio: '16:9', safetyFilterLevel: 'block_some' }
+        })
+      }
+    );
+    if (imagenResp.ok) {
+      const imagenData = await imagenResp.json();
+      const b64 = imagenData.predictions?.[0]?.bytesBase64Encoded;
+      const mimeType = imagenData.predictions?.[0]?.mimeType || 'image/png';
+      if (b64) {
+        const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
+        return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
+      }
+    }
+  } catch (e) {
+    lastError = e.message;
+    // Không throw - fallback xuống Gemini Flash
+  }
+
+  // --- Fallback: Gemini 2.0 Flash với IMAGE modality ---
   for (const model of GEMINI_IMAGE_MODELS) {
     try {
       const resp = await fetch(
@@ -113,7 +157,10 @@ async function generateTopicImage(topic, apiKey) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '16:9' } }
+            generationConfig: {
+              responseModalities: ['IMAGE', 'TEXT'],
+              temperature: 1.0
+            }
           })
         }
       );
@@ -123,7 +170,8 @@ async function generateTopicImage(topic, apiKey) {
         if (resp.status === 429 || resp.status === 404 || resp.status === 400 ||
             lastError.includes('quota') || lastError.includes('Quota') ||
             lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED') ||
-            lastError.includes('NOT_FOUND') || lastError.includes('does not support')) continue;
+            lastError.includes('NOT_FOUND') || lastError.includes('does not support') ||
+            lastError.includes('invalid') || lastError.includes('Invalid')) continue;
         throw new Error(lastError);
       }
       const data = await resp.json();
@@ -136,7 +184,8 @@ async function generateTopicImage(topic, apiKey) {
     } catch (e) {
       lastError = e.message;
       if (e.message.includes('quota') || e.message.includes('Quota') ||
-          e.message.includes('429') || e.message.includes('not found')) continue;
+          e.message.includes('429') || e.message.includes('not found') ||
+          e.message.includes('invalid')) continue;
       throw e;
     }
   }
@@ -144,7 +193,7 @@ async function generateTopicImage(topic, apiKey) {
 }
 
 // Nén & resize ảnh base64 về JPEG nhỏ (vừa thumbnail) để tiết kiệm dung lượng lưu trữ
-function compressImageDataUrl(srcDataUrl, maxW = 320, maxH = 208, quality = 0.75) {
+function compressImageDataUrl(srcDataUrl, maxW = 480, maxH = 312, quality = 0.88) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
