@@ -206,7 +206,9 @@ async function generatePollinationsImage(topic, onStatus) {
       // width=1280&height=800: tỉ lệ 16:9 độ phân giải cao
       // enhance=true: Pollinations tự cải thiện prompt
       // safe=true: bật bộ lọc nội dung an toàn cho trẻ em
-      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=800&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}&safe=true`;
+      // Bỏ safe=true vì gây 402 ở một số vùng (Việt Nam)
+      // Dùng width nhỏ hơn để tránh timeout
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=960&height=600&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}`;
 
       // flux-pro mất lâu hơn (30-60s), flux/turbo nhanh hơn
       const timeoutMs = model === 'flux-pro' ? 60000 : 45000;
@@ -241,13 +243,15 @@ async function generatePollinationsImage(topic, onStatus) {
 
 // ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (fallback khi Pollinations fail) ----
 // Thứ tự ưu tiên: Imagen 3 (cần billing) → Gemini 2.0 Flash Preview image generation
-// Danh sách model Gemini có khả năng tạo ảnh, theo thứ tự ưu tiên
-// gemini-2.0-flash-preview-image-generation: model chính thức tạo ảnh (AI Studio free)
-// gemini-2.0-flash-exp: experimental, cũng hỗ trợ image output
+// Danh sách model Gemini tạo ảnh, mỗi entry gồm { model, apiVersion, modalities }
+// Thứ tự ưu tiên: thử từng cái cho đến khi thành công
 const GEMINI_IMAGE_MODELS = [
-  'gemini-2.0-flash-preview-image-generation',
-  'gemini-2.0-flash-exp',
-  'gemini-2.0-flash'
+  // gemini-2.0-flash-exp qua v1alpha: hỗ trợ IMAGE modality (AI Studio free key)
+  { model: 'gemini-2.0-flash-exp', apiVersion: 'v1alpha', modalities: ['IMAGE', 'TEXT'] },
+  // gemini-2.0-flash-exp qua v1beta với tên model mới
+  { model: 'gemini-2.0-flash-exp', apiVersion: 'v1beta', modalities: ['IMAGE', 'TEXT'] },
+  // Fallback: imagen-3 lite qua v1beta (nếu có billing)
+  { model: 'imagen-3.0-generate-001', apiVersion: 'v1beta', modalities: null },
 ];
 
 // Map từ khóa topic → visual cues cụ thể để AI model hiểu đúng chủ đề
@@ -392,39 +396,33 @@ async function generateTopicImage(topic, apiKey) {
   }
 
   // --- Gemini Flash image generation (AI Studio free key) ---
-  // Thử từng model, ghi log rõ để dễ debug
-  for (const model of GEMINI_IMAGE_MODELS) {
+  for (const cfg of GEMINI_IMAGE_MODELS) {
     try {
-      console.log(`[Gemini] Đang thử model: ${model}`);
+      console.log(`[Gemini] Thử ${cfg.model} (${cfg.apiVersion})...`);
+
+      // Build request body tùy từng model config
+      const reqBody = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 1.0 }
+      };
+      if (cfg.modalities) {
+        reqBody.generationConfig.responseModalities = cfg.modalities;
+      }
+
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/${cfg.apiVersion}/models/${cfg.model}:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-              responseModalities: ['IMAGE', 'TEXT'],
-              temperature: 1.0
-            }
-          })
+          body: JSON.stringify(reqBody)
         }
       );
 
       if (!resp.ok) {
         const errJson = await resp.json().catch(() => ({}));
         lastError = errJson.error?.message || `HTTP ${resp.status}`;
-        console.warn(`[Gemini] ${model} thất bại (${resp.status}):`, lastError);
-        // Các lỗi có thể retry với model khác
-        if (resp.status === 429 || resp.status === 404 || resp.status === 400 ||
-            lastError.includes('quota') || lastError.includes('Quota') ||
-            lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED') ||
-            lastError.includes('NOT_FOUND') || lastError.includes('does not support') ||
-            lastError.includes('invalid') || lastError.includes('Invalid') ||
-            lastError.includes('USER_LOCATION') || lastError.includes('not supported')) continue;
-        throw new Error(lastError);
+        console.warn(`[Gemini] ${cfg.model}/${cfg.apiVersion} lỗi ${resp.status}:`, lastError);
+        continue; // Luôn thử model tiếp theo
       }
 
       const data = await resp.json();
@@ -432,23 +430,20 @@ async function generateTopicImage(topic, apiKey) {
       const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
 
       if (!imgPart) {
-        lastError = 'Model không trả về ảnh';
-        console.warn(`[Gemini] ${model}: không có ảnh trong response. Parts:`, parts.map(p => p.text || '[image]'));
+        lastError = 'Không có ảnh trong response';
+        console.warn(`[Gemini] ${cfg.model}: response không có ảnh`, parts.map(p => p.text?.substring(0,50) || '[data]'));
         continue;
       }
 
       const { mimeType, data: b64 } = imgPart.inlineData;
-      console.log(`[Gemini] ✅ ${model} thành công! mimeType=${mimeType}`);
+      console.log(`[Gemini] ✅ ${cfg.model} thành công! (${mimeType})`);
       const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
       return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
 
     } catch (e) {
       lastError = e.message;
-      console.warn(`[Gemini] ${model} exception:`, e.message);
-      if (e.message.includes('quota') || e.message.includes('Quota') ||
-          e.message.includes('429') || e.message.includes('not found') ||
-          e.message.includes('invalid') || e.message.includes('not supported')) continue;
-      throw e;
+      console.warn(`[Gemini] ${cfg.model} exception:`, e.message);
+      continue; // Thử model tiếp theo
     }
   }
 
