@@ -241,9 +241,13 @@ async function generatePollinationsImage(topic, onStatus) {
 
 // ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (fallback khi Pollinations fail) ----
 // Thứ tự ưu tiên: Imagen 3 (cần billing) → Gemini 2.0 Flash Preview image generation
+// Danh sách model Gemini có khả năng tạo ảnh, theo thứ tự ưu tiên
+// gemini-2.0-flash-preview-image-generation: model chính thức tạo ảnh (AI Studio free)
+// gemini-2.0-flash-exp: experimental, cũng hỗ trợ image output
 const GEMINI_IMAGE_MODELS = [
   'gemini-2.0-flash-preview-image-generation',
-  'gemini-2.0-flash-exp'
+  'gemini-2.0-flash-exp',
+  'gemini-2.0-flash'
 ];
 
 // Map từ khóa topic → visual cues cụ thể để AI model hiểu đúng chủ đề
@@ -339,25 +343,25 @@ function buildNegativePrompt() {
   );
 }
 
-// Xây dựng prompt ngắn gọn, rõ ràng cho Gemini image model
-// Gemini hiểu ngữ cảnh tốt → không cần prompt dài, tập trung vào chủ đề
+// Prompt tối ưu cho Gemini image model
+// Gemini hiểu ngôn ngữ tự nhiên rất tốt — viết như chat thật, không cần format đặc biệt
 function buildGeminiImageDirectPrompt(topic) {
   const visualHints = getTopicVisualHints(topic);
   return (
-    `Create a children's educational illustration for the topic "${topic}". ` +
-    `Scene: ${visualHints}. ` +
-    `Style: soft digital illustration, warm pastel colors, storybook art similar to Google educational app covers. ` +
-    `Wide 16:9 landscape composition. Main subject large, centered, clearly recognizable. ` +
-    `Friendly, cheerful, child-friendly. No text, no letters, no numbers anywhere in the image.`
+    `Hãy vẽ cho tôi một hình ảnh minh họa chủ đề "${topic}" dành cho học sinh tiểu học học tiếng Anh. ` +
+    `Cảnh vẽ: ${visualHints}. ` +
+    `Phong cách: tranh minh họa kỹ thuật số mềm mại, màu pastel ấm áp, như ảnh bìa sách thiếu nhi hoặc app học tiếng Anh của Google. ` +
+    `Bố cục ngang 16:9, nhân vật/vật thể chính lớn và rõ ràng ở trung tâm. ` +
+    `Vui tươi, thân thiện, phù hợp trẻ em. Không có chữ, không có số trong ảnh.`
   );
 }
 
 async function generateTopicImage(topic, apiKey) {
-  // Dùng prompt riêng tối ưu cho Gemini (ngắn gọn, rõ chủ đề)
+  // Prompt ngắn gọn, rõ chủ đề — Gemini hiểu ngữ nghĩa tốt, không cần mô tả dài
   const prompt = buildGeminiImageDirectPrompt(topic);
   let lastError = null;
 
-  // --- Thử Imagen 3 trước (chất lượng ảnh thật nhất, cần billing) ---
+  // --- Thử Imagen 3 trước nếu có billing ---
   try {
     const imagenResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
@@ -375,27 +379,32 @@ async function generateTopicImage(topic, apiKey) {
       const b64 = imagenData.predictions?.[0]?.bytesBase64Encoded;
       const mimeType = imagenData.predictions?.[0]?.mimeType || 'image/png';
       if (b64) {
-        console.log('[Gemini] Imagen 3 success!');
+        console.log('[Gemini] ✅ Imagen 3 thành công!');
         const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
         return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
       }
+    } else {
+      const err = await imagenResp.json().catch(() => ({}));
+      console.warn('[Gemini] Imagen 3 không khả dụng (cần billing):', err?.error?.message || imagenResp.status);
     }
   } catch (e) {
-    lastError = e.message;
-    console.warn('[Gemini] Imagen 3 failed:', e.message);
+    console.warn('[Gemini] Imagen 3 lỗi:', e.message);
   }
 
-  // --- Gemini 2.0 Flash image generation (miễn phí, không cần billing) ---
+  // --- Gemini Flash image generation (AI Studio free key) ---
+  // Thử từng model, ghi log rõ để dễ debug
   for (const model of GEMINI_IMAGE_MODELS) {
     try {
-      console.log(`[Gemini] Trying model: ${model}`);
+      console.log(`[Gemini] Đang thử model: ${model}`);
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{
+              parts: [{ text: prompt }]
+            }],
             generationConfig: {
               responseModalities: ['IMAGE', 'TEXT'],
               temperature: 1.0
@@ -403,33 +412,47 @@ async function generateTopicImage(topic, apiKey) {
           })
         }
       );
+
       if (!resp.ok) {
         const errJson = await resp.json().catch(() => ({}));
         lastError = errJson.error?.message || `HTTP ${resp.status}`;
+        console.warn(`[Gemini] ${model} thất bại (${resp.status}):`, lastError);
+        // Các lỗi có thể retry với model khác
         if (resp.status === 429 || resp.status === 404 || resp.status === 400 ||
             lastError.includes('quota') || lastError.includes('Quota') ||
             lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED') ||
             lastError.includes('NOT_FOUND') || lastError.includes('does not support') ||
-            lastError.includes('invalid') || lastError.includes('Invalid')) continue;
+            lastError.includes('invalid') || lastError.includes('Invalid') ||
+            lastError.includes('USER_LOCATION') || lastError.includes('not supported')) continue;
         throw new Error(lastError);
       }
+
       const data = await resp.json();
       const parts = data.candidates?.[0]?.content?.parts || [];
       const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
-      if (!imgPart) { lastError = 'No image in response'; continue; }
+
+      if (!imgPart) {
+        lastError = 'Model không trả về ảnh';
+        console.warn(`[Gemini] ${model}: không có ảnh trong response. Parts:`, parts.map(p => p.text || '[image]'));
+        continue;
+      }
+
       const { mimeType, data: b64 } = imgPart.inlineData;
-      console.log(`[Gemini] ${model} success!`);
+      console.log(`[Gemini] ✅ ${model} thành công! mimeType=${mimeType}`);
       const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
       return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
+
     } catch (e) {
       lastError = e.message;
+      console.warn(`[Gemini] ${model} exception:`, e.message);
       if (e.message.includes('quota') || e.message.includes('Quota') ||
           e.message.includes('429') || e.message.includes('not found') ||
-          e.message.includes('invalid')) continue;
+          e.message.includes('invalid') || e.message.includes('not supported')) continue;
       throw e;
     }
   }
-  throw new Error(lastError || 'Cannot generate image');
+
+  throw new Error(lastError || 'Gemini không tạo được ảnh');
 }
 
 // Nén & resize ảnh base64 về JPEG nhỏ (vừa thumbnail) để tiết kiệm dung lượng lưu trữ
