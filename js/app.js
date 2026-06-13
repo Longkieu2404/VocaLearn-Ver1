@@ -89,33 +89,90 @@ async function generateTopicThumb(topic) {
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) throw new Error('NO_API_KEY');
 
+  // Thứ tự ưu tiên:
+  // 1. Pollinations AI (miễn phí, không cần billing, ảnh thật đẹp)
+  // 2. Imagen 3 (cần billing Gemini API)
+  // 3. Gemini Flash image generation
+  // 4. SVG fallback (cuối cùng)
+
+  try {
+    return await generatePollinationsImage(topic);
+  } catch (e) {
+    console.warn('[Thumb] Pollinations failed:', e.message, '→ trying Gemini image...');
+  }
+
   try {
     return await generateTopicImage(topic, apiKey);
   } catch (e) {
-    console.warn('Image-gen failed, fallback to SVG:', e.message);
+    console.warn('[Thumb] Gemini image failed:', e.message, '→ fallback SVG');
     return await generateTopicSVG(topic, apiKey);
   }
 }
 
-// ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (Nano Banana) ----
-// Thứ tự ưu tiên: Imagen 3 (chất lượng cao nhất) → Gemini 2.0 Flash Exp → Gemini 2.0 Flash
+// ---- Pollinations AI: tạo ảnh thật miễn phí, không cần billing ----
+// API: https://image.pollinations.ai/prompt/{prompt}?params
+// Trả về ảnh JPEG thật, chất lượng cao, không cần API key
+async function generatePollinationsImage(topic) {
+  const prompt = buildImagePrompt(topic);
+  const encodedPrompt = encodeURIComponent(prompt);
+
+  // Thử 2 model theo thứ tự: flux (đẹp nhất) → turbo (nhanh hơn)
+  const models = ['flux', 'turbo'];
+
+  for (const model of models) {
+    try {
+      const seed = Math.floor(Math.random() * 999999);
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=500&model=${model}&nologo=true&seed=${seed}&enhance=true&safe=false`;
+
+      // Pollinations có thể mất 15-40s để generate, đặt timeout 45s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const blob = await response.blob();
+      if (!blob.type.startsWith('image/')) throw new Error('Not an image');
+      if (blob.size < 5000) throw new Error('Image too small, likely error');
+
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('FileReader failed'));
+        reader.readAsDataURL(blob);
+      });
+
+      const compressedUrl = await compressImageDataUrl(dataUrl);
+      console.log(`[Pollinations] Success with model=${model}, size=${blob.size}bytes`);
+      return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
+    } catch (e) {
+      console.warn(`[Pollinations] model=${model} failed:`, e.message);
+      if (model === models[models.length - 1]) throw e;
+    }
+  }
+}
+
+// ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (fallback khi Pollinations fail) ----
+// Thứ tự ưu tiên: Imagen 3 (cần billing) → Gemini 2.0 Flash Preview image generation
 const GEMINI_IMAGE_MODELS = [
-  'gemini-2.0-flash-exp',
   'gemini-2.0-flash-preview-image-generation',
-  'gemini-2.0-flash'
+  'gemini-2.0-flash-exp'
 ];
 
-// Tạo prompt ảnh thật giống phong cách Google AI Studio
+// Prompt cho Imagen 3 / Gemini image models
 function buildImagePrompt(topic) {
-  // Imagen 3 và Gemini image models hoạt động tốt nhất với prompt ngắn gọn, subject-first
-  return `${topic} themed children's educational illustration, ` +
-    `cartoon style with thick outlines, flat colors, cheerful and colorful scene, ` +
-    `clearly showing "${topic}" as the unmistakable main subject in the foreground, ` +
-    `full illustrated background environment matching the theme, ` +
-    `warm saturated palette (golden yellow, coral, sky blue, leafy green), ` +
-    `Duolingo app illustration style, children's picture book quality, ` +
-    `wide 16:9 landscape composition, multiple depth layers, ` +
-    `no text, no letters, no numbers, no watermarks, no frames`;
+  return (
+    `${topic}, children's educational illustration, ` +
+    `cartoon flat design, thick black outlines, vibrant colors, ` +
+    `"${topic}" as the large unmistakable main subject centered in foreground, ` +
+    `complete illustrated scene with sky background and ground, ` +
+    `Duolingo-style, Khan Academy Kids style, picture book illustration, ` +
+    `warm cheerful palette, golden yellow coral red sky blue leafy green, ` +
+    `16:9 wide landscape, multiple depth layers, high detail, ` +
+    `no text no letters no numbers no watermarks no borders`
+  );
 }
 
 async function generateTopicImage(topic, apiKey) {
