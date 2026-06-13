@@ -1315,7 +1315,15 @@ function renderSetsPage() {
     empty.style.display = 'flex';
   } else {
     empty.style.display = 'none';
-    sets.forEach(s => grid.appendChild(createSetCard(s)));
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      // Mobile: 2-col mini grid
+      grid.classList.add('sc-mini-grid');
+      sets.forEach(s => grid.appendChild(createUserSetCardMobile(s)));
+    } else {
+      grid.classList.remove('sc-mini-grid');
+      sets.forEach(s => grid.appendChild(createSetCard(s)));
+    }
   }
 }
 
@@ -1328,31 +1336,108 @@ function createSetCard(set) {
   const pctMastered = total > 0 ? Math.round(mastered / total * 100) : 0;
   const pctLearning = total > 0 ? Math.round(learning / total * 100) : 0;
 
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    // ===== MOBILE: horizontal card layout =====
+    const wrap = document.createElement('div');
+    wrap.className = `set-card-mobile-wrap set-color-${set.colorIndex || 0}`;
+
+    const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
+    const learningBadge = learning > 0
+      ? ` · <span class="sc-mobile-badge">${learning} đang học</span>`
+      : '';
+
+    wrap.innerHTML = `
+      <div class="set-card-mobile">
+        <div class="sc-mobile-thumb">
+          ${getSetTopicSVG(set)}
+        </div>
+        <div class="sc-mobile-body">
+          <div class="sc-mobile-name">${set.name}</div>
+          <div class="sc-mobile-count">${total} từ vựng</div>
+          <div class="sc-mobile-progress">
+            <div class="sc-mobile-progress-track">
+              <div class="sc-mobile-progress-learning" style="width:${pctMastered + pctLearning}%"></div>
+              <div class="sc-mobile-progress-fill" style="width:${pctMastered}%"></div>
+            </div>
+          </div>
+          <div class="sc-mobile-meta">
+            <span class="sc-mobile-meta-left">${mastered}/${total} đã thuộc${learningBadge}</span>
+            <span class="sc-mobile-pct" style="color:${pctColor}">${pctMastered}%</span>
+          </div>
+        </div>
+      </div>
+      <div class="sc-mobile-actions">
+        <button class="sc-mobile-btn sc-btn-study">🎴 Học</button>
+        <button class="sc-mobile-btn sc-btn-quiz">🧠 Kiểm tra</button>
+      </div>
+    `;
+
+    wrap.querySelector('.set-card-mobile').addEventListener('click', () => openDetailModal(set.id));
+    wrap.querySelector('.sc-btn-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
+    wrap.querySelector('.sc-btn-quiz').addEventListener('click', e => { e.stopPropagation(); showQuizModeModal(set.id); });
+    return wrap;
+
+  } else {
+    // ===== DESKTOP: vertical card layout =====
+    const div = document.createElement('div');
+    div.className = `set-card set-color-${set.colorIndex || 0}`;
+    div.innerHTML = `
+      <div class="set-card-thumb">
+        <div class="set-card-img-wrap">${getSetTopicSVG(set)}</div>
+      </div>
+      <div class="set-card-body">
+        <div class="set-card-name">${set.name}</div>
+        <div class="set-card-count">${total} từ vựng</div>
+        <div class="set-card-progress">
+          <div class="set-card-progress-fill" style="width:${pctMastered + pctLearning}%;opacity:0.5;background:var(--yellow);position:absolute"></div>
+          <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
+        </div>
+        <div class="set-card-meta">
+          <span>${mastered}/${total} đã thuộc${learning > 0 ? ` · <span style="color:var(--yellow)">${learning} đang học</span>` : ''}</span>
+          <span style="color:var(--green)">${pctMastered}%</span>
+        </div>
+        <div class="set-card-actions">
+          <button class="sca-btn sca-study" title="Học thẻ">🎴 Học</button>
+          <button class="sca-btn sca-quiz" title="Kiểm tra">🧠 Kiểm tra</button>
+        </div>
+      </div>
+    `;
+    div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
+    div.querySelector('.sca-quiz').addEventListener('click', e => { e.stopPropagation(); showQuizModeModal(set.id); });
+    div.addEventListener('click', () => openDetailModal(set.id));
+    return div;
+  }
+}
+
+// ---- USER SET CARD (mobile mini 2-col) ----
+function createUserSetCardMobile(set) {
+  const prog = getProgress();
+  const total = set.cards.length;
+  const mastered = set.cards.filter(c => prog[c.id] && prog[c.id].status === 'mastered').length;
+  const learning = set.cards.filter(c => prog[c.id] && prog[c.id].status === 'learning').length;
+  const pctMastered = total > 0 ? Math.round(mastered / total * 100) : 0;
+  const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
+
   const div = document.createElement('div');
-  div.className = `set-card set-color-${set.colorIndex || 0}`;
+  div.className = `sc-mini-card set-color-${set.colorIndex || 0}`;
   div.innerHTML = `
-    <div class="set-card-thumb">
-      <div class="set-card-img-wrap">${getSetTopicSVG(set)}</div>
+    <div class="sc-mini-thumb">
+      <span class="sc-mini-emoji">${getSetTopicEmoji(set)}</span>
     </div>
-    <div class="set-card-body">
-    <div class="set-card-name">${set.name}</div>
-    <div class="set-card-count">${total} từ vựng</div>
-    <div class="set-card-progress">
-      <div class="set-card-progress-fill" style="width:${pctMastered + pctLearning}%;opacity:0.5;background:var(--yellow);position:absolute"></div>
-      <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
-    </div>
-    <div class="set-card-meta">
-      <span>${mastered}/${total} đã thuộc${learning > 0 ? ` · <span style="color:var(--yellow)">${learning} đang học</span>` : ''}</span>
-      <span style="color:var(--green)">${pctMastered}%</span>
-    </div>
-    <div class="set-card-actions">
-      <button class="sca-btn sca-study" title="Học thẻ">🎴 Học</button>
-      <button class="sca-btn sca-quiz" title="Kiểm tra">🧠 Kiểm tra</button>
-    </div>
+    <div class="sc-mini-body">
+      <div class="sc-mini-name">${set.name}</div>
+      <div class="sc-mini-count">${total} từ vựng</div>
+      <div class="sc-mini-progress">
+        <div class="sc-mini-fill" style="width:${pctMastered}%;background:${pctMastered===100?'var(--green)':pctMastered>=50?'var(--yellow)':'var(--accent)'}"></div>
+      </div>
+      <div class="sc-mini-meta">
+        <span>${mastered}/${total}</span>
+        <span style="color:${pctColor};font-weight:600">${pctMastered}%</span>
+      </div>
     </div>
   `;
-  div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
-  div.querySelector('.sca-quiz').addEventListener('click', e => { e.stopPropagation(); showQuizModeModal(set.id); });
   div.addEventListener('click', () => openDetailModal(set.id));
   return div;
 }
