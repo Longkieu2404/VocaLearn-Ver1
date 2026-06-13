@@ -117,7 +117,7 @@ async function generatePollinationsImage(topic) {
   const encodedPrompt = encodeURIComponent(prompt);
 
   // Thử 2 model theo thứ tự: flux (đẹp nhất) → turbo (nhanh hơn)
-  const models = ['flux', 'turbo'];
+  const models = ['flux', 'flux-realism', 'turbo'];
   const negativePrompt = buildNegativePrompt();
   const encodedNegative = encodeURIComponent(negativePrompt);
 
@@ -170,47 +170,46 @@ const GEMINI_IMAGE_MODELS = [
 function getTopicVisualHints(topic) {
   const t = topic.toLowerCase();
   const hints = [
-    // Tiếng Anh lớp 6 - các chủ đề phổ biến
     { keys: ['school', 'trường', 'học'],
-      vis: 'school building with colorful facade, yellow school bus, children with backpacks, classroom with desks and chalkboard' },
+      vis: 'a bright school building exterior with large windows and green lawn, yellow school bus parked outside, children in uniforms walking with backpacks, blue sky with white clouds' },
     { keys: ['home', 'house', 'nhà', 'gia đình'],
-      vis: 'cozy cottage house with red roof, garden with flowers, white picket fence, sunny front yard' },
+      vis: 'a charming two-story house with red tiled roof, flower garden, wooden front door, green hedges, warm afternoon sunlight casting soft shadows' },
     { keys: ['friend', 'bạn bè', 'people', 'người'],
-      vis: 'group of diverse smiling children waving, colorful clothing, sunny park background' },
+      vis: 'three cheerful children standing together smiling in a sunny park, diverse ethnicities, wearing colorful casual clothes, green trees and blue sky behind them' },
     { keys: ['neighbour', 'neighborhood', 'khu phố', 'phố'],
-      vis: 'colorful row of shops and houses on a street, market stalls, friendly neighborhood scene' },
+      vis: 'a lively street scene with colorful storefronts, bakery and flower shop, people walking on sidewalk, trees lining the street, warm golden hour lighting' },
     { keys: ['nature', 'natural', 'wonder', 'thiên nhiên', 'núi'],
-      vis: 'majestic snow-capped mountains, waterfall, lush green valley, dramatic sky' },
+      vis: 'dramatic snow-capped mountain peaks reflected in a crystal-clear alpine lake, pine forest in foreground, golden sunset sky, misty atmosphere' },
     { keys: ['tet', 'tết', 'lunar', 'holiday', 'lễ hội', 'new year'],
-      vis: 'red lanterns hanging, golden peach blossom tree, dragon decorations, red envelopes, festive celebration' },
+      vis: 'Vietnamese Tet festival scene with red and gold lanterns hanging, blooming peach blossom tree, traditional red envelopes, incense smoke, festive family gathering' },
     { keys: ['fruit', 'trái cây', 'food', 'thức ăn', 'eat'],
-      vis: 'colorful fresh fruits arranged beautifully: apples oranges bananas strawberries grapes, market stall' },
-    { keys: ['animal', 'động vật', 'pet', 'thú cưng', 'zoo'],
-      vis: 'cute cartoon animals: lion elephant giraffe rabbit, savanna or jungle background' },
-    { keys: ['sport', 'thể thao', 'game', 'play'],
-      vis: 'children playing football soccer on green field, sports equipment, active outdoor scene' },
+      vis: 'a beautiful arrangement of fresh ripe tropical fruits on a wooden table: red apples, yellow bananas, orange slices, green watermelon, purple grapes, natural lighting' },
+    { keys: ['animal', 'động vật', 'hoang dã', 'pet', 'thú', 'zoo', 'wild'],
+      vis: 'a majestic lion standing proudly on African savanna, golden fur, detailed mane, grass and acacia trees in background, warm sunset glow' },
+    { keys: ['sport', 'thể thao', 'game', 'play', 'football', 'soccer'],
+      vis: 'children playing soccer on a green grass field, action moment of kicking ball, goalposts visible, afternoon sunlight, dynamic movement' },
     { keys: ['travel', 'du lịch', 'trip', 'vacation'],
-      vis: 'airplane flying over world map landmarks, Eiffel Tower Big Ben tropical beach, suitcase' },
-    { keys: ['color', 'màu sắc', 'colour', 'art'],
-      vis: 'rainbow colors palette, paint brushes, colorful art supplies, painting canvas' },
+      vis: 'a scenic travel collage: tropical beach with turquoise water, passport and camera on map, Eiffel Tower silhouette, adventure and wanderlust atmosphere' },
+    { keys: ['color', 'màu sắc', 'colour', 'art', 'paint'],
+      vis: 'colorful paint tubes and brushes on a wooden palette, rainbow paint splashes, artist studio with canvas in background, creative atmosphere' },
     { keys: ['weather', 'thời tiết', 'season', 'mùa'],
-      vis: 'four seasons collage: sunny summer beach, snowy winter, autumn leaves, spring flowers' },
+      vis: 'split-view of four seasons: spring cherry blossoms, bright summer sunshine, autumn maple leaves, winter snow on pine trees' },
     { keys: ['body', 'cơ thể', 'health', 'sức khỏe'],
-      vis: 'friendly cartoon human body diagram, colorful organs, healthy children exercising' },
+      vis: 'healthy children running and exercising outdoors, fruits and vegetables around them, bright sunny day, energetic and vibrant scene' },
     { keys: ['cloth', 'quần áo', 'fashion', 'wear', 'dress'],
-      vis: 'colorful clothing items on display: dresses shirts shoes hats, fashion boutique' },
+      vis: 'stylish clothing items displayed on hangers in a bright boutique: colorful dresses, shirts, shoes and accessories, natural window light' },
     { keys: ['technology', 'thiết bị', 'device', 'smart', 'phone', 'computer'],
-      vis: 'modern gadgets: smartphone tablet laptop smartwatch, colorful tech icons on digital background' },
+      vis: 'modern devices neatly arranged: sleek smartphone, laptop, tablet showing colorful screens, on a clean desk with soft studio lighting' },
     { keys: ['city', 'thành phố', 'town', 'urban'],
-      vis: 'colorful city skyline with tall buildings, busy street, cars and buses, daytime scene' },
+      vis: 'vibrant city skyline at golden hour, tall glass buildings reflecting orange light, busy street below with cars and people, dramatic sky' },
     { keys: ['ocean', 'sea', 'biển', 'fish', 'marine'],
-      vis: 'underwater ocean scene with colorful coral reef, tropical fish, sea turtle, bright blue water' },
+      vis: 'stunning underwater scene with crystal-clear blue water, colorful tropical fish swimming through vibrant coral reef, sunlight rays piercing through water' },
     { keys: ['music', 'âm nhạc', 'song', 'instrument'],
-      vis: 'musical instruments: guitar piano violin trumpet, colorful music notes floating around' },
+      vis: 'acoustic guitar and piano keys with sheet music, warm studio lighting, music notes and golden glow, cozy and inspiring atmosphere' },
     { keys: ['number', 'số', 'math', 'toán'],
-      vis: 'colorful number blocks and math symbols, children learning with abacus and counting toys' },
+      vis: 'colorful wooden number blocks and math symbols arranged on a table, children learning, bright classroom environment' },
     { keys: ['alphabet', 'letter', 'chữ cái', 'abc'],
-      vis: "colorful alphabet letters A to Z arranged playfully, children's learning blocks" },
+      vis: 'colorful wooden alphabet letter blocks spelling ABC, scattered playfully on a table with warm soft lighting, educational setting' },
   ];
 
   for (const h of hints) {
@@ -218,35 +217,32 @@ function getTopicVisualHints(topic) {
       return h.vis;
     }
   }
-  // Generic fallback: describe topic visually
-  return `iconic visual representation of ${topic}, recognizable objects and characters related to ${topic}`;
+  return `a beautiful detailed scene representing "${topic}", with recognizable objects clearly showing the theme, natural lighting, rich colors`;
 }
 
-// Prompt tối ưu cho FLUX model (Pollinations AI) và Imagen 3
-// FLUX hoạt động tốt nhất với: subject cụ thể + style tag + quality booster
+// Prompt tối ưu cho FLUX model - semi-realistic illustrated style như hình mẫu
 function buildImagePrompt(topic) {
   const visualHints = getTopicVisualHints(topic);
   return (
-    `${visualHints}, ` +
-    `children's educational illustration for "${topic}" vocabulary set, ` +
-    `2D cartoon art style, bold clean black outlines, flat colors with soft shading, ` +
-    `bright vivid cheerful colors, warm golden lighting, ` +
-    `complete illustrated scene with fluffy white clouds in blue sky, green grass ground, ` +
-    `multiple depth layers background to foreground, ` +
-    `Duolingo app art style, storybook illustration, Khan Academy Kids quality, ` +
-    `wide 16:9 landscape composition, high detail, colorful and inviting, ` +
-    `masterpiece quality illustration`
+    `${visualHints}. ` +
+    `Digital illustration style, semi-realistic with soft painterly rendering, ` +
+    `inspired by high-quality children book illustrations and Google educational app covers. ` +
+    `Rich detailed textures, volumetric soft lighting, natural shadows and highlights. ` +
+    `Vibrant yet natural color palette, depth of field, layered background. ` +
+    `Professional editorial illustration quality, NOT cartoon, NOT chibi, NOT flat design. ` +
+    `Wide 16:9 landscape format, highly detailed, visually rich scene`
   );
 }
 
-// Negative prompt cho FLUX - loại bỏ những thứ không mong muốn
+// Negative prompt: loại bỏ cartoon, chibi, flat design
 function buildNegativePrompt() {
   return (
+    `cartoon, chibi, kawaii, flat design, 2d vector, clip art, anime, manga, ` +
+    `bold outlines, cel shading, Duolingo style, simple shapes, minimalist, ` +
+    `ugly, blurry, low quality, distorted, bad anatomy, ` +
     `text, letters, numbers, watermark, logo, signature, border, frame, ` +
-    `photo, photography, realistic photo, 3d render, CGI, ` +
-    `blurry, low quality, bad anatomy, ugly, distorted, ` +
-    `abstract, geometric shapes only, minimalist, clip art, ` +
-    `dark background, black background, scary, violent`
+    `dark background, black background, horror, scary, violent, ` +
+    `photograph, photo, realistic photo, 3d render, CGI, hyperrealistic`
   );
 }
 
