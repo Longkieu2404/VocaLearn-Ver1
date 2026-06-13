@@ -66,25 +66,57 @@ async function triggerAiThumb(name) {
     setAiThumbStatus('\u2705 AI da tao xong hinh minh hoa!', 'success');
   } catch(e) {
     console.error('AI SVG error:', e);
-    setAiThumbStatus('\u26a0\ufe0f Khong tao duoc anh, se dung anh mac dinh.', 'error');
+    if (e.message === 'NO_API_KEY') {
+      setAiThumbStatus('🔑 Hãy nhập Gemini API Key (ở mục "Tạo bằng AI") để AI tự vẽ ảnh chủ đề.', 'error');
+    } else {
+      setAiThumbStatus('\u26a0\ufe0f Khong tao duoc anh, se dung anh mac dinh.', 'error');
+    }
   } finally {
     setAiThumbLoading(false);
   }
 }
 
 async function generateTopicSVG(topic) {
-  const prompt = 'You are an expert SVG illustrator for a children vocabulary flashcard app. Create a colorful, cute, flat-design SVG illustration for a flashcard set about: "' + topic + '". Requirements: Output ONLY raw SVG code, nothing else. viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg". First child must be <rect width="200" height="130" fill="transparent"/>. Flat design, cheerful, child-friendly. Include 4-7 relevant objects. Bright saturated colors, no dark backgrounds. NO text or label elements inside SVG. Use only rect, circle, ellipse, polygon, path shapes. Keep entire SVG under 4000 characters.';
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] })
-  });
-  if (!resp.ok) throw new Error('API error ' + resp.status);
-  const data = await resp.json();
-  const raw = (data.content || []).map(b => b.text || '').join('').trim();
-  const match = raw.match(/<svg[\s\S]*<\/svg>/i);
-  if (!match) throw new Error('No SVG in response');
-  return match[0];
+  const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  if (!apiKey) throw new Error('NO_API_KEY');
+
+  const prompt = 'You are an expert SVG illustrator for a children vocabulary flashcard app. Create a colorful, cute, flat-design SVG illustration for a flashcard set about: "' + topic + '". Requirements: Output ONLY raw SVG code, nothing else, no markdown, no backticks, no explanation. viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg". First child must be <rect width="200" height="130" fill="transparent"/>. Flat design, cheerful, child-friendly. Include 4-7 relevant objects. Bright saturated colors, no dark backgrounds. NO text or label elements inside SVG. Use only rect, circle, ellipse, polygon, path shapes. Keep entire SVG under 4000 characters.';
+
+  const MODELS = await GeminiModels.getModels(apiKey);
+  let lastError = null;
+
+  for (const model of MODELS) {
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        }
+      );
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        lastError = errJson.error?.message || `HTTP ${resp.status}`;
+        if (resp.status === 429 || resp.status === 404 || resp.status === 400 ||
+            lastError.includes('quota') || lastError.includes('Quota') ||
+            lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED')) continue;
+        throw new Error(lastError);
+      }
+      const data = await resp.json();
+      const raw = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
+      const match = raw.match(/<svg[\s\S]*<\/svg>/i);
+      if (!match) { lastError = 'No SVG in response'; continue; }
+      return match[0];
+    } catch (e) {
+      lastError = e.message;
+      if (e.message.includes('quota') || e.message.includes('Quota') ||
+          e.message.includes('429') || e.message.includes('not found')) continue;
+      throw e;
+    }
+  }
+
+  throw new Error(lastError || 'Cannot generate SVG');
 }
 
 function setAiThumbLoading(loading) {
