@@ -44,35 +44,43 @@ function getSetTopicSVG(set) {
 //  AI THUMBNAIL GENERATOR
 // ============================================================
 let _aiSvgCache = {};
-let _aiCurrentName = '';
+let _aiCurrentName = { '': '', '2': '' };
 let _aiDebounceTimer = null;
+let _aiDebounceTimer2 = null;
 
 function onSetNameInput() {
   const name = document.getElementById('setNameInput').value.trim();
-  if (!name || name === _aiCurrentName) return;
+  if (!name || name === _aiCurrentName['']) return;
   clearTimeout(_aiDebounceTimer);
-  _aiDebounceTimer = setTimeout(() => triggerAiThumb(name), 900);
+  _aiDebounceTimer = setTimeout(() => triggerAiThumb(name, ''), 900);
 }
 
-async function triggerAiThumb(name) {
+function onAiSetNameInput() {
+  const name = document.getElementById('aiSetName').value.trim();
+  if (!name || name === _aiCurrentName['2']) return;
+  clearTimeout(_aiDebounceTimer2);
+  _aiDebounceTimer2 = setTimeout(() => triggerAiThumb(name, '2'), 900);
+}
+
+async function triggerAiThumb(name, suffix = '') {
   if (!name) return;
-  _aiCurrentName = name;
-  if (_aiSvgCache[name]) { showAiThumb(_aiSvgCache[name]); return; }
-  setAiThumbLoading(true);
+  _aiCurrentName[suffix] = name;
+  if (_aiSvgCache[name]) { showAiThumb(_aiSvgCache[name], suffix); return; }
+  setAiThumbLoading(true, suffix);
   try {
     const svg = await generateTopicSVG(name);
     _aiSvgCache[name] = svg;
-    showAiThumb(svg);
-    setAiThumbStatus('\u2705 AI da tao xong hinh minh hoa!', 'success');
+    showAiThumb(svg, suffix);
+    setAiThumbStatus('\u2705 AI da tao xong hinh minh hoa!', 'success', suffix);
   } catch(e) {
     console.error('AI SVG error:', e);
     if (e.message === 'NO_API_KEY') {
-      setAiThumbStatus('🔑 Hãy nhập Gemini API Key (ở mục "Tạo bằng AI") để AI tự vẽ ảnh chủ đề.', 'error');
+      setAiThumbStatus('🔑 Hãy nhập Gemini API Key để AI tự vẽ ảnh chủ đề.', 'error', suffix);
     } else {
-      setAiThumbStatus('\u26a0\ufe0f Khong tao duoc anh, se dung anh mac dinh.', 'error');
+      setAiThumbStatus('\u26a0\ufe0f Khong tao duoc anh, se dung anh mac dinh.', 'error', suffix);
     }
   } finally {
-    setAiThumbLoading(false);
+    setAiThumbLoading(false, suffix);
   }
 }
 
@@ -119,59 +127,60 @@ async function generateTopicSVG(topic) {
   throw new Error(lastError || 'Cannot generate SVG');
 }
 
-function setAiThumbLoading(loading) {
-  const preview = document.getElementById('aiThumbPreview');
-  const row = document.getElementById('aiThumbRow');
-  const regenBtn = document.getElementById('aiRegenBtn');
+function setAiThumbLoading(loading, suffix = '') {
+  const preview = document.getElementById('aiThumbPreview' + suffix);
+  const row = document.getElementById('aiThumbRow' + suffix);
+  const regenBtn = document.getElementById('aiRegenBtn' + suffix);
   if (!row) return;
   if (loading) {
     row.classList.add('generating'); row.classList.remove('done');
     if (regenBtn) { regenBtn.style.display = 'none'; regenBtn.disabled = true; }
     if (preview) preview.innerHTML = '<div class="ai-thumb-spinner"></div><div class="ai-thumb-shimmer"></div>';
-    setAiThumbStatus('\ud83c\udfa8 AI dang ve hinh minh hoa...', 'loading');
+    setAiThumbStatus('\ud83c\udfa8 AI dang ve hinh minh hoa...', 'loading', suffix);
   } else {
     row.classList.remove('generating');
     if (regenBtn) { regenBtn.style.display = 'inline-block'; regenBtn.disabled = false; }
   }
 }
 
-function showAiThumb(svg) {
-  const preview = document.getElementById('aiThumbPreview');
-  const row = document.getElementById('aiThumbRow');
-  const regenBtn = document.getElementById('aiRegenBtn');
+function showAiThumb(svg, suffix = '') {
+  const preview = document.getElementById('aiThumbPreview' + suffix);
+  const row = document.getElementById('aiThumbRow' + suffix);
+  const regenBtn = document.getElementById('aiRegenBtn' + suffix);
   if (preview) preview.innerHTML = svg;
   if (row) row.classList.add('done');
   if (regenBtn) { regenBtn.style.display = 'inline-block'; regenBtn.disabled = false; }
 }
 
-function setAiThumbStatus(msg, type) {
-  const el = document.getElementById('aiThumbStatus');
+function setAiThumbStatus(msg, type, suffix = '') {
+  const el = document.getElementById('aiThumbStatus' + suffix);
   if (!el) return;
   el.textContent = msg;
   el.className = 'ai-thumb-sublabel' + (type ? ' ' + type : '');
 }
 
-function resetAiThumb() {
-  _aiCurrentName = '';
-  const preview = document.getElementById('aiThumbPreview');
-  const row = document.getElementById('aiThumbRow');
-  const regenBtn = document.getElementById('aiRegenBtn');
+function resetAiThumb(suffix = '') {
+  _aiCurrentName[suffix] = '';
+  const preview = document.getElementById('aiThumbPreview' + suffix);
+  const row = document.getElementById('aiThumbRow' + suffix);
+  const regenBtn = document.getElementById('aiRegenBtn' + suffix);
   if (preview) preview.innerHTML = '<div class="ai-thumb-placeholder"><span class="ai-thumb-icon">&#127912;</span><span class="ai-thumb-hint">AI se tu ve hinh minh hoa theo chu de</span></div>';
   if (row) row.classList.remove('generating', 'done');
   if (regenBtn) regenBtn.style.display = 'none';
-  setAiThumbStatus('Nhap ten bo the de AI tu tao hinh anh', '');
+  setAiThumbStatus('Nhap ten bo the de AI tu tao hinh anh', '', suffix);
 }
 
-function regenAiThumb() {
-  const name = document.getElementById('setNameInput').value.trim();
+function regenAiThumb(suffix = '') {
+  const inputId = suffix === '2' ? 'aiSetName' : 'setNameInput';
+  const name = document.getElementById(inputId).value.trim();
   if (!name) return;
   delete _aiSvgCache[name];
-  _aiCurrentName = '';
-  triggerAiThumb(name);
+  _aiCurrentName[suffix] = '';
+  triggerAiThumb(name, suffix);
 }
 
-function getAiThumbSvg() {
-  const preview = document.getElementById('aiThumbPreview');
+function getAiThumbSvg(suffix = '') {
+  const preview = document.getElementById('aiThumbPreview' + suffix);
   const svgEl = preview ? preview.querySelector('svg') : null;
   return svgEl ? svgEl.outerHTML : null;
 }
@@ -2261,6 +2270,10 @@ function openAIModal() {
   document.getElementById('aiLoading').style.display = 'none';
   document.getElementById('btnGenerateAI').style.display = '';
   document.getElementById('btnSaveAISet').style.display = 'none';
+  resetAiThumb('2');
+  // Wire AI input trigger for thumbnail
+  const aiNameInp = document.getElementById('aiSetName');
+  if (aiNameInp) { aiNameInp.removeEventListener('input', onAiSetNameInput); aiNameInp.addEventListener('input', onAiSetNameInput); }
   // Load API key đã lưu
   const savedKey = localStorage.getItem('vocalearn_gemini_key') || '';
   document.getElementById('geminiApiKey').value = savedKey;
@@ -2294,6 +2307,7 @@ function clearAIResult() {
   document.getElementById('aiResult').style.display = 'none';
   document.getElementById('btnGenerateAI').style.display = '';
   document.getElementById('btnSaveAISet').style.display = 'none';
+  resetAiThumb('2');
 }
 
 async function generateWithAI() {
@@ -2406,13 +2420,17 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
     const parsed = JSON.parse(clean);
 
     // Hiển thị kết quả
-    document.getElementById('aiSetName').value = parsed.setName || 'Bộ thẻ AI';
+    const finalSetName = parsed.setName || 'Bộ thẻ AI';
+    document.getElementById('aiSetName').value = finalSetName;
     document.getElementById('aiWordsOutput').value = parsed.cards
       .map(c => `${c.word} | ${c.phonetic || ''} | ${c.meaning} | ${c.example || ''}`)
       .join('\n');
     document.getElementById('aiResult').style.display = 'block';
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('btnSaveAISet').style.display = '';
+
+    // AI tự vẽ ảnh chủ đề dựa trên tên bộ thẻ
+    triggerAiThumb(finalSetName, '2');
 
   } catch (err) {
     document.getElementById('aiLoading').style.display = 'none';
@@ -2435,7 +2453,8 @@ function saveAISet() {
   if (cards.length === 0) { showNotif('Không có từ hợp lệ!', '❌'); ; return; }
 
   const sets = Storage.getSets();
-  sets.push({ id: setId, name, colorIndex: aiSelectedColor, cards });
+  const aiSvg = getAiThumbSvg('2');
+  sets.push({ id: setId, name, colorIndex: aiSelectedColor, cards, ...(aiSvg ? { customSvg: aiSvg } : {}) });
   Storage.saveSets(sets);
   closeAIModal();
   navigateTo('sets');

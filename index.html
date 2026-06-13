@@ -1123,6 +1123,20 @@
         </div>
         <label class="form-label">Tên bộ thẻ</label>
         <input type="text" class="form-input" id="aiSetName" placeholder="Tên bộ thẻ"/>
+        <!-- AI thumbnail preview -->
+        <div class="ai-thumb-row" id="aiThumbRow2">
+          <div class="ai-thumb-preview" id="aiThumbPreview2">
+            <div class="ai-thumb-placeholder" id="aiThumbPlaceholder2">
+              <span class="ai-thumb-icon">&#127912;</span>
+              <span class="ai-thumb-hint">AI sẽ tự vẽ hình minh họa theo chủ đề</span>
+            </div>
+          </div>
+          <div class="ai-thumb-info">
+            <div class="ai-thumb-label">Hình minh họa AI</div>
+            <div class="ai-thumb-sublabel" id="aiThumbStatus2">Tên bộ thẻ sẽ được dùng để AI tự tạo hình ảnh</div>
+            <button class="ai-regen-btn" id="aiRegenBtn2" onclick="regenAiThumb('2')" style="display:none">&#128260; Vẽ lại</button>
+          </div>
+        </div>
         <label class="form-label">Màu sắc</label>
         <div class="color-picker" id="aiColorPicker"></div>
         <label class="form-label">Danh sách từ (có thể chỉnh sửa)</label>
