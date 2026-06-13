@@ -107,12 +107,17 @@ const GEMINI_IMAGE_MODELS = [
 
 // Tạo prompt ảnh thật giống phong cách Google AI Studio
 function buildImagePrompt(topic) {
-  return `A beautiful, highly detailed digital illustration for an English vocabulary flashcard set cover about "${topic}". ` +
-    `Style: vibrant children's educational illustration, warm and inviting atmosphere, soft natural lighting, ` +
-    `rich saturated colors, semi-realistic with slightly stylized friendly characters and objects, ` +
-    `clean professional composition, cheerful and engaging mood. ` +
-    `Wide 16:9 landscape format, no text, no letters, no numbers, no watermarks, no borders, no frames. ` +
-    `High detail, professional quality illustration suitable for educational app.`;
+  return `Create a vibrant, professional illustrated cover image for a children's English vocabulary flashcard set titled "${topic}". ` +
+    `Art style: modern flat illustration with soft gradients, similar to Duolingo or Google Classroom educational content. ` +
+    `Colorful cartoon-style scene with 3-5 clearly recognizable objects or characters directly related to the topic. ` +
+    `Warm pastel color palette with rich accent colors (coral, teal, golden yellow, sky blue). ` +
+    `Soft rounded shapes, friendly and approachable aesthetic, gentle shadows for depth. ` +
+    `Whimsical sky or neutral gradient background in warm cream, light blue, or soft peach tones. ` +
+    `Scene composition: wide landscape format (16:9), objects arranged naturally in a scene, not floating icons. ` +
+    `Characters (if any) must be cute, diverse, child-friendly with expressive faces. ` +
+    `Illustration quality: professional children's book or educational app UI level (like Khan Academy Kids or Duolingo). ` +
+    `Absolutely NO text, NO letters, NO numbers, NO watermarks, NO borders, NO UI elements, NO frames inside the image. ` +
+    `The image must look like a hand-painted digital illustration, NOT a photograph, NOT a 3D render, NOT geometric shapes.`;
 }
 
 async function generateTopicImage(topic, apiKey) {
@@ -129,7 +134,7 @@ async function generateTopicImage(topic, apiKey) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           instances: [{ prompt: prompt }],
-          parameters: { sampleCount: 1, aspectRatio: '16:9', safetyFilterLevel: 'block_some' }
+          parameters: { sampleCount: 1, aspectRatio: '16:9', safetyFilterLevel: 'block_some', personGeneration: 'allow_adult' }
         })
       }
     );
@@ -226,7 +231,24 @@ async function generateTopicSVG(topic, apiKey) {
   apiKey = apiKey || localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) throw new Error('NO_API_KEY');
 
-  const prompt = 'You are an expert SVG illustrator for a children vocabulary flashcard app. Create a colorful, cute, flat-design SVG illustration for a flashcard set about: "' + topic + '". Requirements: Output ONLY raw SVG code, nothing else, no markdown, no backticks, no explanation. viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg". First child must be <rect width="200" height="130" fill="transparent"/>. Flat design, cheerful, child-friendly. Include 4-7 relevant objects. Bright saturated colors, no dark backgrounds. NO text or label elements inside SVG. Use only rect, circle, ellipse, polygon, path shapes. Keep entire SVG under 4000 characters.';
+  const prompt = `You are a professional SVG illustrator creating cover art for a children's English vocabulary app. Create a detailed, beautiful SVG illustration for a flashcard set about: "${topic}".
+
+CRITICAL REQUIREMENTS:
+- Output ONLY raw SVG code. No markdown, no backticks, no explanation, no comments.
+- viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg"
+- First element: <rect width="200" height="130" fill="transparent"/>
+- Use a sky gradient or soft warm background (defs with linearGradient).
+- Draw 3-5 RECOGNIZABLE, DETAILED objects related to the topic using complex path, polygon, and shape combinations.
+- Each object must have multiple layers (body, shadow, highlight, details) to look realistic and dimensional.
+- Use SOFT ROUNDED SHAPES - avoid harsh geometric blocks. Combine ellipses, paths with curves, and polygons.
+- Color palette: warm pastels with rich accents. Use fills like #FFD166, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7, #DDA0DD.
+- Add subtle shadows using semi-transparent dark ellipses under objects.
+- Add highlights using small white/light semi-transparent ellipses on top of objects.
+- Objects must be GROUNDED in the scene (on a ground plane or surface), not floating randomly.
+- Include background elements: ground strip at bottom (green/brown path), sky gradient at top, maybe clouds or hills.
+- NO text, NO letters, NO numbers, NO labels inside SVG.
+- Total SVG must be under 6000 characters.
+- Make it look like a REAL illustrated scene, NOT clipart made of basic shapes.`;
 
   const MODELS = await GeminiModels.getModels(apiKey);
   let lastError = null;
