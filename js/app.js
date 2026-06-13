@@ -71,14 +71,10 @@ async function triggerAiThumb(name, suffix = '') {
     const thumb = await generateTopicThumb(name);
     _aiSvgCache[name] = thumb;
     showAiThumb(thumb, suffix);
-    setAiThumbStatus('\u2705 AI da tao xong hinh minh hoa!', 'success', suffix);
+    setAiThumbStatus('✅ AI đã tạo xong hình minh họa!', 'success', suffix);
   } catch(e) {
     console.error('AI thumb error:', e);
-    if (e.message === 'NO_API_KEY') {
-      setAiThumbStatus('🔑 Hãy nhập Gemini API Key để AI tự vẽ ảnh chủ đề.', 'error', suffix);
-    } else {
-      setAiThumbStatus('\u26a0\ufe0f Khong tao duoc anh, se dung anh mac dinh.', 'error', suffix);
-    }
+    setAiThumbStatus('⚠️ Không tạo được ảnh, sẽ dùng ảnh mặc định.', 'error', suffix);
   } finally {
     setAiThumbLoading(false, suffix);
   }
@@ -86,19 +82,24 @@ async function triggerAiThumb(name, suffix = '') {
 
 // Thử tạo ảnh minh họa thật bằng model ảnh của Gemini, nếu không được sẽ rơi về vẽ SVG
 async function generateTopicThumb(topic) {
-  const apiKey = localStorage.getItem('vocalearn_gemini_key');
-  if (!apiKey) throw new Error('NO_API_KEY');
-
   // Thứ tự ưu tiên:
-  // 1. Pollinations AI (miễn phí, không cần billing, ảnh thật đẹp)
-  // 2. Imagen 3 (cần billing Gemini API)
-  // 3. Gemini Flash image generation
+  // 1. Pollinations AI (miễn phí, không cần API key, ảnh chất lượng cao)
+  // 2. Imagen 3 (cần Gemini API key + billing)
+  // 3. Gemini Flash image generation (cần Gemini API key)
   // 4. SVG fallback (cuối cùng)
 
+  // Pollinations không cần API key — thử trước tiên, không phụ thuộc vào key
   try {
     return await generatePollinationsImage(topic);
   } catch (e) {
     console.warn('[Thumb] Pollinations failed:', e.message, '→ trying Gemini image...');
+  }
+
+  // Gemini fallback chỉ khi có API key
+  const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  if (!apiKey) {
+    // Pollinations đã thất bại và không có key → dùng SVG thuần không cần key
+    return await generateTopicSVGNoKey(topic);
   }
 
   try {
@@ -116,8 +117,11 @@ async function generatePollinationsImage(topic) {
   const prompt = buildImagePrompt(topic);
   const encodedPrompt = encodeURIComponent(prompt);
 
-  // Thử models theo thứ tự: flux (đẹp nhất, illustrated) → turbo (nhanh hơn)
-  const models = ['flux', 'turbo'];
+  // Thử models theo thứ tự chất lượng:
+  // flux-pro: chất lượng cao nhất, chi tiết, màu sắc đẹp
+  // flux: chất lượng tốt, nhanh hơn
+  // turbo: nhanh nhất, fallback cuối
+  const models = ['flux-pro', 'flux', 'turbo'];
   const negativePrompt = buildNegativePrompt();
   const encodedNegative = encodeURIComponent(negativePrompt);
 
@@ -129,9 +133,10 @@ async function generatePollinationsImage(topic) {
       // safe=true: bật bộ lọc nội dung an toàn cho trẻ em
       const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=800&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}&safe=true`;
 
-      // Pollinations có thể mất 15-40s để generate, đặt timeout 45s
+      // flux-pro mất lâu hơn (30-60s), flux/turbo nhanh hơn
+      const timeoutMs = model === 'flux-pro' ? 60000 : 45000;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
       const response = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
@@ -167,49 +172,56 @@ const GEMINI_IMAGE_MODELS = [
 ];
 
 // Map từ khóa topic → visual cues cụ thể để AI model hiểu đúng chủ đề
+// Prompt chi tiết giúp model tạo ảnh đúng chủ đề, không bị nhầm lẫn
 function getTopicVisualHints(topic) {
   const t = topic.toLowerCase();
   const hints = [
-    { keys: ['school', 'trường', 'học'],
-      vis: 'illustrated scene of a cheerful pastel-colored school building with big round windows, red roof, yellow school bus with round wheels parked outside, children in colorful uniforms with backpacks, fluffy white clouds in soft blue sky' },
-    { keys: ['home', 'house', 'nhà', 'gia đình'],
-      vis: 'illustrated cozy two-story house with warm peach walls, red tiled roof, green garden with flowers in bloom, wooden door with heart wreath, soft golden afternoon light, illustrated storybook style' },
-    { keys: ['friend', 'bạn bè', 'people', 'người'],
-      vis: 'illustrated three cheerful children with round faces and big smiles standing together in a sunny park, wearing colorful outfits, diverse hair and skin tones, green trees and soft sky behind, warm and friendly illustrated style' },
-    { keys: ['neighbour', 'neighborhood', 'khu phố', 'phố'],
-      vis: 'illustrated charming street scene with colorful pastel storefronts (bakery, flower shop, bookstore), rounded awnings, people strolling, flower pots on windowsills, warm illustrated style' },
-    { keys: ['nature', 'natural', 'wonder', 'thiên nhiên', 'núi'],
-      vis: 'illustrated majestic snow-capped mountains with soft purple-blue tones reflected in a calm lake, pine trees in foreground, golden-hour sky with warm peach tones, painterly illustrated style' },
-    { keys: ['tet', 'tết', 'lunar', 'holiday', 'lễ hội', 'new year'],
-      vis: 'illustrated Vietnamese Tet festival scene with red and gold paper lanterns, pink peach blossom branches, golden kumquat tree, festive illustrated style with warm reds and golds' },
-    { keys: ['fruit', 'trái cây', 'food', 'thức ăn', 'eat'],
-      vis: 'illustrated arrangement of plump ripe fruits with soft shading: glossy red apple, yellow banana, orange slices, green watermelon wedge, purple grapes, on a warm wooden table, cheerful illustrated style' },
-    { keys: ['animal', 'động vật', 'hoang dã', 'pet', 'thú', 'zoo', 'wild'],
-      vis: 'illustrated friendly animals in a lush green nature scene: cute bear, rabbit, and giraffe with soft rounded shapes, pastel background, illustrated storybook style' },
-    { keys: ['sport', 'thể thao', 'game', 'play', 'football', 'soccer'],
-      vis: 'illustrated children playing soccer on bright green grass, round-faced characters kicking colorful ball, goal post, cheerful sunny day, illustrated style' },
-    { keys: ['travel', 'du lịch', 'trip', 'vacation'],
-      vis: 'illustrated travel scene with a colorful hot air balloon over rolling green hills, clouds, distant landmarks, sun rays, illustrated adventure style with soft warm palette' },
-    { keys: ['color', 'màu sắc', 'colour', 'art', 'paint'],
-      vis: 'illustrated colorful paint tubes, brushes and rainbow paint splashes on a warm wooden surface, artist palette, soft cozy studio illustrated style' },
-    { keys: ['weather', 'thời tiết', 'season', 'mùa'],
-      vis: 'illustrated four seasons in one scene: spring cherry blossoms (pink), summer sunshine (yellow), autumn maple leaves (orange), winter snowflakes (blue-white), illustrated storybook style' },
-    { keys: ['body', 'cơ thể', 'health', 'sức khỏe'],
-      vis: 'illustrated healthy children with round faces running outdoors, fruits and vegetables floating around them, bright sunshine, illustrated cheerful style' },
-    { keys: ['cloth', 'quần áo', 'fashion', 'wear', 'dress'],
-      vis: 'illustrated cute clothing items on rounded hangers in a pastel boutique: colorful dresses, striped shirts, boots and accessories, soft window light, illustrated whimsical style' },
-    { keys: ['technology', 'thiết bị', 'device', 'smart', 'phone', 'computer'],
-      vis: 'illustrated modern devices with soft rounded corners: glowing smartphone, laptop, tablet on a tidy desk with soft blue light, illustrated friendly tech style' },
-    { keys: ['city', 'thành phố', 'town', 'urban'],
-      vis: 'illustrated vibrant cityscape at golden hour with rounded pastel buildings, tiny cars and people below, orange-pink sky, illustrated storybook city style' },
-    { keys: ['ocean', 'sea', 'biển', 'fish', 'marine'],
-      vis: 'illustrated underwater scene with crystal turquoise water, colorful tropical fish with round friendly faces, coral reef with vibrant shapes, sunlight rays, illustrated storybook style' },
-    { keys: ['music', 'âm nhạc', 'song', 'instrument'],
-      vis: 'illustrated cozy music scene with acoustic guitar, piano keys, floating music notes in warm golden light, soft wooden studio background, illustrated storybook style' },
-    { keys: ['number', 'số', 'math', 'toán'],
-      vis: 'illustrated colorful rounded number blocks arranged on a warm table, playful math symbols, bright classroom with soft light, illustrated educational style' },
-    { keys: ['alphabet', 'letter', 'chữ cái', 'abc'],
-      vis: 'illustrated colorful wooden alphabet blocks with round corners, scattered playfully on a warm surface, soft learning atmosphere, illustrated educational style' },
+    { keys: ['school', 'trường', 'học', 'classroom', 'lớp'],
+      vis: 'a cheerful pastel-colored two-story school building with large round windows and a bright red roof, a yellow school bus with round wheels parked in front, children in colorful uniforms with backpacks walking through a gate labeled "SCHOOL", green trees lining the path, fluffy white clouds in a soft blue sky' },
+    { keys: ['home', 'house', 'nhà', 'gia đình', 'family', 'living room', 'bedroom', 'kitchen', 'furniture'],
+      vis: 'a cozy two-story house with warm peach-colored walls, a red tiled roof, large windows with flower boxes, a wooden front door with a welcome wreath, a green lawn with colorful blooming flowers, a white picket fence, warm golden afternoon light casting soft shadows' },
+    { keys: ['friend', 'bạn bè', 'people', 'người', 'relationship', 'classmate', 'together'],
+      vis: 'three cheerful children of diverse backgrounds standing together in a sunny park, laughing and hugging, wearing colorful outfits in red, blue, and yellow, lush green trees and a blue sky behind them, small flowers on the ground, warm sunlight creating soft glows' },
+    { keys: ['neighbour', 'neighborhood', 'khu phố', 'phố', 'community', 'street', 'town'],
+      vis: 'a charming illustrated street scene with pastel-colored storefronts including a bakery with bread in the window, a flower shop with a colorful display, and a bookstore with stacked books visible, rounded awnings in blue and red, people strolling with shopping bags, flower pots on every windowsill, warm golden-hour lighting' },
+    { keys: ['nature', 'natural', 'wonder', 'thiên nhiên', 'núi', 'mountain', 'forest', 'jungle', 'landscape'],
+      vis: 'majestic snow-capped mountains with soft purple-blue gradients reflected perfectly in a calm crystal lake in the foreground, tall dark pine trees framing the sides, a golden-orange sunset sky with light pink clouds, small wildflowers dotting the grassy shore' },
+    { keys: ['tet', 'tết', 'lunar', 'holiday', 'lễ hội', 'new year', 'celebration', 'festival'],
+      vis: 'a festive Vietnamese Tet scene with red and gold paper lanterns hanging across the frame, a bright pink peach blossom tree in full bloom on the left, a golden kumquat tree laden with fruit on the right, red envelopes (lì xì) scattered on a table, dragon and phoenix decorations, warm red and gold tones throughout' },
+    { keys: ['fruit', 'trái cây', 'food', 'thức ăn', 'eat', 'vegetable', 'rau', 'meal', 'drink', 'restaurant'],
+      vis: 'a beautifully arranged collection of vibrant fresh fruits and vegetables on a warm wooden table: a glossy red apple, a yellow banana bunch, a halved orange showing juicy segments, a watermelon wedge with red flesh, a bunch of purple grapes, green leaves scattered around, soft natural window light from the side' },
+    { keys: ['animal', 'động vật', 'hoang dã', 'pet', 'thú', 'zoo', 'wild', 'farm', 'bird', 'fish'],
+      vis: 'a vibrant nature scene with friendly illustrated animals: a round-faced brown bear sitting on a log, a white rabbit with pink ears in the grass, a tall friendly giraffe with yellow spots peeking from behind a tree, a colorful parrot on a branch, lush green jungle foliage, a bright blue sky with white clouds' },
+    { keys: ['sport', 'thể thao', 'game', 'play', 'football', 'soccer', 'basketball', 'swimming', 'run', 'exercise'],
+      vis: 'energetic children playing various sports on a bright sunny day: one kicking a colorful soccer ball toward a goal, another shooting a basketball, others running on a track, all with round friendly faces and colorful jerseys, a green field with a blue sky and cheering crowd in the background' },
+    { keys: ['travel', 'du lịch', 'trip', 'vacation', 'adventure', 'country', 'map', 'airplane'],
+      vis: 'a colorful hot air balloon striped in red, yellow, and blue floating above rolling green hills with tiny illustrated towns below, white clouds at eye level, distant mountains on the horizon, a bright sun creating golden rays, a winding road visible below with miniature cars' },
+    { keys: ['color', 'màu sắc', 'colour', 'art', 'paint', 'draw', 'vẽ'],
+      vis: 'an artist\'s cozy studio with colorful paint tubes squeezed and arranged by color of the rainbow, thick-bristle paintbrushes in a ceramic jar, a wooden palette with blobs of mixed paint, a canvas on an easel showing a half-finished landscape, paint splashes and handprints on the wooden table' },
+    { keys: ['weather', 'thời tiết', 'season', 'mùa', 'rain', 'snow', 'sun', 'cloud', 'wind'],
+      vis: 'a charming split illustration showing all four seasons simultaneously: top-left spring with pink cherry blossoms and green sprouts, top-right summer with a bright sun and children at the beach, bottom-left autumn with orange and red maple leaves falling, bottom-right winter with snowflakes and a snowman, a central tree showing all four states' },
+    { keys: ['body', 'cơ thể', 'health', 'sức khỏe', 'doctor', 'hospital', 'medicine', 'exercise', 'hygiene'],
+      vis: 'a bright healthcare scene with a friendly cartoon doctor in a white coat holding a clipboard, a cheerful patient child sitting on an exam table, colorful health posters on the wall showing vegetables and exercise, a stethoscope, medicine bottles with clear labels, soft white and green interior' },
+    { keys: ['cloth', 'quần áo', 'fashion', 'wear', 'dress', 'shirt', 'hat', 'shoes', 'shop'],
+      vis: 'a cute clothing boutique interior with pastel walls, rounded wooden hangers displaying colorful dresses, striped shirts, denim jackets, a shelf of colorful shoes, a mirror with decorative frame, accessories like scarves and hats on display, soft window light creating a warm shopping atmosphere' },
+    { keys: ['technology', 'thiết bị', 'device', 'smart', 'phone', 'computer', 'robot', 'internet', 'digital'],
+      vis: 'modern tech devices with sleek rounded designs arranged on a clean desk: a glowing smartphone showing a colorful app screen, an open laptop with a bright display, a tablet with a stylus, wireless earbuds, a small smart speaker, soft blue ambient LED lighting, icons and interfaces subtly visible on screens' },
+    { keys: ['city', 'thành phố', 'town', 'urban', 'building', 'bridge', 'traffic'],
+      vis: 'a vibrant city skyline at golden hour with rounded pastel-colored buildings of varying heights, illuminated windows, a river reflecting the cityscape, a graceful bridge in the foreground, tiny colorful cars on streets below, people walking on sidewalks, a warm orange-pink sky with a few stars just appearing' },
+    { keys: ['ocean', 'sea', 'biển', 'fish', 'marine', 'beach', 'island', 'coral', 'dive', 'swim'],
+      vis: 'a stunning underwater scene with crystal-clear turquoise water, colorful tropical fish with round friendly faces swimming in groups, a vibrant coral reef with pink, orange, and purple corals, sea anemones swaying, sunlight rays piercing the surface from above, a sea turtle gliding gracefully in the background' },
+    { keys: ['music', 'âm nhạc', 'song', 'instrument', 'concert', 'band', 'guitar', 'piano', 'sing'],
+      vis: 'a cozy music room with warm wooden walls, an acoustic guitar leaning against a stool, a grand piano keyboard visible, floating musical notes (♩♪♫) in gold and blue, sheet music on a stand, a microphone on a stand, string lights creating a performance atmosphere, warm amber lighting' },
+    { keys: ['number', 'số', 'math', 'toán', 'count', 'calculate', 'addition', 'subtract'],
+      vis: 'a colorful classroom scene with large illustrated number blocks in rainbow colors (1-10) arranged on a carpet, a chalkboard with simple addition equations, an abacus with colored beads, mathematical symbols (+, -, =) floating in the air, a friendly cartoon owl teacher pointing at the board' },
+    { keys: ['alphabet', 'letter', 'chữ cái', 'abc', 'word', 'reading', 'book', 'vocabulary'],
+      vis: 'colorful wooden alphabet blocks with rounded corners scattered playfully on a warm surface, each showing a different letter in different colors, an open storybook with illustrated pages nearby, a pencil and crayons, letter flashcards pinned to a corkboard, soft natural light from a window' },
+    { keys: ['time', 'thời gian', 'clock', 'schedule', 'calendar', 'hour', 'day', 'week'],
+      vis: 'a cheerful illustrated clock face with round numbers in rainbow colors, smaller clocks showing different times around it, a calendar with colored dots marking important days, an hourglass with flowing golden sand, soft pastel backgrounds with gentle star and sun decorations' },
+    { keys: ['shop', 'store', 'market', 'buy', 'sell', 'money', 'price', 'chợ', 'siêu thị'],
+      vis: 'a bustling illustrated market scene with colorful fruit and vegetable stalls, a baker\'s stand with fresh bread and cakes, a toy shop with colorful items, friendly vendors waving, shoppers with baskets, price tags visible, cheerful pennant flags strung between stalls, warm afternoon light' },
+    { keys: ['transport', 'vehicle', 'car', 'bus', 'train', 'plane', 'boat', 'giao thông'],
+      vis: 'a colorful transportation scene showing various vehicles: a red double-decker bus, a blue train on tracks, a yellow taxi cab, an airplane in the sky leaving a vapor trail, a sailboat on water, all illustrated in a cute friendly style with rounded shapes and bright colors against a pastel sky background' },
   ];
 
   for (const h of hints) {
@@ -217,35 +229,38 @@ function getTopicVisualHints(topic) {
       return h.vis;
     }
   }
-  return `a charming illustrated scene for children showing "${topic}", soft warm gradient background, friendly recognizable objects with gentle shading, storybook illustration style`;
+  // Generic fallback với chủ đề được nhúng trực tiếp
+  return `a charming educational illustrated scene clearly representing the topic "${topic}": show the most iconic and recognizable objects, characters, or settings associated with "${topic}", arranged in a warm inviting composition with soft pastel background gradients, friendly rounded shapes, and cheerful colors suitable for children`;
 }
 
 // Prompt tối ưu cho FLUX model - illustrated style như hình mẫu (Google educational app covers)
 function buildImagePrompt(topic) {
   const visualHints = getTopicVisualHints(topic);
   return (
-    `${visualHints}. ` +
-    `Style: soft digital illustration, warm pastel palette, gentle gradients, ` +
-    `reminiscent of high-quality Google educational app card art and modern children's storybook covers. ` +
-    `Characters are friendly, expressive, lightly stylized with smooth shading and soft cel-shading technique. ` +
-    `Background uses subtle warm gradient (peach, sky blue, or soft yellow tones). ` +
-    `Objects and characters have clean silhouettes with gentle drop shadows for depth. ` +
-    `Lighting is soft and diffused, coming from upper-left, creating a cozy and welcoming atmosphere. ` +
-    `Color palette: warm coral (#E8735A), sunny yellow (#F9C74F), sky blue (#90E0EF), sage green (#80B918), soft peach (#FFD6A5). ` +
-    `High detail, no text, no UI, no borders, no frame. Wide 16:9 landscape composition. ` +
-    `Professional children's educational app illustration. Vibrant, cheerful, child-friendly.`
+    `SUBJECT (very important): ${visualHints}. ` +
+    `STYLE: Soft digital illustration in the style of high-quality Google educational app card artwork and modern children's storybook covers. ` +
+    `Warm pastel color palette with rich saturation, gentle gradient backgrounds, smooth cel-shading, and soft drop shadows. ` +
+    `Characters have friendly round faces, expressive eyes, clean silhouettes, and lightly stylized proportions. ` +
+    `COMPOSITION: Wide 16:9 landscape. Main subject large and centered occupying 50-70% of frame. ` +
+    `Foreground elements for depth. Soft gradient sky or indoor background. Curved ground or surface. ` +
+    `LIGHTING: Soft diffused light from upper-left. Warm golden tones, cozy welcoming atmosphere. ` +
+    `KEY COLORS: coral #E8735A, sunny yellow #F9C74F, sky blue #90E0EF, sage green #80B918, soft peach #FFD6A5. ` +
+    `QUALITY: High detail, richly illustrated, professional. Vibrant, cheerful, child-friendly. ` +
+    `NEGATIVE: no text, no letters, no numbers, no watermarks, no UI, no borders, no frames, no dark themes, no realistic photography, no 3D render.`
   );
 }
 
 // Negative prompt: loại bỏ những thứ không mong muốn
 function buildNegativePrompt() {
   return (
-    `photograph, photo, realistic photo, hyperrealistic, 3d render, CGI, ` +
-    `dark theme, dark background, black background, horror, scary, violent, creepy, ` +
-    `ugly, blurry, low quality, distorted, bad anatomy, deformed, ` +
-    `text, letters, numbers, watermark, logo, signature, border, frame, UI element, ` +
-    `anime, manga, chibi, kawaii, aggressive cartoon, thick bold outlines, ` +
-    `clip art, stock photo, busy cluttered composition, neon colors, oversaturated`
+    `photograph, photo, realistic photo, hyperrealistic, 3D render, CGI, ` +
+    `dark theme, dark background, black background, horror, scary, violent, disturbing, ` +
+    `ugly, blurry, low quality, distorted, bad anatomy, deformed, extra limbs, ` +
+    `text, letters, numbers, watermark, logo, signature, border, frame, UI element, HUD, ` +
+    `anime, manga, chibi, thick bold outlines, flat icon, clipart, vector icon, ` +
+    `stock photo, busy cluttered composition, neon colors, oversaturated, ` +
+    `abstract, surreal, minimalist, geometric only, monochrome, grayscale, ` +
+    `wrong subject, unrelated objects, confusing composition`
   );
 }
 
@@ -424,6 +439,50 @@ MANDATORY DESIGN RULES:
   }
 
   throw new Error(lastError || 'Cannot generate SVG');
+}
+
+// ---- SVG fallback không cần API key (khi cả Pollinations và Gemini đều thất bại) ----
+function generateTopicSVGNoKey(topic) {
+  const t = topic.toLowerCase();
+  // Màu gradient theo chủ đề
+  let c1 = '#FFE8D6', c2 = '#C9E8F5', accent = '#E8735A', icon = '📚';
+  if (t.includes('school') || t.includes('trường')) { c1='#E8F4FD'; c2='#C8E6FA'; accent='#3A86FF'; icon='🏫'; }
+  else if (t.includes('home') || t.includes('nhà')) { c1='#FFF5E6'; c2='#FFE0A0'; accent='#FF9F40'; icon='🏠'; }
+  else if (t.includes('friend') || t.includes('bạn')) { c1='#F0FFF0'; c2='#C8F0C0'; accent='#4CAF50'; icon='👫'; }
+  else if (t.includes('nature') || t.includes('thiên')) { c1='#E8F5E9'; c2='#B2DFDB'; accent='#2E7D32'; icon='🏔️'; }
+  else if (t.includes('tet') || t.includes('tết') || t.includes('holiday')) { c1='#FFF3E0'; c2='#FFCDD2'; accent='#D32F2F'; icon='🎊'; }
+  else if (t.includes('animal') || t.includes('động vật')) { c1='#F3E5F5'; c2='#E1BEE7'; accent='#7B1FA2'; icon='🦁'; }
+  else if (t.includes('food') || t.includes('fruit') || t.includes('ăn')) { c1='#FFFDE7'; c2='#F0F4C3'; accent='#F57F17'; icon='🍎'; }
+  else if (t.includes('sport') || t.includes('thể thao')) { c1='#E3F2FD'; c2='#BBDEFB'; accent='#1565C0'; icon='⚽'; }
+  else if (t.includes('music') || t.includes('âm nhạc')) { c1='#FCE4EC'; c2='#F8BBD0'; accent='#C2185B'; icon='🎵'; }
+  else if (t.includes('travel') || t.includes('du lịch')) { c1='#E0F7FA'; c2='#B2EBF2'; accent='#00838F'; icon='✈️'; }
+  else if (t.includes('weather') || t.includes('thời tiết')) { c1='#E1F5FE'; c2='#B3E5FC'; accent='#0277BD'; icon='☀️'; }
+  else if (t.includes('body') || t.includes('sức khỏe')) { c1='#F1F8E9'; c2='#DCEDC8'; accent='#558B2F'; icon='💪'; }
+  else if (t.includes('cloth') || t.includes('quần áo')) { c1='#FCE4EC'; c2='#EDE7F6'; accent='#AD1457'; icon='👗'; }
+  else if (t.includes('city') || t.includes('thành phố')) { c1='#ECEFF1'; c2='#CFD8DC'; accent='#37474F'; icon='🏙️'; }
+  else if (t.includes('ocean') || t.includes('biển')) { c1='#E0F7FA'; c2='#80DEEA'; accent='#006064'; icon='🐠'; }
+  const label = topic.length > 18 ? topic.substring(0, 18) + '…' : topic;
+  return `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+    <linearGradient id="groundG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${accent}" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="${accent}" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="130" fill="url(#bgG)" rx="0"/>
+  <ellipse cx="100" cy="110" rx="90" ry="22" fill="url(#groundG)"/>
+  <circle cx="100" cy="58" r="34" fill="white" opacity="0.45"/>
+  <text x="100" y="70" text-anchor="middle" font-size="36" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">${icon}</text>
+  <text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="${accent}" font-family="system-ui,sans-serif" opacity="0.85">${label}</text>
+  <circle cx="28" cy="25" r="10" fill="white" opacity="0.6"/>
+  <circle cx="38" cy="22" r="8" fill="white" opacity="0.6"/>
+  <circle cx="160" cy="30" r="9" fill="white" opacity="0.5"/>
+  <circle cx="172" cy="26" r="7" fill="white" opacity="0.5"/>
+</svg>`;
 }
 
 function setAiThumbLoading(loading, suffix = '') {
