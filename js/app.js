@@ -116,18 +116,18 @@ async function generatePollinationsImage(topic) {
   const prompt = buildImagePrompt(topic);
   const encodedPrompt = encodeURIComponent(prompt);
 
-  // Thử 2 model theo thứ tự: flux (đẹp nhất) → turbo (nhanh hơn)
-  const models = ['flux', 'flux-realism', 'turbo'];
+  // Thử models theo thứ tự: flux (đẹp nhất, illustrated) → turbo (nhanh hơn)
+  const models = ['flux', 'turbo'];
   const negativePrompt = buildNegativePrompt();
   const encodedNegative = encodeURIComponent(negativePrompt);
 
   for (const model of models) {
     try {
       const seed = Math.floor(Math.random() * 999999);
-      // negative: loại bỏ những thứ không mong muốn (ảnh thật, chữ, nền tối...)
-      // enhance: Pollinations tự động cải thiện prompt
       // width=1280&height=800: tỉ lệ 16:9 độ phân giải cao
-      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=800&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}`;
+      // enhance=true: Pollinations tự cải thiện prompt
+      // safe=true: bật bộ lọc nội dung an toàn cho trẻ em
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=800&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}&safe=true`;
 
       // Pollinations có thể mất 15-40s để generate, đặt timeout 45s
       const controller = new AbortController();
@@ -166,50 +166,50 @@ const GEMINI_IMAGE_MODELS = [
   'gemini-2.0-flash-exp'
 ];
 
-// Map từ khóa topic → visual cues cụ thể để FLUX hiểu đúng chủ đề
+// Map từ khóa topic → visual cues cụ thể để AI model hiểu đúng chủ đề
 function getTopicVisualHints(topic) {
   const t = topic.toLowerCase();
   const hints = [
     { keys: ['school', 'trường', 'học'],
-      vis: 'a bright school building exterior with large windows and green lawn, yellow school bus parked outside, children in uniforms walking with backpacks, blue sky with white clouds' },
+      vis: 'illustrated scene of a cheerful pastel-colored school building with big round windows, red roof, yellow school bus with round wheels parked outside, children in colorful uniforms with backpacks, fluffy white clouds in soft blue sky' },
     { keys: ['home', 'house', 'nhà', 'gia đình'],
-      vis: 'a charming two-story house with red tiled roof, flower garden, wooden front door, green hedges, warm afternoon sunlight casting soft shadows' },
+      vis: 'illustrated cozy two-story house with warm peach walls, red tiled roof, green garden with flowers in bloom, wooden door with heart wreath, soft golden afternoon light, illustrated storybook style' },
     { keys: ['friend', 'bạn bè', 'people', 'người'],
-      vis: 'three cheerful children standing together smiling in a sunny park, diverse ethnicities, wearing colorful casual clothes, green trees and blue sky behind them' },
+      vis: 'illustrated three cheerful children with round faces and big smiles standing together in a sunny park, wearing colorful outfits, diverse hair and skin tones, green trees and soft sky behind, warm and friendly illustrated style' },
     { keys: ['neighbour', 'neighborhood', 'khu phố', 'phố'],
-      vis: 'a lively street scene with colorful storefronts, bakery and flower shop, people walking on sidewalk, trees lining the street, warm golden hour lighting' },
+      vis: 'illustrated charming street scene with colorful pastel storefronts (bakery, flower shop, bookstore), rounded awnings, people strolling, flower pots on windowsills, warm illustrated style' },
     { keys: ['nature', 'natural', 'wonder', 'thiên nhiên', 'núi'],
-      vis: 'dramatic snow-capped mountain peaks reflected in a crystal-clear alpine lake, pine forest in foreground, golden sunset sky, misty atmosphere' },
+      vis: 'illustrated majestic snow-capped mountains with soft purple-blue tones reflected in a calm lake, pine trees in foreground, golden-hour sky with warm peach tones, painterly illustrated style' },
     { keys: ['tet', 'tết', 'lunar', 'holiday', 'lễ hội', 'new year'],
-      vis: 'Vietnamese Tet festival scene with red and gold lanterns hanging, blooming peach blossom tree, traditional red envelopes, incense smoke, festive family gathering' },
+      vis: 'illustrated Vietnamese Tet festival scene with red and gold paper lanterns, pink peach blossom branches, golden kumquat tree, festive illustrated style with warm reds and golds' },
     { keys: ['fruit', 'trái cây', 'food', 'thức ăn', 'eat'],
-      vis: 'a beautiful arrangement of fresh ripe tropical fruits on a wooden table: red apples, yellow bananas, orange slices, green watermelon, purple grapes, natural lighting' },
+      vis: 'illustrated arrangement of plump ripe fruits with soft shading: glossy red apple, yellow banana, orange slices, green watermelon wedge, purple grapes, on a warm wooden table, cheerful illustrated style' },
     { keys: ['animal', 'động vật', 'hoang dã', 'pet', 'thú', 'zoo', 'wild'],
-      vis: 'a majestic lion standing proudly on African savanna, golden fur, detailed mane, grass and acacia trees in background, warm sunset glow' },
+      vis: 'illustrated friendly animals in a lush green nature scene: cute bear, rabbit, and giraffe with soft rounded shapes, pastel background, illustrated storybook style' },
     { keys: ['sport', 'thể thao', 'game', 'play', 'football', 'soccer'],
-      vis: 'children playing soccer on a green grass field, action moment of kicking ball, goalposts visible, afternoon sunlight, dynamic movement' },
+      vis: 'illustrated children playing soccer on bright green grass, round-faced characters kicking colorful ball, goal post, cheerful sunny day, illustrated style' },
     { keys: ['travel', 'du lịch', 'trip', 'vacation'],
-      vis: 'a scenic travel collage: tropical beach with turquoise water, passport and camera on map, Eiffel Tower silhouette, adventure and wanderlust atmosphere' },
+      vis: 'illustrated travel scene with a colorful hot air balloon over rolling green hills, clouds, distant landmarks, sun rays, illustrated adventure style with soft warm palette' },
     { keys: ['color', 'màu sắc', 'colour', 'art', 'paint'],
-      vis: 'colorful paint tubes and brushes on a wooden palette, rainbow paint splashes, artist studio with canvas in background, creative atmosphere' },
+      vis: 'illustrated colorful paint tubes, brushes and rainbow paint splashes on a warm wooden surface, artist palette, soft cozy studio illustrated style' },
     { keys: ['weather', 'thời tiết', 'season', 'mùa'],
-      vis: 'split-view of four seasons: spring cherry blossoms, bright summer sunshine, autumn maple leaves, winter snow on pine trees' },
+      vis: 'illustrated four seasons in one scene: spring cherry blossoms (pink), summer sunshine (yellow), autumn maple leaves (orange), winter snowflakes (blue-white), illustrated storybook style' },
     { keys: ['body', 'cơ thể', 'health', 'sức khỏe'],
-      vis: 'healthy children running and exercising outdoors, fruits and vegetables around them, bright sunny day, energetic and vibrant scene' },
+      vis: 'illustrated healthy children with round faces running outdoors, fruits and vegetables floating around them, bright sunshine, illustrated cheerful style' },
     { keys: ['cloth', 'quần áo', 'fashion', 'wear', 'dress'],
-      vis: 'stylish clothing items displayed on hangers in a bright boutique: colorful dresses, shirts, shoes and accessories, natural window light' },
+      vis: 'illustrated cute clothing items on rounded hangers in a pastel boutique: colorful dresses, striped shirts, boots and accessories, soft window light, illustrated whimsical style' },
     { keys: ['technology', 'thiết bị', 'device', 'smart', 'phone', 'computer'],
-      vis: 'modern devices neatly arranged: sleek smartphone, laptop, tablet showing colorful screens, on a clean desk with soft studio lighting' },
+      vis: 'illustrated modern devices with soft rounded corners: glowing smartphone, laptop, tablet on a tidy desk with soft blue light, illustrated friendly tech style' },
     { keys: ['city', 'thành phố', 'town', 'urban'],
-      vis: 'vibrant city skyline at golden hour, tall glass buildings reflecting orange light, busy street below with cars and people, dramatic sky' },
+      vis: 'illustrated vibrant cityscape at golden hour with rounded pastel buildings, tiny cars and people below, orange-pink sky, illustrated storybook city style' },
     { keys: ['ocean', 'sea', 'biển', 'fish', 'marine'],
-      vis: 'stunning underwater scene with crystal-clear blue water, colorful tropical fish swimming through vibrant coral reef, sunlight rays piercing through water' },
+      vis: 'illustrated underwater scene with crystal turquoise water, colorful tropical fish with round friendly faces, coral reef with vibrant shapes, sunlight rays, illustrated storybook style' },
     { keys: ['music', 'âm nhạc', 'song', 'instrument'],
-      vis: 'acoustic guitar and piano keys with sheet music, warm studio lighting, music notes and golden glow, cozy and inspiring atmosphere' },
+      vis: 'illustrated cozy music scene with acoustic guitar, piano keys, floating music notes in warm golden light, soft wooden studio background, illustrated storybook style' },
     { keys: ['number', 'số', 'math', 'toán'],
-      vis: 'colorful wooden number blocks and math symbols arranged on a table, children learning, bright classroom environment' },
+      vis: 'illustrated colorful rounded number blocks arranged on a warm table, playful math symbols, bright classroom with soft light, illustrated educational style' },
     { keys: ['alphabet', 'letter', 'chữ cái', 'abc'],
-      vis: 'colorful wooden alphabet letter blocks spelling ABC, scattered playfully on a table with warm soft lighting, educational setting' },
+      vis: 'illustrated colorful wooden alphabet blocks with round corners, scattered playfully on a warm surface, soft learning atmosphere, illustrated educational style' },
   ];
 
   for (const h of hints) {
@@ -217,32 +217,35 @@ function getTopicVisualHints(topic) {
       return h.vis;
     }
   }
-  return `a beautiful detailed scene representing "${topic}", with recognizable objects clearly showing the theme, natural lighting, rich colors`;
+  return `a charming illustrated scene for children showing "${topic}", soft warm gradient background, friendly recognizable objects with gentle shading, storybook illustration style`;
 }
 
-// Prompt tối ưu cho FLUX model - semi-realistic illustrated style như hình mẫu
+// Prompt tối ưu cho FLUX model - illustrated style như hình mẫu (Google educational app covers)
 function buildImagePrompt(topic) {
   const visualHints = getTopicVisualHints(topic);
   return (
     `${visualHints}. ` +
-    `Digital illustration style, semi-realistic with soft painterly rendering, ` +
-    `inspired by high-quality children book illustrations and Google educational app covers. ` +
-    `Rich detailed textures, volumetric soft lighting, natural shadows and highlights. ` +
-    `Vibrant yet natural color palette, depth of field, layered background. ` +
-    `Professional editorial illustration quality, NOT cartoon, NOT chibi, NOT flat design. ` +
-    `Wide 16:9 landscape format, highly detailed, visually rich scene`
+    `Style: soft digital illustration, warm pastel palette, gentle gradients, ` +
+    `reminiscent of high-quality Google educational app card art and modern children's storybook covers. ` +
+    `Characters are friendly, expressive, lightly stylized with smooth shading and soft cel-shading technique. ` +
+    `Background uses subtle warm gradient (peach, sky blue, or soft yellow tones). ` +
+    `Objects and characters have clean silhouettes with gentle drop shadows for depth. ` +
+    `Lighting is soft and diffused, coming from upper-left, creating a cozy and welcoming atmosphere. ` +
+    `Color palette: warm coral (#E8735A), sunny yellow (#F9C74F), sky blue (#90E0EF), sage green (#80B918), soft peach (#FFD6A5). ` +
+    `High detail, no text, no UI, no borders, no frame. Wide 16:9 landscape composition. ` +
+    `Professional children's educational app illustration. Vibrant, cheerful, child-friendly.`
   );
 }
 
-// Negative prompt: loại bỏ cartoon, chibi, flat design
+// Negative prompt: loại bỏ những thứ không mong muốn
 function buildNegativePrompt() {
   return (
-    `cartoon, chibi, kawaii, flat design, 2d vector, clip art, anime, manga, ` +
-    `bold outlines, cel shading, Duolingo style, simple shapes, minimalist, ` +
-    `ugly, blurry, low quality, distorted, bad anatomy, ` +
-    `text, letters, numbers, watermark, logo, signature, border, frame, ` +
-    `dark background, black background, horror, scary, violent, ` +
-    `photograph, photo, realistic photo, 3d render, CGI, hyperrealistic`
+    `photograph, photo, realistic photo, hyperrealistic, 3d render, CGI, ` +
+    `dark theme, dark background, black background, horror, scary, violent, creepy, ` +
+    `ugly, blurry, low quality, distorted, bad anatomy, deformed, ` +
+    `text, letters, numbers, watermark, logo, signature, border, frame, UI element, ` +
+    `anime, manga, chibi, kawaii, aggressive cartoon, thick bold outlines, ` +
+    `clip art, stock photo, busy cluttered composition, neon colors, oversaturated`
   );
 }
 
@@ -357,26 +360,30 @@ async function generateTopicSVG(topic, apiKey) {
   apiKey = apiKey || localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) throw new Error('NO_API_KEY');
 
-  const prompt = `You are an expert SVG artist for a children English vocabulary learning app. Your goal is to create an SVG scene that IMMEDIATELY shows the topic "${topic}" — a child must recognize the theme in under 1 second.
+  const prompt = `You are an expert SVG illustrator for a children's English vocabulary learning app. Create a warm, charming illustrated scene for the topic: "${topic}".
 
 MANDATORY OUTPUT RULES:
 - Output ONLY the raw SVG element. Zero markdown, zero backticks, zero explanation.
 - Start with: <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
-- Second element must be: <rect width="200" height="130" fill="transparent"/>
+- Use <defs> with <linearGradient> for backgrounds — this is required.
 - End with: </svg>
-- Total length: under 7000 characters.
+- Total length: under 8000 characters.
 
-SCENE DESIGN RULES:
-1. TOPIC CLARITY IS #1 PRIORITY: Draw the most iconic, universally recognized visual for "${topic}". The main subject must be LARGE, CENTERED, and UNMISTAKABLE.
-2. FULL ILLUSTRATED SCENE: Not scattered icons. Build a proper scene with: sky background (gradient), a ground or floor, 1-2 large foreground hero objects, 2-3 supporting background elements.
-3. DETAILED CHARACTERS/OBJECTS: Use many layered shapes. A house = walls + roof polygon + windows + door + chimney + path detail. A person = head ellipse + body + arms + face features. NEVER just one shape per object.
-4. RICH COLORS: Sky #87CEEB or gradient. Ground #7EC850 or #A0522D. Main objects use: #FF6B6B, #FFD166, #06D6A0, #118AB2, #FF9F1C, #E76F51, #2EC4B6, #FFBF69.
-5. DEPTH LAYERS: Background (sky+hills) → Midground (trees/buildings far) → Foreground (main subject large).
-6. SOFT CURVES: Use path with bezier curves (Q, C commands). Avoid pure rectangles for organic things.
-7. SHADOWS: Add dark semi-transparent ellipse under grounded objects (fill="rgba(0,0,0,0.15)").
-8. HIGHLIGHTS: Add small white semi-transparent shape on top-left of rounded objects for shine.
-9. CLOUDS: If sky is visible, add 2-3 simple white cloud shapes using overlapping circles.
-10. NO text, NO numbers, NO letters anywhere inside SVG.`;
+VISUAL STYLE — match Google educational app card art:
+Soft warm gradients, friendly slightly-stylized characters, gentle shadows, pastel-leaning but vibrant palette.
+Think "modern storybook illustration" — NOT pure flat icons, NOT realistic photo.
+
+MANDATORY DESIGN RULES:
+1. BACKGROUND GRADIENT: Always use <defs><linearGradient id="bg"> and a full-canvas <rect fill="url(#bg)"/>. Use warm tones: sky (peach→light-blue #FFE8D6→#C9E8F5), indoor (cream→warm-yellow #FFF5E6→#FFE0A0), nature (sky-blue→soft-green #D4EEFF→#C8F0C0).
+2. CURVED GROUND: Add a curved ground using <path> with bezier Q/C commands — NOT a flat rect. E.g.: <path d="M0 95 Q100 85 200 95 L200 130 L0 130Z" fill="#8BC34A"/>.
+3. MAIN SUBJECT LARGE + CENTERED: The hero object must be at least 60px wide, centered. Use 10+ layered shapes for it — add details, highlights, shadows.
+4. SOFT SHADING: Each rounded object needs a white highlight (opacity 0.3–0.5, top-left) and a dark ellipse shadow (opacity 0.12–0.2, below on ground).
+5. WARM PALETTE: Use these colors — coral: #E8735A, yellow: #F9C74F, sky: #90E0EF, green: #80B918, peach: #FFD6A5, lilac: #C9B8E8, mint: #80CBC4. Avoid pure #FF0000 / #0000FF primaries.
+6. DEPTH LAYERS: Far background (small, pale) → Midground → Large foreground hero.
+7. CLOUDS: If outdoors, add 2 soft clouds with overlapping circles (fill white, opacity 0.85).
+8. FRIENDLY CHARACTERS: Rounded shapes. Faces = circle head + dot eyes + curve smile. Bodies = rounded-rect with rx. Skin tones: #FFD5A8, #F1C27D, or #8D5524.
+9. DECORATIVE ACCENTS: Add small flowers, stars, sparkles, or dots to fill empty space and add charm.
+10. NO text, NO numbers, NO letters anywhere in the SVG.`;
 
   const MODELS = await GeminiModels.getModels(apiKey);
   let lastError = null;
@@ -389,9 +396,9 @@ SCENE DESIGN RULES:
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-              systemInstruction: { parts: [{ text: 'You are an SVG code generator. You output ONLY raw SVG code with no explanation, no markdown fences, no comments. Your SVGs are detailed illustrated scenes for children, not clipart.' }] },
+              systemInstruction: { parts: [{ text: 'You are a professional SVG illustrator. Output ONLY raw SVG code — no explanation, no markdown, no comments. Your SVGs must use gradient backgrounds (linearGradient in defs), layered depth, warm pastel color palettes, curved paths with bezier commands, and soft shading. Style: Google educational app card art meets modern storybook illustration. Rich detail, NOT flat clipart.' }] },
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.4 }
+              generationConfig: { temperature: 0.7 }
             })
         }
       );
