@@ -580,9 +580,7 @@ MANDATORY DESIGN RULES:
       if (!resp.ok) {
         const errJson = await resp.json().catch(() => ({}));
         lastError = errJson.error?.message || `HTTP ${resp.status}`;
-        if (resp.status === 429 || resp.status === 404 || resp.status === 400 ||
-            lastError.includes('quota') || lastError.includes('Quota') ||
-            lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED')) continue;
+        if (isRetryableAIError(resp.status, lastError)) continue;
         throw new Error(lastError);
       }
       const data = await resp.json();
@@ -592,8 +590,7 @@ MANDATORY DESIGN RULES:
       return match[0];
     } catch (e) {
       lastError = e.message;
-      if (e.message.includes('quota') || e.message.includes('Quota') ||
-          e.message.includes('429') || e.message.includes('not found')) continue;
+      if (isRetryableAIError(null, e.message)) continue;
       throw e;
     }
   }
@@ -958,6 +955,7 @@ function showConfirm(msg, icon = '❓') {
     { label: 'Hủy', primary: false, value: false },
     { label: 'Đồng ý', primary: true, value: true }
   ]);
+}
 
 // Chuyển lỗi API thô thành thông báo thân thiện
 function friendlyAIError(rawMsg) {
@@ -980,12 +978,26 @@ function friendlyAIError(rawMsg) {
   if (m.includes('timeout') || m.includes('Timeout')) {
     return '⌛ <strong>Yêu cầu quá thời gian chờ.</strong><br>Vui lòng thử lại.';
   }
+  if (m.includes('503') || m.includes('UNAVAILABLE') || m.includes('overloaded') || m.includes('Internal error')) {
+    return '🔄 <strong>Server AI của Google đang quá tải.</strong><br>Tất cả model đều tạm thời bận. Vui lòng thử lại sau ít phút.';
+  }
   if (m.includes('not found') || m.includes('404')) {
     return '🔄 <strong>Model AI không khả dụng.</strong><br>Đang thử model khác... Vui lòng thử lại.';
   }
   // Fallback ngắn gọn
   return '❌ <strong>Không thể kết nối AI.</strong><br>Vui lòng kiểm tra API Key và thử lại.';
 }
+
+// Kiểm tra xem một lỗi từ Gemini API có nên thử model tiếp theo hay không.
+// Bao gồm: hết quota (429), model không tồn tại (404/400), VÀ server Google
+// đang quá tải tạm thời (500/502/503/504, UNAVAILABLE, "overloaded").
+// Trước đây code chỉ continue với 429/404/400 → một lỗi 503 (rất phổ biến với
+// gemini-2.5-flash khi quá tải) sẽ làm dừng toàn bộ quá trình ngay lập tức
+// thay vì thử các model dự phòng khác.
+function isRetryableAIError(status, msg) {
+  msg = msg || '';
+  if ([429, 404, 400, 500, 502, 503, 504].includes(status)) return true;
+  return /quota|Quota|not found|RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|Internal error/i.test(msg);
 }
 
 // ---- NAVIGATION ----
@@ -2918,23 +2930,21 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
         if (!response.ok) {
           const errJson = await response.json().catch(() => ({}));
           lastError = errJson.error?.message || `HTTP ${response.status}`;
-          // Thử model tiếp theo nếu quota/rate limit hoặc model không tìm thấy
-          if (response.status === 429 || response.status === 404 || response.status === 400 ||
-              lastError.includes('quota') || lastError.includes('Quota') ||
-              lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED')) continue;
+          // Thử model tiếp theo nếu quota/rate limit, model không tìm thấy,
+          // hoặc server Google đang quá tải tạm thời (503/UNAVAILABLE)
+          if (isRetryableAIError(response.status, lastError)) continue;
           throw new Error(lastError);
         }
         data = await response.json();
         break; // Thành công
       } catch (e) {
         lastError = e.message;
-        if (e.message.includes('quota') || e.message.includes('Quota') ||
-            e.message.includes('429') || e.message.includes('not found')) continue;
+        if (isRetryableAIError(null, e.message)) continue;
         throw e;
       }
     }
 
-    if (!data) throw new Error('quota exceeded: ' + lastError);
+    if (!data) throw new Error(lastError || 'Không thể tạo bộ thẻ, vui lòng thử lại.');
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const clean = raw.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
@@ -4605,6 +4615,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   let dynamicModels2 = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b'];
   try { dynamicModels2 = await GeminiModels.getModels(apiKey); } catch(e) {}
   let data = null;
+  let lastError2 = null;
   for (const model of dynamicModels2) {
     try {
       const response = await fetch(
@@ -4622,12 +4633,12 @@ async function generateFlashcardsFromChat(offerId, topic) {
       if (!json.error) { data = json; break; }
       const errCode = json.error.code;
       const errMsg = json.error.message || '';
-      if (errCode === 429 || errCode === 404 || errCode === 400 ||
-          errMsg.includes('quota') || errMsg.includes('not found') || errMsg.includes('RESOURCE_EXHAUSTED')) continue;
+      lastError2 = errMsg;
+      if (isRetryableAIError(errCode, errMsg)) continue;
       throw new Error(errMsg);
     } catch(e) {
-      if (e.message && (e.message.includes('429') || e.message.includes('quota') ||
-          e.message.includes('not found') || e.message.includes('404'))) continue;
+      lastError2 = e.message;
+      if (isRetryableAIError(null, e.message)) continue;
       break;
     }
   }
@@ -4636,7 +4647,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   if (loadingRemove) loadingRemove.remove();
 
   if (!data) {
-    appendErrorBubble(friendlyAIError('quota exceeded'));
+    appendErrorBubble(friendlyAIError(lastError2 || 'quota exceeded'));
     return;
   }
 
