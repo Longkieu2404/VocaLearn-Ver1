@@ -78,10 +78,18 @@ async function triggerAiThumb(name, suffix = '') {
     const thumb = await generateTopicThumb(name, (msg, type) => setAiThumbStatus(msg, type, suffix));
     _aiSvgCache[name] = thumb;
     showAiThumb(thumb, suffix);
-    setAiThumbStatus('✅ AI đã tạo xong hình minh họa!', 'success', suffix);
+    // generateTopicThumb() có thể đã tự set trạng thái lỗi (dùng ảnh mặc định) qua onStatus
+    // ở bước cuối — không ghi đè thành "thành công" trong trường hợp đó.
+    const statusEl = document.getElementById('aiThumbStatus' + suffix);
+    if (!statusEl || !statusEl.classList.contains('error')) {
+      setAiThumbStatus('✅ AI đã tạo xong hình minh họa!', 'success', suffix);
+    }
   } catch(e) {
     console.error('AI thumb error:', e);
     setAiThumbStatus('⚠️ Không tạo được ảnh, sẽ dùng ảnh mặc định.', 'error', suffix);
+    // generateTopicThumb() đã được thiết kế để không bao giờ throw, nhưng nếu có
+    // lỗi bất ngờ (DOM, v.v.) vẫn hiển thị một hình thay vì để preview kẹt ở spinner.
+    try { showAiThumb(generateTopicSVGNoKey(name), suffix); } catch (_) {}
   } finally {
     setAiThumbLoading(false, suffix);
   }
@@ -89,21 +97,26 @@ async function triggerAiThumb(name, suffix = '') {
 
 // Tạo ảnh minh họa thật cho bộ thẻ
 // Thứ tự ưu tiên khi có Gemini key:
-//   1. Gemini Flash image generation (hiểu chủ đề tốt nhất, đúng chủ đề)
+//   1. Gemini Flash Image / Imagen (hiểu chủ đề tốt nhất, đúng chủ đề)
 //   2. Pollinations AI (miễn phí, fallback khi Gemini lỗi)
-//   3. SVG fallback (cuối cùng)
+//   3. SVG do Gemini text vẽ (gần đúng chủ đề nhưng chỉ là hình khối đơn giản)
+//   4. SVG offline (luôn thành công, không cần mạng/khoá API)
 // Khi không có key:
 //   1. Pollinations AI
-//   2. SVG fallback
+//   2. SVG offline
+// Hàm này KHÔNG được throw — luôn trả về một chuỗi HTML/SVG hợp lệ, để UI
+// không bị "kẹt" ở trạng thái spinner khi mọi nguồn ảnh đều lỗi.
 async function generateTopicThumb(topic, onStatus) {
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  const errors = [];
 
   if (apiKey) {
-    // Có key → ưu tiên Gemini Flash (tạo ảnh đúng chủ đề hơn Pollinations)
+    // Có key → ưu tiên Gemini Flash Image (tạo ảnh đúng chủ đề hơn Pollinations)
     if (onStatus) onStatus('🧠 Gemini đang tạo hình minh họa...', 'loading');
     try {
       return await generateTopicImage(topic, apiKey);
     } catch (e) {
+      errors.push(`Gemini ảnh: ${e.message}`);
       console.warn('[Thumb] Gemini image failed:', e.message, '→ trying Pollinations...');
       if (onStatus) onStatus('🎨 Đang thử Pollinations AI...', 'loading');
     }
@@ -111,10 +124,19 @@ async function generateTopicThumb(topic, onStatus) {
     try {
       return await generatePollinationsImage(topic, onStatus);
     } catch (e) {
+      errors.push(`Pollinations: ${e.message}`);
       console.warn('[Thumb] Pollinations failed:', e.message, '→ fallback SVG');
+      if (onStatus) onStatus('✏️ Đang vẽ hình minh họa dự phòng...', 'loading');
     }
     // Cả hai thất bại → SVG bằng Gemini text
-    return await generateTopicSVG(topic, apiKey);
+    try {
+      return await generateTopicSVG(topic, apiKey);
+    } catch (e) {
+      errors.push(`SVG (Gemini text): ${e.message}`);
+      console.warn('[Thumb] Tất cả nguồn ảnh AI đều lỗi, dùng SVG offline:', errors.join(' | '));
+      if (onStatus) onStatus('⚠️ AI không tạo được ảnh, dùng hình mặc định.', 'error');
+      return generateTopicSVGNoKey(topic);
+    }
   } else {
     // Không có key → Pollinations (miễn phí)
     if (onStatus) onStatus('🎨 AI đang tạo hình minh họa...', 'loading');
@@ -122,7 +144,8 @@ async function generateTopicThumb(topic, onStatus) {
       return await generatePollinationsImage(topic, onStatus);
     } catch (e) {
       console.warn('[Thumb] Pollinations failed:', e.message, '→ SVG fallback');
-      return await generateTopicSVGNoKey(topic);
+      if (onStatus) onStatus('⚠️ Không tạo được ảnh, dùng hình mặc định.', 'error');
+      return generateTopicSVGNoKey(topic);
     }
   }
 }
@@ -177,6 +200,15 @@ Write a detailed image generation prompt for this topic. The image will be used 
   return null;
 }
 
+// Giới hạn độ dài prompt trước khi đưa vào query string của Pollinations.
+// Prompt do Gemini sinh ra (buildGeminiImagePrompt) hoặc negative prompt quá dài
+// khi encodeURIComponent có thể vượt giới hạn độ dài URL của server Pollinations
+// (~thường gặp lỗi 414 / request bị treo), nên cắt về độ dài an toàn.
+function clampPromptLength(str, maxLen) {
+  if (!str) return str;
+  return str.length > maxLen ? str.slice(0, maxLen) : str;
+}
+
 async function generatePollinationsImage(topic, onStatus) {
   // Ưu tiên dùng Gemini để viết prompt thông minh hơn (nếu có key)
   // Nếu không có key hoặc Gemini lỗi → fallback về prompt tĩnh
@@ -190,6 +222,7 @@ async function generatePollinationsImage(topic, onStatus) {
   } catch(e) {
     prompt = buildImagePrompt(topic);
   }
+  prompt = clampPromptLength(prompt, 700);
   const encodedPrompt = encodeURIComponent(prompt);
 
   // Thử models theo thứ tự chất lượng:
@@ -197,8 +230,9 @@ async function generatePollinationsImage(topic, onStatus) {
   // flux: chất lượng tốt, nhanh hơn
   // turbo: nhanh nhất, fallback cuối
   const models = ['flux-pro', 'flux', 'turbo'];
-  const negativePrompt = buildNegativePrompt();
+  const negativePrompt = clampPromptLength(buildNegativePrompt(), 350);
   const encodedNegative = encodeURIComponent(negativePrompt);
+  const errors = [];
 
   for (const model of models) {
     try {
@@ -210,8 +244,9 @@ async function generatePollinationsImage(topic, onStatus) {
       // Dùng width nhỏ hơn để tránh timeout
       const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=960&height=600&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}`;
 
-      // flux-pro mất lâu hơn (30-60s), flux/turbo nhanh hơn
-      const timeoutMs = model === 'flux-pro' ? 60000 : 45000;
+      // flux-pro mất lâu hơn, flux/turbo nhanh hơn — rút ngắn timeout so với trước
+      // để người dùng không phải chờ quá lâu trước khi chuyển sang phương án dự phòng.
+      const timeoutMs = model === 'flux-pro' ? 45000 : model === 'flux' ? 30000 : 20000;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -235,23 +270,26 @@ async function generatePollinationsImage(topic, onStatus) {
       console.log(`[Pollinations] Success with model=${model}, size=${blob.size}bytes`);
       return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
     } catch (e) {
-      console.warn(`[Pollinations] model=${model} failed:`, e.message);
-      if (model === models[models.length - 1]) throw e;
+      const msg = e.name === 'AbortError' ? 'timeout' : e.message;
+      console.warn(`[Pollinations] model=${model} failed:`, msg);
+      errors.push(`${model}: ${msg}`);
+      if (model === models[models.length - 1]) throw new Error(errors.join(' | '));
     }
   }
 }
 
 // ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (fallback khi Pollinations fail) ----
-// Thứ tự ưu tiên: Imagen 3 (cần billing) → Gemini 2.0 Flash Preview image generation
-// Danh sách model Gemini tạo ảnh, mỗi entry gồm { model, apiVersion, modalities }
+// Thứ tự ưu tiên: Imagen 3 (cần billing) → Gemini 2.5 Flash Image ("Nano Banana") → Gemini 2.0 Flash Preview Image Generation
+// Danh sách model Gemini tạo ảnh, mỗi entry gồm { model, apiVersion, modalities, supportsImageConfig }
+// LƯU Ý: gemini-2.0-flash-exp (model thử nghiệm cuối 2024) đã bị Google khai tử/đổi tên,
+// không còn hỗ trợ responseModalities IMAGE → luôn lỗi 404, khiến code rơi thẳng xuống
+// Pollinations rồi SVG fallback. Phải dùng tên model ảnh chính thức hiện hành.
 // Thứ tự ưu tiên: thử từng cái cho đến khi thành công
 const GEMINI_IMAGE_MODELS = [
-  // gemini-2.0-flash-exp qua v1alpha: hỗ trợ IMAGE modality (AI Studio free key)
-  { model: 'gemini-2.0-flash-exp', apiVersion: 'v1alpha', modalities: ['IMAGE', 'TEXT'] },
-  // gemini-2.0-flash-exp qua v1beta với tên model mới
-  { model: 'gemini-2.0-flash-exp', apiVersion: 'v1beta', modalities: ['IMAGE', 'TEXT'] },
-  // Fallback: imagen-3 lite qua v1beta (nếu có billing)
-  { model: 'imagen-3.0-generate-001', apiVersion: 'v1beta', modalities: null },
+  // gemini-2.5-flash-image ("Nano Banana") - model sinh ảnh chính thức hiện tại, hỗ trợ imageConfig.aspectRatio
+  { model: 'gemini-2.5-flash-image', apiVersion: 'v1beta', modalities: ['TEXT', 'IMAGE'], supportsImageConfig: true },
+  // Bản preview cũ hơn - một số key/region vẫn còn quyền truy cập, không hỗ trợ imageConfig
+  { model: 'gemini-2.0-flash-preview-image-generation', apiVersion: 'v1beta', modalities: ['TEXT', 'IMAGE'], supportsImageConfig: false },
 ];
 
 // Map từ khóa topic → visual cues cụ thể để AI model hiểu đúng chủ đề
@@ -363,7 +401,7 @@ function buildGeminiImageDirectPrompt(topic) {
 async function generateTopicImage(topic, apiKey) {
   // Prompt ngắn gọn, rõ chủ đề — Gemini hiểu ngữ nghĩa tốt, không cần mô tả dài
   const prompt = buildGeminiImageDirectPrompt(topic);
-  let lastError = null;
+  const errors = [];
 
   // --- Thử Imagen 3 trước nếu có billing ---
   try {
@@ -387,12 +425,16 @@ async function generateTopicImage(topic, apiKey) {
         const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
         return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
       }
+      errors.push('imagen-3: response không có ảnh');
     } else {
       const err = await imagenResp.json().catch(() => ({}));
-      console.warn('[Gemini] Imagen 3 không khả dụng (cần billing):', err?.error?.message || imagenResp.status);
+      const msg = err?.error?.message || `HTTP ${imagenResp.status}`;
+      console.warn('[Gemini] Imagen 3 không khả dụng (thường do thiếu billing):', msg);
+      errors.push(`imagen-3: ${msg}`);
     }
   } catch (e) {
     console.warn('[Gemini] Imagen 3 lỗi:', e.message);
+    errors.push(`imagen-3: ${e.message}`);
   }
 
   // --- Gemini Flash image generation (AI Studio free key) ---
@@ -408,6 +450,11 @@ async function generateTopicImage(topic, apiKey) {
       if (cfg.modalities) {
         reqBody.generationConfig.responseModalities = cfg.modalities;
       }
+      // Một số model (gemini-2.5-flash-image) hỗ trợ ép tỉ lệ khung hình 16:9
+      // giúp ảnh ra đúng dạng cover thumbnail, không bị cắt méo khi resize.
+      if (cfg.supportsImageConfig) {
+        reqBody.generationConfig.imageConfig = { aspectRatio: '16:9' };
+      }
 
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/${cfg.apiVersion}/models/${cfg.model}:generateContent?key=${apiKey}`,
@@ -420,8 +467,9 @@ async function generateTopicImage(topic, apiKey) {
 
       if (!resp.ok) {
         const errJson = await resp.json().catch(() => ({}));
-        lastError = errJson.error?.message || `HTTP ${resp.status}`;
-        console.warn(`[Gemini] ${cfg.model}/${cfg.apiVersion} lỗi ${resp.status}:`, lastError);
+        const msg = errJson.error?.message || `HTTP ${resp.status}`;
+        console.warn(`[Gemini] ${cfg.model}/${cfg.apiVersion} lỗi ${resp.status}:`, msg);
+        errors.push(`${cfg.model}: ${msg}`);
         continue; // Luôn thử model tiếp theo
       }
 
@@ -430,8 +478,11 @@ async function generateTopicImage(topic, apiKey) {
       const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
 
       if (!imgPart) {
-        lastError = 'Không có ảnh trong response';
-        console.warn(`[Gemini] ${cfg.model}: response không có ảnh`, parts.map(p => p.text?.substring(0,50) || '[data]'));
+        // Nếu Gemini chặn vì lý do an toàn / chính sách, finishReason sẽ cho biết rõ hơn
+        const finishReason = data.candidates?.[0]?.finishReason;
+        const reasonMsg = finishReason ? `không có ảnh (finishReason=${finishReason})` : 'không có ảnh trong response';
+        console.warn(`[Gemini] ${cfg.model}: ${reasonMsg}`, parts.map(p => p.text?.substring(0,80) || '[data]'));
+        errors.push(`${cfg.model}: ${reasonMsg}`);
         continue;
       }
 
@@ -441,13 +492,13 @@ async function generateTopicImage(topic, apiKey) {
       return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
 
     } catch (e) {
-      lastError = e.message;
       console.warn(`[Gemini] ${cfg.model} exception:`, e.message);
+      errors.push(`${cfg.model}: ${e.message}`);
       continue; // Thử model tiếp theo
     }
   }
 
-  throw new Error(lastError || 'Gemini không tạo được ảnh');
+  throw new Error(errors.join(' | ') || 'Gemini không tạo được ảnh');
 }
 
 // Nén & resize ảnh base64 về JPEG nhỏ (vừa thumbnail) để tiết kiệm dung lượng lưu trữ
