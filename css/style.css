@@ -429,6 +429,27 @@ body {
 }
 
 .set-card-body { padding: 1.1rem 1.25rem 1.25rem; }
+
+/* ===== GAME CARDS (trong #gamesGrid) ===== */
+.game-card {
+  padding: 1.25rem;
+}
+.game-card .set-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.game-card .set-card-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+.game-card .set-card-count {
+  font-size: 0.82rem;
+  color: var(--text3);
+  margin-top: 2px;
+}
 .set-card-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
 .set-card-count { font-size: 0.8rem; color: var(--text2); }
 .set-card-progress {
@@ -4625,9 +4646,18 @@ body.game-fullscreen #detDone {
     color: var(--text3);
   }
 
-  /* ── Desktop set-card bị ẩn trên mobile ── */
-  .set-card {
+  /* ── Desktop set-card bị ẩn trên mobile (chỉ ẩn set-card thường, không ẩn game card) ── */
+  .set-card:not(.game-card) {
     display: none;
+  }
+
+  /* ── Game cards trên mobile: hiển thị dạng cột ── */
+  #gamesGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  #gamesGrid .set-card {
+    display: flex !important;
   }
 }
 
