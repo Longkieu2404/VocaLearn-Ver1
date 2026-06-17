@@ -123,27 +123,25 @@ function _hangLoadWord() {
   document.getElementById('hangProgressText').textContent = `Từ ${hangIndex + 1} / ${hangCards.length}`;
   document.getElementById('hangScore').textContent = hangTotalScore;
 
-  // Gợi ý BẮT BUỘC ban đầu: câu ví dụ (che từ) hoặc nghĩa — KHÔNG lộ chữ cái đầu
-  const example = card.example || '';
-  const meaning = card.meaning || card.definition || '';
-  const partOfSpeech = card.partOfSpeech || card.type || '';
-  let mandatoryHint;
-  if (example) {
-    const termEscaped = (card.term || card.word || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp('\\b' + termEscaped + '\\b', 'gi');
-    const maskedExample = example.replace(regex, '___');
-    mandatoryHint = maskedExample;
-  } else if (meaning) {
-    mandatoryHint = partOfSpeech ? `(${partOfSpeech}) ${meaning}` : meaning;
-  } else {
-    const wordLen = hangWord.replace(/ /g, '').length;
-    mandatoryHint = `${wordLen} chữ cái` + (partOfSpeech ? ` • ${partOfSpeech}` : '');
-  }
-
-  document.getElementById('hangMeaning').textContent = mandatoryHint;
-  document.getElementById('hangMeaning').classList.remove('hang-meaning-reveal');
-  document.getElementById('hangMeaning').classList.add('hang-meaning-hint');
+  // Gợi ý ban đầu: AI tạo bằng tiếng Việt, hiện loading trong lúc chờ
+  const meaningEl = document.getElementById('hangMeaning');
+  meaningEl.textContent = '✨ Đang tạo gợi ý...';
+  meaningEl.classList.remove('hang-meaning-reveal');
+  meaningEl.classList.add('hang-meaning-hint');
   document.getElementById('hangPhonetic').textContent = '';
+
+  // Gọi AI bất đồng bộ — không block render bàn phím/ô chữ
+  _hangGenerateInitialHint(card).then(hint => {
+    if (!hangRoundOver) {
+      meaningEl.textContent = hint;
+    }
+  }).catch(() => {
+    if (!hangRoundOver) {
+      const wordLen = hangWord.replace(/ /g, '').length;
+      const pos = card.partOfSpeech || card.type || '';
+      meaningEl.textContent = wordLen + ' chữ cái' + (pos ? ' • ' + pos : '');
+    }
+  });
 
   // AI hint area reset
   const aiWrap = document.getElementById('hangAIHintWrap');
@@ -371,6 +369,63 @@ document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
   if (/^[a-z]$/.test(key)) _hangGuessLetter(key);
 });
+
+// ---- AI INITIAL HINT (tự động khi bắt đầu từ) ----
+async function _hangGenerateInitialHint(card) {
+  const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  if (!apiKey) {
+    // Không có key: fallback tức thì về số chữ cái
+    const wordLen = (card.term || card.word || '').trim().length;
+    const pos = card.partOfSpeech || card.type || '';
+    throw new Error('no key');
+  }
+
+  const word    = card.term || card.word || '';
+  const meaning = card.meaning || card.definition || '';
+  const example = card.example || '';
+
+  const prompt =
+    `Bạn là trợ lý cho game "Word Hangman" — người chơi phải đoán từ tiếng Anh "${word}" bằng cách đoán từng chữ cái.\n` +
+    `Thông tin từ: nghĩa "${meaning}"` + (example ? `, ví dụ: "${example}"` : '') + `.\n` +
+    `Hãy viết MỘT câu gợi ý bằng tiếng Việt để giúp người chơi đoán được từ này.\n` +
+    `Yêu cầu:\n` +
+    `- Viết bằng tiếng Việt hoàn toàn\n` +
+    `- Ngắn gọn (1 câu, tối đa 20 từ)\n` +
+    `- Mô tả đặc điểm, ngữ cảnh, hoặc cách dùng của từ\n` +
+    `- TUYỆT ĐỐI KHÔNG nhắc đến từ "${word}", không đánh vần, không dịch thẳng nghĩa "${meaning}"\n` +
+    `Trả về JSON thuần (không markdown, không backtick): {"hint":"nội dung gợi ý"}`;
+
+  let dynamicModels = HANG_MODELS;
+  try { dynamicModels = await GeminiModels.getModels(apiKey); } catch (e) {}
+
+  let lastError = null;
+  for (const model of dynamicModels) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
+      );
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        lastError = errData.error?.message || `HTTP ${res.status}`;
+        if (isRetryableAIError(res.status, lastError)) continue;
+        throw new Error(lastError);
+      }
+      const data  = await res.json();
+      const raw   = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      if (!parsed.hint) throw new Error('Thiếu hint');
+      return parsed.hint;
+    } catch (e) {
+      lastError = e.message;
+      if (/quota|429/i.test(e.message)) continue;
+      throw e;
+    }
+  }
+  throw new Error(lastError || 'Tất cả model đều hết quota');
+}
 
 // ---- AI HINT ----
 async function _hangRequestAIHint() {
