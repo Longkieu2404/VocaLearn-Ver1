@@ -481,6 +481,50 @@ function showConfirm(msg, icon = '❓') {
   ]);
 }
 
+// Modal nhập văn bản tùy chỉnh (thay cho prompt() mặc định của trình duyệt, kém thẩm mỹ và không đồng bộ theme)
+function showPromptModal(title, defaultValue = '', icon = '✏️', placeholder = '') {
+  return new Promise(resolve => {
+    document.getElementById('notifIcon').textContent = icon;
+    document.getElementById('notifMsg').innerHTML = `
+      <div style="margin-bottom:0.85rem">${title}</div>
+      <input type="text" class="form-input" id="notifPromptInput" placeholder="${placeholder}" style="text-align:left;font-weight:400" />
+    `;
+    const actions = document.getElementById('notifActions');
+    actions.innerHTML = '';
+
+    const overlay = document.getElementById('notifOverlay');
+    const input = document.getElementById('notifPromptInput');
+    input.value = defaultValue;
+
+    const finish = (value) => {
+      overlay.classList.remove('show');
+      input.removeEventListener('keydown', onKeydown);
+      resolve(value);
+    };
+    const onKeydown = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); finish(input.value.trim()); }
+      else if (e.key === 'Escape') { e.preventDefault(); finish(null); }
+    };
+    input.addEventListener('keydown', onKeydown);
+
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-ghost';
+    btnCancel.textContent = 'Hủy';
+    btnCancel.onclick = () => finish(null);
+
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn-primary';
+    btnOk.textContent = 'OK';
+    btnOk.onclick = () => finish(input.value.trim());
+
+    actions.appendChild(btnCancel);
+    actions.appendChild(btnOk);
+
+    overlay.classList.add('show');
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+  });
+}
+
 // Chuyển lỗi API thô thành thông báo thân thiện
 function friendlyAIError(rawMsg) {
   const m = rawMsg || '';
@@ -3162,9 +3206,9 @@ function exitReview() {
 // ======================================================
 // ĐẶT TÊN NGƯỜI DÙNG
 // ======================================================
-function promptSetName() {
+async function promptSetName() {
   const current = localStorage.getItem('vocalearn_username') || '';
-  const name = prompt('Nhập tên của bạn:', current);
+  const name = await showPromptModal('Nhập tên của bạn:', current, '✏️', 'VD: Lê Quốc Thái');
   if (name === null) return;
   const trimmed = name.trim().slice(0, 30);
   localStorage.setItem('vocalearn_username', trimmed);
