@@ -160,7 +160,7 @@ function _hangLoadWord() {
   // Render hint budget bar
   _hangRenderHintBudget();
 
-  _hangRenderFigure();
+  _hangInitFigure();
   _hangRenderWordSlots();
   _hangRenderKeyboard();
 }
@@ -230,64 +230,83 @@ function _hangHintRevealLetter() {
   }
 }
 
-// ---- RENDER HANGMAN FIGURE (SVG, animated stroke-draw per wrong guess) ----
-function _hangRenderFigure() {
+// ---- BODY PARTS DEFINITION ----
+const HANG_BODY_PARTS = [
+  // 1: head
+  { tag: 'circle', attrs: 'cx="75" cy="38" r="13"', dashlen: 82, cls: 'hang-draw-circle' },
+  // 2: torso
+  { tag: 'line', attrs: 'x1="75" y1="51" x2="75" y2="85"', dashlen: 34, cls: 'hang-draw-line' },
+  // 3: left arm
+  { tag: 'line', attrs: 'x1="75" y1="60" x2="58" y2="75"', dashlen: 23, cls: 'hang-draw-line' },
+  // 4: right arm
+  { tag: 'line', attrs: 'x1="75" y1="60" x2="92" y2="75"', dashlen: 23, cls: 'hang-draw-line' },
+  // 5: left leg
+  { tag: 'line', attrs: 'x1="75" y1="85" x2="60" y2="108"', dashlen: 28, cls: 'hang-draw-line' },
+  // 6: right leg
+  { tag: 'line', attrs: 'x1="75" y1="85" x2="90" y2="108"', dashlen: 28, cls: 'hang-draw-line' },
+];
+
+// ---- INIT FIGURE (gallows only, call once per word) ----
+function _hangInitFigure() {
   const svg = document.getElementById('hangFigureSvg');
   if (!svg) return;
-
-  // Gallows luôn hiện (không animate)
-  const gallows = `
+  svg.innerHTML = `
     <line x1="10" y1="118" x2="90" y2="118" class="hang-part hang-base" />
     <line x1="30" y1="118" x2="30" y2="10"  class="hang-part hang-base" />
     <line x1="30" y1="10"  x2="75" y2="10"  class="hang-part hang-base" />
     <line x1="75" y1="10"  x2="75" y2="25"  class="hang-part hang-base" />
   `;
+  svg.className = 'hang-figure-svg';
+}
 
-  // Mỗi phần body: [svg_element, stroke_length_approx]
-  // stroke-dasharray trick để animate "vẽ nét"
-  const bodyParts = [
-    // 1: head — circle, dùng stroke-dasharray = circumference ≈ 82
-    `<circle cx="75" cy="38" r="13" class="hang-part hang-body hang-draw-circle" style="stroke-dasharray:82;stroke-dashoffset:82" />`,
-    // 2: torso
-    `<line x1="75" y1="51" x2="75" y2="85" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:34;stroke-dashoffset:34" />`,
-    // 3: left arm
-    `<line x1="75" y1="60" x2="58" y2="75" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:23;stroke-dashoffset:23" />`,
-    // 4: right arm
-    `<line x1="75" y1="60" x2="92" y2="75" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:23;stroke-dashoffset:23" />`,
-    // 5: left leg
-    `<line x1="75" y1="85" x2="60" y2="108" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:28;stroke-dashoffset:28" />`,
-    // 6: right leg
-    `<line x1="75" y1="85" x2="90" y2="108" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:28;stroke-dashoffset:28" />`,
-  ];
+// ---- RENDER HANGMAN FIGURE — chỉ append phần mới, không vẽ lại ----
+function _hangRenderFigure() {
+  const svg = document.getElementById('hangFigureSvg');
+  if (!svg) return;
 
-  let html = gallows;
-  for (let i = 0; i < hangWrongCount && i < bodyParts.length; i++) {
-    html += bodyParts[i];
+  // Số phần body hiện đang có trong SVG
+  const existingCount = svg.querySelectorAll('.hang-body').length;
+
+  // Chỉ thêm phần mới nhất (index = hangWrongCount - 1)
+  if (hangWrongCount > 0 && hangWrongCount <= HANG_BODY_PARTS.length) {
+    const partIndex = hangWrongCount - 1;
+    if (partIndex >= existingCount) {
+      const p = HANG_BODY_PARTS[partIndex];
+      const el = document.createElementNS('http://www.w3.org/2000/svg', p.tag);
+      // Parse attrs string thành attributes
+      p.attrs.split(/\s+/).forEach(pair => {
+        const [k, v] = pair.split('=');
+        if (k && v) el.setAttribute(k, v.replace(/"/g, ''));
+      });
+      el.setAttribute('class', `hang-part hang-body ${p.cls}`);
+      el.style.strokeDasharray = p.dashlen;
+      el.style.strokeDashoffset = p.dashlen;
+      svg.appendChild(el);
+
+      // Animate nét vẽ sau 1 frame
+      requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)';
+        el.style.strokeDashoffset = '0';
+      });
+    }
   }
 
-  // Mặt buồn khi thua — animate fade in
-  if (hangWrongCount >= HANG_MAX_WRONG) {
-    html += `
-      <g class="hang-face-group hang-face-animate">
-        <line x1="70" y1="33" x2="73" y2="36" class="hang-part hang-face" />
-        <line x1="73" y1="33" x2="70" y2="36" class="hang-part hang-face" />
-        <line x1="77" y1="33" x2="80" y2="36" class="hang-part hang-face" />
-        <line x1="80" y1="33" x2="77" y2="36" class="hang-part hang-face" />
-        <path d="M70 45 Q75 41 80 45" class="hang-part hang-face hang-face-mouth" fill="none" />
-      </g>
+  // Mặt buồn khi thua — chỉ thêm 1 lần
+  if (hangWrongCount >= HANG_MAX_WRONG && !svg.querySelector('.hang-face-group')) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const g = document.createElementNS(ns, 'g');
+    g.setAttribute('class', 'hang-face-group hang-face-animate');
+    g.innerHTML = `
+      <line x1="70" y1="33" x2="73" y2="36" class="hang-part hang-face" />
+      <line x1="73" y1="33" x2="70" y2="36" class="hang-part hang-face" />
+      <line x1="77" y1="33" x2="80" y2="36" class="hang-part hang-face" />
+      <line x1="80" y1="33" x2="77" y2="36" class="hang-part hang-face" />
+      <path d="M70 45 Q75 41 80 45" class="hang-part hang-face hang-face-mouth" fill="none" />
     `;
+    svg.appendChild(g);
   }
-  svg.innerHTML = html;
 
-  // Kích hoạt animation bằng cách xóa dashoffset sau 1 frame
-  requestAnimationFrame(() => {
-    svg.querySelectorAll('.hang-draw-line, .hang-draw-circle').forEach(el => {
-      el.style.transition = 'stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)';
-      el.style.strokeDashoffset = '0';
-    });
-  });
-
-  // Lắc nhẹ khi nguy hiểm (5 sai / 6 tối đa)
+  // Cập nhật class trạng thái trên SVG
   const isDanger = hangWrongCount >= HANG_MAX_WRONG - 1 && hangWrongCount < HANG_MAX_WRONG;
   svg.classList.toggle('hang-danger', isDanger);
   svg.classList.toggle('hang-shake', hangWrongCount > 0 && hangWrongCount < HANG_MAX_WRONG);
@@ -587,8 +606,20 @@ function _hangEndRound(won, skipped = false) {
   const isLast = hangIndex >= hangCards.length - 1;
   const nextBtn = document.getElementById('hangBtnNext');
   nextBtn.style.display = '';
-  nextBtn.textContent = isLast ? '🏆 Xem kết quả' : 'Từ tiếp theo →';
-  nextBtn.onclick = isLast ? _hangFinish : _hangNextWord;
+
+  if (!won && !skipped) {
+    // Thua (treo cổ) → game over, không tiếp tục
+    nextBtn.textContent = '💀 Xem kết quả';
+    nextBtn.onclick = _hangFinish;
+  } else if (isLast) {
+    // Từ cuối cùng thắng/bỏ qua → tự động chuyển kết quả sau 1.5s
+    nextBtn.style.display = 'none';
+    setTimeout(_hangFinish, 1500);
+  } else {
+    // Còn từ tiếp theo
+    nextBtn.textContent = 'Từ tiếp theo →';
+    nextBtn.onclick = _hangNextWord;
+  }
 }
 
 // ---- NEXT WORD ----
@@ -606,15 +637,26 @@ function _hangFinish() {
   const rate  = total ? hangRoundCorrect / total : 0;
   const avgWrong = total ? (hangResults.reduce((s, r) => s + r.wrongCount, 0) / total).toFixed(1) : 0;
 
+  // Kiểm tra có bị game over giữa chừng không (từ cuối cùng trong results bị thua do treo cổ)
+  const lastResult = hangResults[hangResults.length - 1];
+  const gameOverByLoss = lastResult && !lastResult.won && lastResult.wrongCount >= HANG_MAX_WRONG;
+  const completedAll = hangIndex >= hangCards.length - 1 && !gameOverByLoss;
+
   const prev = parseInt(localStorage.getItem('hangman_highscore') || '0');
   const isNewHigh = hangTotalScore > prev;
   if (isNewHigh) localStorage.setItem('hangman_highscore', hangTotalScore);
   const hi = Math.max(hangTotalScore, prev);
 
   let icon, title;
-  if (rate >= 0.8)      { icon = '🏆'; title = 'Xuất sắc! Bạn là cao thủ Hangman!'; }
-  else if (rate >= 0.5) { icon = '👏'; title = 'Khá tốt! Tiếp tục luyện tập!'; }
-  else                  { icon = '📖'; title = 'Cần luyện thêm nhé!'; }
+  if (gameOverByLoss) {
+    icon = '💀'; title = `Game Over! Bạn thua ở từ ${hangIndex + 1}/${hangCards.length}`;
+  } else if (rate >= 0.8) {
+    icon = '🏆'; title = 'Xuất sắc! Bạn là cao thủ Hangman!';
+  } else if (rate >= 0.5) {
+    icon = '👏'; title = 'Khá tốt! Tiếp tục luyện tập!';
+  } else {
+    icon = '📖'; title = 'Cần luyện thêm nhé!';
+  }
 
   document.getElementById('hangDoneIcon').textContent = icon;
   document.getElementById('hangDoneTitle').textContent = title;
