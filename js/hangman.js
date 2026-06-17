@@ -605,18 +605,17 @@ function _hangEndRound(won, skipped = false) {
 
   const isLast = hangIndex >= hangCards.length - 1;
   const nextBtn = document.getElementById('hangBtnNext');
-  nextBtn.style.display = '';
+  nextBtn.style.display = 'none'; // ẩn nút mặc định, dùng auto-timeout
 
   if (!won && !skipped) {
-    // Thua (treo cổ) → game over, không tiếp tục
-    nextBtn.textContent = '💀 Xem kết quả';
-    nextBtn.onclick = _hangFinish;
+    // Thua (treo cổ) → tự động game over sau 2s
+    setTimeout(_hangFinish, 2000);
   } else if (isLast) {
-    // Từ cuối cùng thắng/bỏ qua → tự động chuyển kết quả sau 1.5s
-    nextBtn.style.display = 'none';
+    // Từ cuối cùng thắng/bỏ qua → tự động kết quả sau 1.5s
     setTimeout(_hangFinish, 1500);
   } else {
-    // Còn từ tiếp theo
+    // Còn từ tiếp theo → hiện nút next bình thường
+    nextBtn.style.display = '';
     nextBtn.textContent = 'Từ tiếp theo →';
     nextBtn.onclick = _hangNextWord;
   }
