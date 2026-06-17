@@ -464,51 +464,6 @@ function showConfirm(msg, icon = '❓') {
   ]);
 }
 
-function showPrompt(msg, icon = '✏️', defaultValue = '') {
-  return new Promise(resolve => {
-    document.getElementById('notifIcon').textContent = icon;
-    document.getElementById('notifMsg').innerHTML = msg;
-
-    // Show and pre-fill the input
-    const inputEl = document.getElementById('notifInput');
-    inputEl.value = defaultValue;
-    inputEl.style.display = 'block';
-    inputEl.placeholder = 'Nhập tên của bạn...';
-
-    const actions = document.getElementById('notifActions');
-    actions.innerHTML = '';
-
-    const close = (val) => {
-      document.getElementById('notifOverlay').classList.remove('show');
-      inputEl.style.display = 'none';
-      resolve(val);
-    };
-
-    // Cancel button
-    const btnCancel = document.createElement('button');
-    btnCancel.className = 'btn-ghost';
-    btnCancel.textContent = 'Hủy';
-    btnCancel.onclick = () => close(null);
-    actions.appendChild(btnCancel);
-
-    // OK button
-    const btnOk = document.createElement('button');
-    btnOk.className = 'btn-primary';
-    btnOk.textContent = 'Xác nhận';
-    btnOk.onclick = () => close(inputEl.value);
-    actions.appendChild(btnOk);
-
-    // Allow Enter key to confirm
-    inputEl.onkeydown = (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); close(inputEl.value); }
-      if (e.key === 'Escape') { e.preventDefault(); close(null); }
-    };
-
-    document.getElementById('notifOverlay').classList.add('show');
-    setTimeout(() => inputEl.focus(), 80);
-  });
-}
-
 // Chuyển lỗi API thô thành thông báo thân thiện
 function friendlyAIError(rawMsg) {
   const m = rawMsg || '';
@@ -3190,9 +3145,9 @@ function exitReview() {
 // ======================================================
 // ĐẶT TÊN NGƯỜI DÙNG
 // ======================================================
-async function promptSetName() {
+function promptSetName() {
   const current = localStorage.getItem('vocalearn_username') || '';
-  const name = await showPrompt('Nhập tên hiển thị của bạn:', '✏️', current);
+  const name = prompt('Nhập tên của bạn:', current);
   if (name === null) return;
   const trimmed = name.trim().slice(0, 30);
   localStorage.setItem('vocalearn_username', trimmed);
@@ -4330,20 +4285,39 @@ function setupFirebaseUI() {
   const btnSync   = document.getElementById('btnFirebaseSync');
 
   function updateUI(user) {
+    const loginState = document.getElementById('authLoginState');
+    const userCard   = document.getElementById('authUserCard');
+    const nameEl     = document.getElementById('authUserName');
+    const avatarImg  = document.getElementById('authAvatarImg');
+    const avatarInit = document.getElementById('authAvatarInitials');
+
     if (user) {
-      btnLogin.style.display  = 'none';
-      btnLogout.style.display = '';
-      btnSync.style.display   = '';
-      note.textContent = '✔ Đăng nhập: ' + (user.displayName || user.email);
+      if (loginState) loginState.style.display = 'none';
+      if (userCard)   userCard.style.display   = '';
+
+      const name = user.displayName || user.email || '';
+      if (nameEl) nameEl.textContent = name;
+
+      if (user.photoURL && avatarImg) {
+        avatarImg.src = user.photoURL;
+        avatarImg.style.display = '';
+        if (avatarInit) avatarInit.style.display = 'none';
+      } else {
+        if (avatarImg) avatarImg.style.display = 'none';
+        if (avatarInit) {
+          const initials = name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+          avatarInit.textContent = initials || '?';
+          avatarInit.style.display = '';
+        }
+      }
     } else {
-      btnLogin.style.display  = '';
-      btnLogout.style.display = 'none';
-      btnSync.style.display   = 'none';
-      note.textContent = 'Đồng bộ dữ liệu trên mọi thiết bị';
+      if (loginState) loginState.style.display = '';
+      if (userCard)   userCard.style.display   = 'none';
       const el = document.getElementById('autosaveStatus');
-      if (el) { el.innerHTML = '<span>☁️</span><span>Chưa đăng nhập</span>'; el.className = 'autosave-status'; }
+      if (el) { el.textContent = ''; }
     }
   }
+
 
   // ── Theo dõi trạng thái đăng nhập ─────────────────────────────────────────
   // Firebase Auth trên mobile fire onAuthStateChanged(null) lần đầu trước khi

@@ -305,17 +305,7 @@ const FirebaseSync = {
   _updateStatus(state) {
     const el = document.getElementById('autosaveStatus');
     if (!el) return;
-    const map = {
-      off:     { icon: '☁️', text: 'Chưa đăng nhập',             cls: '' },
-      offline: { icon: '📴', text: 'Offline — sync khi có mạng', cls: 'autosave-pending' },
-      pending: { icon: '⏳', text: 'Đang chờ đồng bộ...',        cls: 'autosave-pending' },
-      syncing: { icon: '🔄', text: 'Đang đồng bộ...',            cls: 'autosave-pending' },
-      synced:  { icon: '✅', text: 'Đã đồng bộ Firebase',        cls: 'autosave-ok'      },
-      error:   { icon: '❌', text: 'Lỗi đồng bộ',                cls: 'autosave-err'     }
-    };
-    const s = map[state] || map.off;
-    el.innerHTML = `<span>${s.icon}</span><span>${s.text}</span>`;
-    el.className = 'autosave-status ' + s.cls;
+    
   }
 };
 

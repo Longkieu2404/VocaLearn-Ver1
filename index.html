@@ -74,20 +74,32 @@
       </div>
     </button>
 
-    <!-- 3. Firebase Sync -->
-    <div class="autosave-panel">
-      <div class="autosave-status" id="autosaveStatus">
-        <span>☁️</span><span>Chưa đăng nhập</span>
-      </div>
-      <div class="autosave-btns">
-        <button class="btn-autosave-on" id="btnFirebaseLogin" title="Đăng nhập để đồng bộ dữ liệu">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">Đăng nhập Google
+    <!-- 3. Firebase Auth -->
+    <div class="auth-panel" id="authPanel">
+      <div class="auth-login-state" id="authLoginState">
+        <p class="auth-login-hint">Đồng bộ dữ liệu trên mọi thiết bị</p>
+        <button class="btn-google-login" id="btnFirebaseLogin">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" height="16" alt="">
+          Đăng nhập Google
         </button>
-        <button class="btn-autosave-off" id="btnFirebaseLogout" title="Đăng xuất" style="display:none">⏹ Đăng xuất</button>
-        <button class="btn-autosave-load" id="btnFirebaseSync" title="Đồng bộ ngay" style="display:none"><span style="display:block;line-height:1">🔄</span><span style="display:block;font-size:0.7em">Sync</span></button>
       </div>
-      <div class="autosave-note" id="autosaveNote">Đồng bộ dữ liệu trên mọi thiết bị</div>
+      <div class="auth-user-card" id="authUserCard" style="display:none">
+        <div class="auth-user-left">
+          <div class="auth-avatar-wrap" id="authAvatarWrap">
+            <img id="authAvatarImg" src="" alt="" class="auth-avatar-img" style="display:none"/>
+            <span id="authAvatarInitials" class="auth-avatar-initials"></span>
+          </div>
+          <div class="auth-user-info">
+            <span class="auth-user-name" id="authUserName"></span>
+          </div>
+        </div>
+        <button class="auth-logout-btn" id="btnFirebaseLogout" title="Đăng xuất">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
     </div>
+    <div id="autosaveNote" style="display:none"></div>
+    <button id="btnFirebaseSync" style="display:none"></button>
   </div>
 </nav>
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -1169,7 +1181,6 @@
   <div class="notif-box" id="notifBox">
     <div class="notif-icon" id="notifIcon">⚠️</div>
     <div class="notif-msg" id="notifMsg"></div>
-    <input type="text" id="notifInput" class="notif-input" style="display:none" autocomplete="off" />
     <div class="notif-actions" id="notifActions"></div>
   </div>
 </div>
