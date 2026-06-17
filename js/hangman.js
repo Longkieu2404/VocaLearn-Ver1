@@ -96,6 +96,8 @@ function _hangStartGame() {
   hangRoundWrong   = 0;
   hangResults      = [];
 
+  document.getElementById('hangProgressFill').style.width = '0%';
+
   _hangShowSection('session');
   document.body.classList.add('game-fullscreen', 'game-in-session');
   _hangLoadWord();
@@ -117,10 +119,11 @@ function _hangLoadWord() {
   hangMeaningHintShown = false;
   hangRevealHintsUsed = 0;
 
-  // Progress
-  const pct = ((hangIndex) / hangCards.length) * 100;
+  // Progress text + width: hiện ngay vị trí từ hiện tại
+  const pct = ((hangIndex + 1) / hangCards.length) * 100;
   document.getElementById('hangProgressFill').style.width = pct + '%';
   document.getElementById('hangProgressText').textContent = `Từ ${hangIndex + 1} / ${hangCards.length}`;
+  document.getElementById('hangScore').textContent = hangTotalScore;
   document.getElementById('hangScore').textContent = hangTotalScore;
 
   // Gợi ý ban đầu: AI tạo bằng tiếng Việt, hiện loading trong lúc chờ
