@@ -812,8 +812,8 @@ function createSetCard(set) {
         </div>
       </div>
       <div class="sc-mobile-actions">
-        <button class="sc-mobile-btn sc-btn-study">&#127956; Học</button>
-        <button class="sc-mobile-btn sc-btn-quiz">&#129504; Kiểm tra</button>
+        <button class="sc-mobile-btn sc-btn-study">📖 Học</button>
+        <button class="sc-mobile-btn sc-btn-quiz">✏️ Kiểm tra</button>
       </div>`;
     wrap.querySelector('.set-card-mobile').addEventListener('click', () => openDetailModal(set.id));
     wrap.querySelector('.sc-btn-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
@@ -841,8 +841,8 @@ function createSetCard(set) {
         <span style="color:var(--green)">${pctMastered}%</span>
       </div>
       <div class="set-card-actions">
-        <button class="sca-btn sca-study" title="Học thẻ">&#127956; Học</button>
-        <button class="sca-btn sca-quiz" title="Kiểm tra">&#129504; Kiểm tra</button>
+        <button class="sca-btn sca-study" title="Học thẻ">📖 Học</button>
+        <button class="sca-btn sca-quiz" title="Kiểm tra">✏️ Kiểm tra</button>
       </div>
     </div>`;
   div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });

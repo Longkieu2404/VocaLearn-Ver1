@@ -1570,7 +1570,7 @@ body {
 
 /* ===== SET CARD QUICK ACTIONS ===== */
 .set-card-actions {
-  display: flex; gap: 0.5rem; margin-top: 0.85rem;
+  display: flex; gap: 0.5rem; margin-top: 0.9rem;
   opacity: 0; transform: translateY(4px);
   transition: var(--transition);
 }
@@ -1578,17 +1578,20 @@ body {
   opacity: 1; transform: translateY(0);
 }
 .sca-btn {
-  flex: 1; padding: 0.45rem 0;
+  flex: 1;
+  padding: 0.55rem 0.5rem;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   background: var(--bg3);
   color: var(--text2);
   font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 0.78rem; font-weight: 600;
+  font-size: 0.82rem; font-weight: 600;
   cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  white-space: nowrap;
 }
-.sca-study:hover  { background: rgba(255,209,102,0.15); color: var(--yellow); border-color: rgba(255,209,102,0.3); }
-.sca-quiz:hover   { background: rgba(199,125,255,0.15); color: var(--accent5); border-color: rgba(199,125,255,0.3); }
+.sca-study:hover  { background: rgba(255,209,102,0.15); color: var(--yellow); border-color: rgba(255,209,102,0.4); }
+.sca-quiz:hover   { background: rgba(199,125,255,0.15); color: var(--accent5); border-color: rgba(199,125,255,0.4); }
 
 /* ===== BTN-SM ===== */
 .btn-sm {
