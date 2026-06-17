@@ -464,6 +464,51 @@ function showConfirm(msg, icon = '❓') {
   ]);
 }
 
+function showPrompt(msg, icon = '✏️', defaultValue = '') {
+  return new Promise(resolve => {
+    document.getElementById('notifIcon').textContent = icon;
+    document.getElementById('notifMsg').innerHTML = msg;
+
+    // Show and pre-fill the input
+    const inputEl = document.getElementById('notifInput');
+    inputEl.value = defaultValue;
+    inputEl.style.display = 'block';
+    inputEl.placeholder = 'Nhập tên của bạn...';
+
+    const actions = document.getElementById('notifActions');
+    actions.innerHTML = '';
+
+    const close = (val) => {
+      document.getElementById('notifOverlay').classList.remove('show');
+      inputEl.style.display = 'none';
+      resolve(val);
+    };
+
+    // Cancel button
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-ghost';
+    btnCancel.textContent = 'Hủy';
+    btnCancel.onclick = () => close(null);
+    actions.appendChild(btnCancel);
+
+    // OK button
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn-primary';
+    btnOk.textContent = 'Xác nhận';
+    btnOk.onclick = () => close(inputEl.value);
+    actions.appendChild(btnOk);
+
+    // Allow Enter key to confirm
+    inputEl.onkeydown = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); close(inputEl.value); }
+      if (e.key === 'Escape') { e.preventDefault(); close(null); }
+    };
+
+    document.getElementById('notifOverlay').classList.add('show');
+    setTimeout(() => inputEl.focus(), 80);
+  });
+}
+
 // Chuyển lỗi API thô thành thông báo thân thiện
 function friendlyAIError(rawMsg) {
   const m = rawMsg || '';
@@ -3145,9 +3190,9 @@ function exitReview() {
 // ======================================================
 // ĐẶT TÊN NGƯỜI DÙNG
 // ======================================================
-function promptSetName() {
+async function promptSetName() {
   const current = localStorage.getItem('vocalearn_username') || '';
-  const name = prompt('Nhập tên của bạn:', current);
+  const name = await showPrompt('Nhập tên hiển thị của bạn:', '✏️', current);
   if (name === null) return;
   const trimmed = name.trim().slice(0, 30);
   localStorage.setItem('vocalearn_username', trimmed);
