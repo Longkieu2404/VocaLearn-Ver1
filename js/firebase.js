@@ -114,6 +114,7 @@ const FirebaseSync = {
     if (data.trash        !== undefined) localStorage.setItem('vocalearn_trash',         JSON.stringify(data.trash));
     if (data.chatSessions !== undefined) localStorage.setItem('vocalearn_chat_sessions', JSON.stringify(data.chatSessions));
     if (data.geminiKey    !== undefined) localStorage.setItem('vocalearn_gemini_key',    data.geminiKey);
+    if (data.sampleThumbs !== undefined) localStorage.setItem('vocalearn_sample_thumbs', JSON.stringify(data.sampleThumbs));
   },
 
   _clearLocal() {
@@ -121,6 +122,7 @@ const FirebaseSync = {
     localStorage.setItem('vocalearn_progress', JSON.stringify({}));
     localStorage.setItem('vocalearn_stats',    JSON.stringify({ daily: {}, dailyCards: {}, sessions: [] }));
     localStorage.setItem('vocalearn_streak',   JSON.stringify({ count: 0, lastDate: null }));
+    localStorage.setItem('vocalearn_sample_thumbs', JSON.stringify({}));
     localStorage.removeItem('vocalearn_trash');
     localStorage.removeItem('vocalearn_username');
     localStorage.removeItem('vocalearn_chat_sessions');
@@ -276,6 +278,7 @@ const FirebaseSync = {
         username:     localStorage.getItem('vocalearn_username')                || '',
         chatSessions: JSON.parse(localStorage.getItem('vocalearn_chat_sessions') || '[]'),
         geminiKey:    localStorage.getItem('vocalearn_gemini_key')              || '',
+        sampleThumbs: Storage.getSampleThumbs(),
         updatedAt:    serverTimestamp(),
         version:      3
       }, { merge: true });
@@ -329,17 +332,19 @@ window.FirebaseThumb = FirebaseThumb;
 window.FirebaseAuth = FirebaseAuth;
 window.FirebaseSync = FirebaseSync;
 
-const _origSaveSets     = Storage.saveSets.bind(Storage);
-const _origSaveProgress = Storage.saveProgress.bind(Storage);
-const _origSaveStats    = Storage.saveStats.bind(Storage);
-const _origSaveStreak   = Storage.saveStreak.bind(Storage);
-const _origTrashSave    = Trash._save.bind(Trash);
+const _origSaveSets        = Storage.saveSets.bind(Storage);
+const _origSaveProgress    = Storage.saveProgress.bind(Storage);
+const _origSaveStats       = Storage.saveStats.bind(Storage);
+const _origSaveStreak      = Storage.saveStreak.bind(Storage);
+const _origSaveSampleThumbs = Storage.saveSampleThumbs.bind(Storage);
+const _origTrashSave       = Trash._save.bind(Trash);
 
-Storage.saveSets     = v => { _origSaveSets(v);     FirebaseSync.triggerSave(); };
-Storage.saveProgress = v => { _origSaveProgress(v); FirebaseSync.triggerSave(); };
-Storage.saveStats    = v => { _origSaveStats(v);    FirebaseSync.triggerSave(); };
-Storage.saveStreak   = v => { _origSaveStreak(v);   FirebaseSync.triggerSave(); };
-Trash._save          = v => { _origTrashSave(v);    FirebaseSync.triggerSave(); };
+Storage.saveSets        = v => { _origSaveSets(v);        FirebaseSync.triggerSave(); };
+Storage.saveProgress    = v => { _origSaveProgress(v);    FirebaseSync.triggerSave(); };
+Storage.saveStats       = v => { _origSaveStats(v);       FirebaseSync.triggerSave(); };
+Storage.saveStreak      = v => { _origSaveStreak(v);      FirebaseSync.triggerSave(); };
+Storage.saveSampleThumbs = v => { _origSaveSampleThumbs(v); FirebaseSync.triggerSave(); };
+Trash._save              = v => { _origTrashSave(v);       FirebaseSync.triggerSave(); };
 
 // ===== NETWORK RECONNECT =====
 window.addEventListener('online', async () => {
