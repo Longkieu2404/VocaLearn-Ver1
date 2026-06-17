@@ -319,6 +319,19 @@ const FirebaseSync = {
   }
 };
 
+// ===== THUMBNAIL — lưu base64 thẳng vào Firestore qua sync thông thường =====
+// Firebase Storage không dùng (yêu cầu gói Blaze).
+// customThumb (base64 JPEG ~20-40KB) được lưu trong trường sets[] của Firestore document,
+// đồng bộ tự động cùng với toàn bộ dữ liệu qua FirebaseSync.triggerSave().
+const FirebaseThumb = {
+  // Không cần upload riêng — FirebaseSync.triggerSave() sẽ đẩy customThumb lên Firestore
+  async upload(setId, dataUrl) { return null; },
+  // Không cần xóa riêng — xóa set là đủ
+  async delete(setId) { return; }
+};
+
+window.FirebaseThumb = FirebaseThumb;
+
 // ===== PATCH Storage & Trash =====
 window.FirebaseAuth = FirebaseAuth;
 window.FirebaseSync = FirebaseSync;

@@ -35,670 +35,177 @@ function getSetTopicEmoji(set) {
 }
 
 function getSetTopicSVG(set) {
-  if (set.customSvg) return set.customSvg;
-  if (SET_TOPIC_SVG[set.id]) return SET_TOPIC_SVG[set.id];
-  return SET_TOPIC_SVG_FALLBACK[(set.colorIndex || 0) % SET_TOPIC_SVG_FALLBACK.length];
+  return getSetThumbContent(set);
 }
+
 
 // ============================================================
-//  AI THUMBNAIL GENERATOR
+//  THUMBNAIL SYSTEM — Icon SVG theo chủ đề + Upload ảnh
 // ============================================================
-let _aiSvgCache = {};
-let _aiCurrentName = { '': '', '2': '' };
-let _aiDebounceTimer = null;
-let _aiDebounceTimer2 = null;
 
-function onSetNameInput() {
-  const name = document.getElementById('setNameInput').value.trim();
-  if (!name || name === _aiCurrentName['']) return;
-  clearTimeout(_aiDebounceTimer);
-  _aiDebounceTimer = setTimeout(() => triggerAiThumb(name, ''), 900);
-}
-
-function onAiSetNameInput() {
-  const name = document.getElementById('aiSetName').value.trim();
-  if (!name || name === _aiCurrentName['2']) return;
-  clearTimeout(_aiDebounceTimer2);
-  _aiDebounceTimer2 = setTimeout(() => triggerAiThumb(name, '2'), 900);
-}
-
-async function triggerAiThumb(name, suffix = '') {
-  if (!name) return;
-  _aiCurrentName[suffix] = name;
-  if (_aiSvgCache[name]) { showAiThumb(_aiSvgCache[name], suffix); return; }
-  setAiThumbLoading(true, suffix);
-  // Hiển thị trạng thái 2 bước: viết prompt → tạo ảnh
-  const apiKey = localStorage.getItem('vocalearn_gemini_key');
-  if (apiKey) {
-    setAiThumbStatus('🧠 Gemini đang phân tích chủ đề...', 'loading', suffix);
-  } else {
-    setAiThumbStatus('🎨 AI đang tạo hình minh họa...', 'loading', suffix);
-  }
-  try {
-    const thumb = await generateTopicThumb(name, (msg, type) => setAiThumbStatus(msg, type, suffix));
-    _aiSvgCache[name] = thumb;
-    showAiThumb(thumb, suffix);
-    // generateTopicThumb() có thể đã tự set trạng thái lỗi (dùng ảnh mặc định) qua onStatus
-    // ở bước cuối — không ghi đè thành "thành công" trong trường hợp đó.
-    const statusEl = document.getElementById('aiThumbStatus' + suffix);
-    if (!statusEl || !statusEl.classList.contains('error')) {
-      setAiThumbStatus('✅ AI đã tạo xong hình minh họa!', 'success', suffix);
-    }
-  } catch(e) {
-    console.error('AI thumb error:', e);
-    setAiThumbStatus('⚠️ Không tạo được ảnh, sẽ dùng ảnh mặc định.', 'error', suffix);
-    // generateTopicThumb() đã được thiết kế để không bao giờ throw, nhưng nếu có
-    // lỗi bất ngờ (DOM, v.v.) vẫn hiển thị một hình thay vì để preview kẹt ở spinner.
-    try { showAiThumb(generateTopicSVGNoKey(name), suffix); } catch (_) {}
-  } finally {
-    setAiThumbLoading(false, suffix);
-  }
-}
-
-// Tạo ảnh minh họa thật cho bộ thẻ
-// Thứ tự ưu tiên khi có Gemini key:
-//   1. Gemini Flash Image / Imagen (hiểu chủ đề tốt nhất, đúng chủ đề)
-//   2. Pollinations AI (miễn phí, fallback khi Gemini lỗi)
-//   3. SVG do Gemini text vẽ (gần đúng chủ đề nhưng chỉ là hình khối đơn giản)
-//   4. SVG offline (luôn thành công, không cần mạng/khoá API)
-// Khi không có key:
-//   1. Pollinations AI
-//   2. SVG offline
-// Hàm này KHÔNG được throw — luôn trả về một chuỗi HTML/SVG hợp lệ, để UI
-// không bị "kẹt" ở trạng thái spinner khi mọi nguồn ảnh đều lỗi.
-async function generateTopicThumb(topic, onStatus) {
-  const apiKey = localStorage.getItem('vocalearn_gemini_key');
-  const errors = [];
-
-  if (apiKey) {
-    // Có key → ưu tiên Gemini Flash Image (tạo ảnh đúng chủ đề hơn Pollinations)
-    if (onStatus) onStatus('🧠 Gemini đang tạo hình minh họa...', 'loading');
-    try {
-      return await generateTopicImage(topic, apiKey);
-    } catch (e) {
-      errors.push(`Gemini ảnh: ${e.message}`);
-      console.warn('[Thumb] Gemini image failed:', e.message, '→ trying Pollinations...');
-      if (onStatus) onStatus('🎨 Đang thử Pollinations AI...', 'loading');
-    }
-    // Gemini thất bại → thử Pollinations
-    try {
-      return await generatePollinationsImage(topic, onStatus);
-    } catch (e) {
-      errors.push(`Pollinations: ${e.message}`);
-      console.warn('[Thumb] Pollinations failed:', e.message, '→ fallback SVG');
-      if (onStatus) onStatus('✏️ Đang vẽ hình minh họa dự phòng...', 'loading');
-    }
-    // Cả hai thất bại → SVG bằng Gemini text
-    try {
-      return await generateTopicSVG(topic, apiKey);
-    } catch (e) {
-      errors.push(`SVG (Gemini text): ${e.message}`);
-      console.warn('[Thumb] Tất cả nguồn ảnh AI đều lỗi, dùng SVG offline:', errors.join(' | '));
-      if (onStatus) onStatus('⚠️ AI không tạo được ảnh, dùng hình mặc định.', 'error');
-      return generateTopicSVGNoKey(topic);
-    }
-  } else {
-    // Không có key → Pollinations (miễn phí)
-    if (onStatus) onStatus('🎨 AI đang tạo hình minh họa...', 'loading');
-    try {
-      return await generatePollinationsImage(topic, onStatus);
-    } catch (e) {
-      console.warn('[Thumb] Pollinations failed:', e.message, '→ SVG fallback');
-      if (onStatus) onStatus('⚠️ Không tạo được ảnh, dùng hình mặc định.', 'error');
-      return generateTopicSVGNoKey(topic);
-    }
-  }
-}
-
-// ---- Pollinations AI: tạo ảnh thật miễn phí, không cần billing ----
-// API: https://image.pollinations.ai/prompt/{prompt}?params
-// Trả về ảnh JPEG thật, chất lượng cao, không cần API key
-// ---- Dùng Gemini text để viết prompt ảnh chuyên nghiệp cho Pollinations ----
-// Gemini text API miễn phí (không cần billing), hiểu tiếng Việt tốt
-// → Tạo ra prompt tiếng Anh rất chi tiết, đúng chủ đề hơn prompt tĩnh
-async function buildGeminiImagePrompt(topic) {
-  const apiKey = localStorage.getItem('vocalearn_gemini_key');
-  if (!apiKey) return null; // Không có key → dùng prompt tĩnh
-
-  const systemMsg = `You are an expert prompt engineer for AI image generation (Stable Diffusion / FLUX model).
-Your task: given a Vietnamese or English topic name, write a detailed English image generation prompt.
-
-RULES:
-- Output ONLY the prompt text. No explanation, no preamble, no quotes.
-- The prompt must clearly and specifically describe the scene for that topic.
-- Style must be: soft children's digital illustration, warm pastel palette, storybook art style similar to high-quality Google educational app card covers.
-- The main subject must be large, centered, clearly recognizable as the topic.
-- Include: specific objects/characters related to the topic, background setting, lighting, mood.
-- End with: "children's educational illustration, warm pastel colors, soft gradients, gentle shadows, vibrant cheerful, 16:9 wide composition, no text, no letters"`;
-
-  const userMsg = `Topic: "${topic}"
-Write a detailed image generation prompt for this topic. The image will be used as a cover thumbnail for a children's English vocabulary flashcard set.`;
-
-  try {
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemMsg }] },
-          contents: [{ parts: [{ text: userMsg }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 300 }
-        })
-      }
-    );
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
-    if (text && text.length > 20) {
-      console.log('[GeminiPrompt] Generated prompt:', text.substring(0, 100) + '...');
-      return text;
-    }
-  } catch (e) {
-    console.warn('[GeminiPrompt] Failed:', e.message);
-  }
-  return null;
-}
-
-// Giới hạn độ dài prompt trước khi đưa vào query string của Pollinations.
-// Prompt do Gemini sinh ra (buildGeminiImagePrompt) hoặc negative prompt quá dài
-// khi encodeURIComponent có thể vượt giới hạn độ dài URL của server Pollinations
-// (~thường gặp lỗi 414 / request bị treo), nên cắt về độ dài an toàn.
-function clampPromptLength(str, maxLen) {
-  if (!str) return str;
-  return str.length > maxLen ? str.slice(0, maxLen) : str;
-}
-
-async function generatePollinationsImage(topic, onStatus) {
-  // Ưu tiên dùng Gemini để viết prompt thông minh hơn (nếu có key)
-  // Nếu không có key hoặc Gemini lỗi → fallback về prompt tĩnh
-  let prompt;
-  try {
-    const geminiPrompt = await buildGeminiImagePrompt(topic);
-    if (geminiPrompt) {
-      if (onStatus) onStatus('🎨 Đang tạo ảnh với Pollinations AI...', 'loading');
-    }
-    prompt = geminiPrompt || buildImagePrompt(topic);
-  } catch(e) {
-    prompt = buildImagePrompt(topic);
-  }
-  prompt = clampPromptLength(prompt, 700);
-  const encodedPrompt = encodeURIComponent(prompt);
-
-  // Thử models theo thứ tự chất lượng:
-  // flux-pro: chất lượng cao nhất, chi tiết, màu sắc đẹp
-  // flux: chất lượng tốt, nhanh hơn
-  // turbo: nhanh nhất, fallback cuối
-  const models = ['flux-pro', 'flux', 'turbo'];
-  const negativePrompt = clampPromptLength(buildNegativePrompt(), 350);
-  const encodedNegative = encodeURIComponent(negativePrompt);
-  const errors = [];
-
-  for (const model of models) {
-    try {
-      const seed = Math.floor(Math.random() * 999999);
-      // width=1280&height=800: tỉ lệ 16:9 độ phân giải cao
-      // enhance=true: Pollinations tự cải thiện prompt
-      // safe=true: bật bộ lọc nội dung an toàn cho trẻ em
-      // Bỏ safe=true vì gây 402 ở một số vùng (Việt Nam)
-      // Dùng width nhỏ hơn để tránh timeout
-      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=960&height=600&model=${model}&nologo=true&seed=${seed}&enhance=true&negative=${encodedNegative}`;
-
-      // flux-pro mất lâu hơn, flux/turbo nhanh hơn — rút ngắn timeout so với trước
-      // để người dùng không phải chờ quá lâu trước khi chuyển sang phương án dự phòng.
-      const timeoutMs = model === 'flux-pro' ? 45000 : model === 'flux' ? 30000 : 20000;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-      const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const blob = await response.blob();
-      if (!blob.type.startsWith('image/')) throw new Error('Not an image');
-      if (blob.size < 5000) throw new Error('Image too small, likely error');
-
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('FileReader failed'));
-        reader.readAsDataURL(blob);
-      });
-
-      const compressedUrl = await compressImageDataUrl(dataUrl);
-      console.log(`[Pollinations] Success with model=${model}, size=${blob.size}bytes`);
-      return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
-    } catch (e) {
-      const msg = e.name === 'AbortError' ? 'timeout' : e.message;
-      console.warn(`[Pollinations] model=${model} failed:`, msg);
-      errors.push(`${model}: ${msg}`);
-      if (model === models[models.length - 1]) throw new Error(errors.join(' | '));
-    }
-  }
-}
-
-// ---- Tạo ảnh minh họa thật bằng model ảnh Gemini (fallback khi Pollinations fail) ----
-// Thứ tự ưu tiên: Imagen 3 (cần billing) → Gemini 2.5 Flash Image ("Nano Banana") → Gemini 2.0 Flash Preview Image Generation
-// Danh sách model Gemini tạo ảnh, mỗi entry gồm { model, apiVersion, modalities, supportsImageConfig }
-// LƯU Ý: gemini-2.0-flash-exp (model thử nghiệm cuối 2024) đã bị Google khai tử/đổi tên,
-// không còn hỗ trợ responseModalities IMAGE → luôn lỗi 404, khiến code rơi thẳng xuống
-// Pollinations rồi SVG fallback. Phải dùng tên model ảnh chính thức hiện hành.
-// Thứ tự ưu tiên: thử từng cái cho đến khi thành công
-const GEMINI_IMAGE_MODELS = [
-  // gemini-2.5-flash-image ("Nano Banana") - model sinh ảnh chính thức hiện tại, hỗ trợ imageConfig.aspectRatio
-  { model: 'gemini-2.5-flash-image', apiVersion: 'v1beta', modalities: ['TEXT', 'IMAGE'], supportsImageConfig: true },
-  // Bản preview cũ hơn - một số key/region vẫn còn quyền truy cập, không hỗ trợ imageConfig
-  { model: 'gemini-2.0-flash-preview-image-generation', apiVersion: 'v1beta', modalities: ['TEXT', 'IMAGE'], supportsImageConfig: false },
-];
-
-// Map từ khóa topic → visual cues cụ thể để AI model hiểu đúng chủ đề
-// Prompt chi tiết giúp model tạo ảnh đúng chủ đề, không bị nhầm lẫn
-function getTopicVisualHints(topic) {
-  const t = topic.toLowerCase();
-  const hints = [
-    { keys: ['school', 'trường', 'học', 'classroom', 'lớp'],
-      vis: 'a cheerful pastel-colored two-story school building with large round windows and a bright red roof, a yellow school bus with round wheels parked in front, children in colorful uniforms with backpacks walking through a gate labeled "SCHOOL", green trees lining the path, fluffy white clouds in a soft blue sky' },
-    { keys: ['home', 'house', 'nhà', 'gia đình', 'family', 'living room', 'bedroom', 'kitchen', 'furniture'],
-      vis: 'a cozy two-story house with warm peach-colored walls, a red tiled roof, large windows with flower boxes, a wooden front door with a welcome wreath, a green lawn with colorful blooming flowers, a white picket fence, warm golden afternoon light casting soft shadows' },
-    { keys: ['friend', 'bạn bè', 'people', 'người', 'relationship', 'classmate', 'together'],
-      vis: 'three cheerful children of diverse backgrounds standing together in a sunny park, laughing and hugging, wearing colorful outfits in red, blue, and yellow, lush green trees and a blue sky behind them, small flowers on the ground, warm sunlight creating soft glows' },
-    { keys: ['neighbour', 'neighborhood', 'khu phố', 'phố', 'community', 'street', 'town'],
-      vis: 'a charming illustrated street scene with pastel-colored storefronts including a bakery with bread in the window, a flower shop with a colorful display, and a bookstore with stacked books visible, rounded awnings in blue and red, people strolling with shopping bags, flower pots on every windowsill, warm golden-hour lighting' },
-    { keys: ['nature', 'natural', 'wonder', 'thiên nhiên', 'núi', 'mountain', 'forest', 'jungle', 'landscape'],
-      vis: 'majestic snow-capped mountains with soft purple-blue gradients reflected perfectly in a calm crystal lake in the foreground, tall dark pine trees framing the sides, a golden-orange sunset sky with light pink clouds, small wildflowers dotting the grassy shore' },
-    { keys: ['tet', 'tết', 'lunar', 'holiday', 'lễ hội', 'new year', 'celebration', 'festival'],
-      vis: 'a festive Vietnamese Tet scene with red and gold paper lanterns hanging across the frame, a bright pink peach blossom tree in full bloom on the left, a golden kumquat tree laden with fruit on the right, red envelopes (lì xì) scattered on a table, dragon and phoenix decorations, warm red and gold tones throughout' },
-    { keys: ['fruit', 'trái cây', 'food', 'thức ăn', 'eat', 'vegetable', 'rau', 'meal', 'drink', 'restaurant'],
-      vis: 'a beautifully arranged collection of vibrant fresh fruits and vegetables on a warm wooden table: a glossy red apple, a yellow banana bunch, a halved orange showing juicy segments, a watermelon wedge with red flesh, a bunch of purple grapes, green leaves scattered around, soft natural window light from the side' },
-    { keys: ['animal', 'động vật', 'hoang dã', 'pet', 'thú', 'zoo', 'wild', 'farm', 'bird', 'fish'],
-      vis: 'a vibrant nature scene with friendly illustrated animals: a round-faced brown bear sitting on a log, a white rabbit with pink ears in the grass, a tall friendly giraffe with yellow spots peeking from behind a tree, a colorful parrot on a branch, lush green jungle foliage, a bright blue sky with white clouds' },
-    { keys: ['sport', 'thể thao', 'game', 'play', 'football', 'soccer', 'basketball', 'swimming', 'run', 'exercise'],
-      vis: 'energetic children playing various sports on a bright sunny day: one kicking a colorful soccer ball toward a goal, another shooting a basketball, others running on a track, all with round friendly faces and colorful jerseys, a green field with a blue sky and cheering crowd in the background' },
-    { keys: ['travel', 'du lịch', 'trip', 'vacation', 'adventure', 'country', 'map', 'airplane'],
-      vis: 'a colorful hot air balloon striped in red, yellow, and blue floating above rolling green hills with tiny illustrated towns below, white clouds at eye level, distant mountains on the horizon, a bright sun creating golden rays, a winding road visible below with miniature cars' },
-    { keys: ['color', 'màu sắc', 'colour', 'art', 'paint', 'draw', 'vẽ'],
-      vis: 'an artist\'s cozy studio with colorful paint tubes squeezed and arranged by color of the rainbow, thick-bristle paintbrushes in a ceramic jar, a wooden palette with blobs of mixed paint, a canvas on an easel showing a half-finished landscape, paint splashes and handprints on the wooden table' },
-    { keys: ['weather', 'thời tiết', 'season', 'mùa', 'rain', 'snow', 'sun', 'cloud', 'wind'],
-      vis: 'a charming split illustration showing all four seasons simultaneously: top-left spring with pink cherry blossoms and green sprouts, top-right summer with a bright sun and children at the beach, bottom-left autumn with orange and red maple leaves falling, bottom-right winter with snowflakes and a snowman, a central tree showing all four states' },
-    { keys: ['body', 'cơ thể', 'health', 'sức khỏe', 'doctor', 'hospital', 'medicine', 'exercise', 'hygiene'],
-      vis: 'a bright healthcare scene with a friendly cartoon doctor in a white coat holding a clipboard, a cheerful patient child sitting on an exam table, colorful health posters on the wall showing vegetables and exercise, a stethoscope, medicine bottles with clear labels, soft white and green interior' },
-    { keys: ['cloth', 'quần áo', 'fashion', 'wear', 'dress', 'shirt', 'hat', 'shoes', 'shop'],
-      vis: 'a cute clothing boutique interior with pastel walls, rounded wooden hangers displaying colorful dresses, striped shirts, denim jackets, a shelf of colorful shoes, a mirror with decorative frame, accessories like scarves and hats on display, soft window light creating a warm shopping atmosphere' },
-    { keys: ['technology', 'thiết bị', 'device', 'smart', 'phone', 'computer', 'robot', 'internet', 'digital'],
-      vis: 'modern tech devices with sleek rounded designs arranged on a clean desk: a glowing smartphone showing a colorful app screen, an open laptop with a bright display, a tablet with a stylus, wireless earbuds, a small smart speaker, soft blue ambient LED lighting, icons and interfaces subtly visible on screens' },
-    { keys: ['city', 'thành phố', 'town', 'urban', 'building', 'bridge', 'traffic'],
-      vis: 'a vibrant city skyline at golden hour with rounded pastel-colored buildings of varying heights, illuminated windows, a river reflecting the cityscape, a graceful bridge in the foreground, tiny colorful cars on streets below, people walking on sidewalks, a warm orange-pink sky with a few stars just appearing' },
-    { keys: ['ocean', 'sea', 'biển', 'fish', 'marine', 'beach', 'island', 'coral', 'dive', 'swim'],
-      vis: 'a stunning underwater scene with crystal-clear turquoise water, colorful tropical fish with round friendly faces swimming in groups, a vibrant coral reef with pink, orange, and purple corals, sea anemones swaying, sunlight rays piercing the surface from above, a sea turtle gliding gracefully in the background' },
-    { keys: ['music', 'âm nhạc', 'song', 'instrument', 'concert', 'band', 'guitar', 'piano', 'sing'],
-      vis: 'a cozy music room with warm wooden walls, an acoustic guitar leaning against a stool, a grand piano keyboard visible, floating musical notes (♩♪♫) in gold and blue, sheet music on a stand, a microphone on a stand, string lights creating a performance atmosphere, warm amber lighting' },
-    { keys: ['number', 'số', 'math', 'toán', 'count', 'calculate', 'addition', 'subtract'],
-      vis: 'a colorful classroom scene with large illustrated number blocks in rainbow colors (1-10) arranged on a carpet, a chalkboard with simple addition equations, an abacus with colored beads, mathematical symbols (+, -, =) floating in the air, a friendly cartoon owl teacher pointing at the board' },
-    { keys: ['alphabet', 'letter', 'chữ cái', 'abc', 'word', 'reading', 'book', 'vocabulary'],
-      vis: 'colorful wooden alphabet blocks with rounded corners scattered playfully on a warm surface, each showing a different letter in different colors, an open storybook with illustrated pages nearby, a pencil and crayons, letter flashcards pinned to a corkboard, soft natural light from a window' },
-    { keys: ['time', 'thời gian', 'clock', 'schedule', 'calendar', 'hour', 'day', 'week'],
-      vis: 'a cheerful illustrated clock face with round numbers in rainbow colors, smaller clocks showing different times around it, a calendar with colored dots marking important days, an hourglass with flowing golden sand, soft pastel backgrounds with gentle star and sun decorations' },
-    { keys: ['shop', 'store', 'market', 'buy', 'sell', 'money', 'price', 'chợ', 'siêu thị'],
-      vis: 'a bustling illustrated market scene with colorful fruit and vegetable stalls, a baker\'s stand with fresh bread and cakes, a toy shop with colorful items, friendly vendors waving, shoppers with baskets, price tags visible, cheerful pennant flags strung between stalls, warm afternoon light' },
-    { keys: ['transport', 'vehicle', 'car', 'bus', 'train', 'plane', 'boat', 'giao thông'],
-      vis: 'a colorful transportation scene showing various vehicles: a red double-decker bus, a blue train on tracks, a yellow taxi cab, an airplane in the sky leaving a vapor trail, a sailboat on water, all illustrated in a cute friendly style with rounded shapes and bright colors against a pastel sky background' },
-  ];
-
-  for (const h of hints) {
-    if (h.keys.some(k => t.includes(k))) {
-      return h.vis;
-    }
-  }
-  // Generic fallback với chủ đề được nhúng trực tiếp
-  return `a charming educational illustrated scene clearly representing the topic "${topic}": show the most iconic and recognizable objects, characters, or settings associated with "${topic}", arranged in a warm inviting composition with soft pastel background gradients, friendly rounded shapes, and cheerful colors suitable for children`;
-}
-
-// Prompt tối ưu cho FLUX model - illustrated style như hình mẫu (Google educational app covers)
-function buildImagePrompt(topic) {
-  const visualHints = getTopicVisualHints(topic);
-  return (
-    `SUBJECT (very important): ${visualHints}. ` +
-    `STYLE: Soft digital illustration in the style of high-quality Google educational app card artwork and modern children's storybook covers. ` +
-    `Warm pastel color palette with rich saturation, gentle gradient backgrounds, smooth cel-shading, and soft drop shadows. ` +
-    `Characters have friendly round faces, expressive eyes, clean silhouettes, and lightly stylized proportions. ` +
-    `COMPOSITION: Wide 16:9 landscape. Main subject large and centered occupying 50-70% of frame. ` +
-    `Foreground elements for depth. Soft gradient sky or indoor background. Curved ground or surface. ` +
-    `LIGHTING: Soft diffused light from upper-left. Warm golden tones, cozy welcoming atmosphere. ` +
-    `KEY COLORS: coral #E8735A, sunny yellow #F9C74F, sky blue #90E0EF, sage green #80B918, soft peach #FFD6A5. ` +
-    `QUALITY: High detail, richly illustrated, professional. Vibrant, cheerful, child-friendly. ` +
-    `NEGATIVE: no text, no letters, no numbers, no watermarks, no UI, no borders, no frames, no dark themes, no realistic photography, no 3D render.`
-  );
-}
-
-// Negative prompt: loại bỏ những thứ không mong muốn
-function buildNegativePrompt() {
-  return (
-    `photograph, photo, realistic photo, hyperrealistic, 3D render, CGI, ` +
-    `dark theme, dark background, black background, horror, scary, violent, disturbing, ` +
-    `ugly, blurry, low quality, distorted, bad anatomy, deformed, extra limbs, ` +
-    `text, letters, numbers, watermark, logo, signature, border, frame, UI element, HUD, ` +
-    `anime, manga, chibi, thick bold outlines, flat icon, clipart, vector icon, ` +
-    `stock photo, busy cluttered composition, neon colors, oversaturated, ` +
-    `abstract, surreal, minimalist, geometric only, monochrome, grayscale, ` +
-    `wrong subject, unrelated objects, confusing composition`
-  );
-}
-
-// Prompt tối ưu cho Gemini image model
-// Gemini hiểu ngôn ngữ tự nhiên rất tốt — viết như chat thật, không cần format đặc biệt
-function buildGeminiImageDirectPrompt(topic) {
-  const visualHints = getTopicVisualHints(topic);
-  return (
-    `Hãy vẽ cho tôi một hình ảnh minh họa chủ đề "${topic}" dành cho học sinh tiểu học học tiếng Anh. ` +
-    `Cảnh vẽ: ${visualHints}. ` +
-    `Phong cách: tranh minh họa kỹ thuật số mềm mại, màu pastel ấm áp, như ảnh bìa sách thiếu nhi hoặc app học tiếng Anh của Google. ` +
-    `Bố cục ngang 16:9, nhân vật/vật thể chính lớn và rõ ràng ở trung tâm. ` +
-    `Vui tươi, thân thiện, phù hợp trẻ em. Không có chữ, không có số trong ảnh.`
-  );
-}
-
-async function generateTopicImage(topic, apiKey) {
-  // Prompt ngắn gọn, rõ chủ đề — Gemini hiểu ngữ nghĩa tốt, không cần mô tả dài
-  const prompt = buildGeminiImageDirectPrompt(topic);
-  const errors = [];
-
-  // --- Thử Imagen 3 trước nếu có billing ---
-  try {
-    const imagenResp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt: prompt }],
-          parameters: { sampleCount: 1, aspectRatio: '16:9', safetyFilterLevel: 'block_some', personGeneration: 'allow_adult' }
-        })
-      }
-    );
-    if (imagenResp.ok) {
-      const imagenData = await imagenResp.json();
-      const b64 = imagenData.predictions?.[0]?.bytesBase64Encoded;
-      const mimeType = imagenData.predictions?.[0]?.mimeType || 'image/png';
-      if (b64) {
-        console.log('[Gemini] ✅ Imagen 3 thành công!');
-        const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
-        return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
-      }
-      errors.push('imagen-3: response không có ảnh');
-    } else {
-      const err = await imagenResp.json().catch(() => ({}));
-      const msg = err?.error?.message || `HTTP ${imagenResp.status}`;
-      console.warn('[Gemini] Imagen 3 không khả dụng (thường do thiếu billing):', msg);
-      errors.push(`imagen-3: ${msg}`);
-    }
-  } catch (e) {
-    console.warn('[Gemini] Imagen 3 lỗi:', e.message);
-    errors.push(`imagen-3: ${e.message}`);
-  }
-
-  // --- Gemini Flash image generation (AI Studio free key) ---
-  for (const cfg of GEMINI_IMAGE_MODELS) {
-    try {
-      console.log(`[Gemini] Thử ${cfg.model} (${cfg.apiVersion})...`);
-
-      // Build request body tùy từng model config
-      const reqBody = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 1.0 }
-      };
-      if (cfg.modalities) {
-        reqBody.generationConfig.responseModalities = cfg.modalities;
-      }
-      // Một số model (gemini-2.5-flash-image) hỗ trợ ép tỉ lệ khung hình 16:9
-      // giúp ảnh ra đúng dạng cover thumbnail, không bị cắt méo khi resize.
-      if (cfg.supportsImageConfig) {
-        reqBody.generationConfig.imageConfig = { aspectRatio: '16:9' };
-      }
-
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/${cfg.apiVersion}/models/${cfg.model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reqBody)
-        }
-      );
-
-      if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        const msg = errJson.error?.message || `HTTP ${resp.status}`;
-        console.warn(`[Gemini] ${cfg.model}/${cfg.apiVersion} lỗi ${resp.status}:`, msg);
-        errors.push(`${cfg.model}: ${msg}`);
-        continue; // Luôn thử model tiếp theo
-      }
-
-      const data = await resp.json();
-      const parts = data.candidates?.[0]?.content?.parts || [];
-      const imgPart = parts.find(p => p.inlineData && p.inlineData.data);
-
-      if (!imgPart) {
-        // Nếu Gemini chặn vì lý do an toàn / chính sách, finishReason sẽ cho biết rõ hơn
-        const finishReason = data.candidates?.[0]?.finishReason;
-        const reasonMsg = finishReason ? `không có ảnh (finishReason=${finishReason})` : 'không có ảnh trong response';
-        console.warn(`[Gemini] ${cfg.model}: ${reasonMsg}`, parts.map(p => p.text?.substring(0,80) || '[data]'));
-        errors.push(`${cfg.model}: ${reasonMsg}`);
-        continue;
-      }
-
-      const { mimeType, data: b64 } = imgPart.inlineData;
-      console.log(`[Gemini] ✅ ${cfg.model} thành công! (${mimeType})`);
-      const compressedUrl = await compressImageDataUrl(`data:${mimeType};base64,${b64}`);
-      return '<img src="' + compressedUrl + '" alt="" loading="lazy"/>';
-
-    } catch (e) {
-      console.warn(`[Gemini] ${cfg.model} exception:`, e.message);
-      errors.push(`${cfg.model}: ${e.message}`);
-      continue; // Thử model tiếp theo
-    }
-  }
-
-  throw new Error(errors.join(' | ') || 'Gemini không tạo được ảnh');
-}
-
-// Nén & resize ảnh base64 về JPEG nhỏ (vừa thumbnail) để tiết kiệm dung lượng lưu trữ
-function compressImageDataUrl(srcDataUrl, maxW = 480, maxH = 312, quality = 0.88) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = maxW;
-        canvas.height = maxH;
-        const ctx = canvas.getContext('2d');
-        const srcRatio = img.width / img.height;
-        const dstRatio = maxW / maxH;
-        let sx = 0, sy = 0, sw = img.width, sh = img.height;
-        if (srcRatio > dstRatio) {
-          sw = img.height * dstRatio;
-          sx = (img.width - sw) / 2;
-        } else {
-          sh = img.width / dstRatio;
-          sy = (img.height - sh) / 2;
-        }
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, maxW, maxH);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      } catch (e) { reject(e); }
-    };
-    img.onerror = () => reject(new Error('Cannot load generated image'));
-    img.src = srcDataUrl;
-  });
-}
-
-// ---- Vẽ SVG minh họa bằng Gemini (dùng khi model ảnh không khả dụng) ----
-async function generateTopicSVG(topic, apiKey) {
-  apiKey = apiKey || localStorage.getItem('vocalearn_gemini_key');
-  if (!apiKey) throw new Error('NO_API_KEY');
-
-  const prompt = `You are an expert SVG illustrator for a children's English vocabulary learning app. Create a warm, charming illustrated scene for the topic: "${topic}".
-
-MANDATORY OUTPUT RULES:
-- Output ONLY the raw SVG element. Zero markdown, zero backticks, zero explanation.
-- Start with: <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
-- Use <defs> with <linearGradient> for backgrounds — this is required.
-- End with: </svg>
-- Total length: under 8000 characters.
-
-VISUAL STYLE — match Google educational app card art:
-Soft warm gradients, friendly slightly-stylized characters, gentle shadows, pastel-leaning but vibrant palette.
-Think "modern storybook illustration" — NOT pure flat icons, NOT realistic photo.
-
-MANDATORY DESIGN RULES:
-1. BACKGROUND GRADIENT: Always use <defs><linearGradient id="bg"> and a full-canvas <rect fill="url(#bg)"/>. Use warm tones: sky (peach→light-blue #FFE8D6→#C9E8F5), indoor (cream→warm-yellow #FFF5E6→#FFE0A0), nature (sky-blue→soft-green #D4EEFF→#C8F0C0).
-2. CURVED GROUND: Add a curved ground using <path> with bezier Q/C commands — NOT a flat rect. E.g.: <path d="M0 95 Q100 85 200 95 L200 130 L0 130Z" fill="#8BC34A"/>.
-3. MAIN SUBJECT LARGE + CENTERED: The hero object must be at least 60px wide, centered. Use 10+ layered shapes for it — add details, highlights, shadows.
-4. SOFT SHADING: Each rounded object needs a white highlight (opacity 0.3–0.5, top-left) and a dark ellipse shadow (opacity 0.12–0.2, below on ground).
-5. WARM PALETTE: Use these colors — coral: #E8735A, yellow: #F9C74F, sky: #90E0EF, green: #80B918, peach: #FFD6A5, lilac: #C9B8E8, mint: #80CBC4. Avoid pure #FF0000 / #0000FF primaries.
-6. DEPTH LAYERS: Far background (small, pale) → Midground → Large foreground hero.
-7. CLOUDS: If outdoors, add 2 soft clouds with overlapping circles (fill white, opacity 0.85).
-8. FRIENDLY CHARACTERS: Rounded shapes. Faces = circle head + dot eyes + curve smile. Bodies = rounded-rect with rx. Skin tones: #FFD5A8, #F1C27D, or #8D5524.
-9. DECORATIVE ACCENTS: Add small flowers, stars, sparkles, or dots to fill empty space and add charm.
-10. NO text, NO numbers, NO letters anywhere in the SVG.`;
-
-  const MODELS = await GeminiModels.getModels(apiKey);
-  let lastError = null;
-
-  for (const model of MODELS) {
-    try {
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-              systemInstruction: { parts: [{ text: 'You are a professional SVG illustrator. Output ONLY raw SVG code — no explanation, no markdown, no comments. Your SVGs must use gradient backgrounds (linearGradient in defs), layered depth, warm pastel color palettes, curved paths with bezier commands, and soft shading. Style: Google educational app card art meets modern storybook illustration. Rich detail, NOT flat clipart.' }] },
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.7 }
-            })
-        }
-      );
-      if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        lastError = errJson.error?.message || `HTTP ${resp.status}`;
-        if (isRetryableAIError(resp.status, lastError)) continue;
-        throw new Error(lastError);
-      }
-      const data = await resp.json();
-      const raw = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
-      const match = raw.match(/<svg[\s\S]*<\/svg>/i);
-      if (!match) { lastError = 'No SVG in response'; continue; }
-      return match[0];
-    } catch (e) {
-      lastError = e.message;
-      if (isRetryableAIError(null, e.message)) continue;
-      throw e;
-    }
-  }
-
-  throw new Error(lastError || 'Cannot generate SVG');
-}
-
-// ---- SVG fallback không cần API key (khi cả Pollinations và Gemini đều thất bại) ----
+// Hàm tạo SVG icon theo chủ đề từ tên bộ thẻ
 function generateTopicSVGNoKey(topic) {
-  const t = topic.toLowerCase();
-  // Màu gradient theo chủ đề
+  const t = (topic || '').toLowerCase();
   let c1 = '#FFE8D6', c2 = '#C9E8F5', accent = '#E8735A', icon = '📚';
-  if (t.includes('school') || t.includes('trường')) { c1='#E8F4FD'; c2='#C8E6FA'; accent='#3A86FF'; icon='🏫'; }
-  else if (t.includes('home') || t.includes('nhà')) { c1='#FFF5E6'; c2='#FFE0A0'; accent='#FF9F40'; icon='🏠'; }
-  else if (t.includes('friend') || t.includes('bạn')) { c1='#F0FFF0'; c2='#C8F0C0'; accent='#4CAF50'; icon='👫'; }
-  else if (t.includes('nature') || t.includes('thiên')) { c1='#E8F5E9'; c2='#B2DFDB'; accent='#2E7D32'; icon='🏔️'; }
-  else if (t.includes('tet') || t.includes('tết') || t.includes('holiday')) { c1='#FFF3E0'; c2='#FFCDD2'; accent='#D32F2F'; icon='🎊'; }
-  else if (t.includes('animal') || t.includes('động vật')) { c1='#F3E5F5'; c2='#E1BEE7'; accent='#7B1FA2'; icon='🦁'; }
-  else if (t.includes('food') || t.includes('fruit') || t.includes('ăn')) { c1='#FFFDE7'; c2='#F0F4C3'; accent='#F57F17'; icon='🍎'; }
-  else if (t.includes('sport') || t.includes('thể thao')) { c1='#E3F2FD'; c2='#BBDEFB'; accent='#1565C0'; icon='⚽'; }
-  else if (t.includes('music') || t.includes('âm nhạc')) { c1='#FCE4EC'; c2='#F8BBD0'; accent='#C2185B'; icon='🎵'; }
-  else if (t.includes('travel') || t.includes('du lịch')) { c1='#E0F7FA'; c2='#B2EBF2'; accent='#00838F'; icon='✈️'; }
-  else if (t.includes('weather') || t.includes('thời tiết')) { c1='#E1F5FE'; c2='#B3E5FC'; accent='#0277BD'; icon='☀️'; }
-  else if (t.includes('body') || t.includes('sức khỏe')) { c1='#F1F8E9'; c2='#DCEDC8'; accent='#558B2F'; icon='💪'; }
-  else if (t.includes('cloth') || t.includes('quần áo')) { c1='#FCE4EC'; c2='#EDE7F6'; accent='#AD1457'; icon='👗'; }
-  else if (t.includes('city') || t.includes('thành phố')) { c1='#ECEFF1'; c2='#CFD8DC'; accent='#37474F'; icon='🏙️'; }
-  else if (t.includes('ocean') || t.includes('biển')) { c1='#E0F7FA'; c2='#80DEEA'; accent='#006064'; icon='🐠'; }
-  const label = topic.length > 18 ? topic.substring(0, 18) + '…' : topic;
+  if (t.includes('school') || t.includes('trường') || t.includes('class')) { c1='#E8F4FD'; c2='#C8E6FA'; accent='#3A86FF'; icon='🏫'; }
+  else if (t.includes('home') || t.includes('nhà') || t.includes('family') || t.includes('gia đình')) { c1='#FFF5E6'; c2='#FFE0A0'; accent='#FF9F40'; icon='🏠'; }
+  else if (t.includes('friend') || t.includes('bạn') || t.includes('people') || t.includes('person')) { c1='#F0FFF0'; c2='#C8F0C0'; accent='#4CAF50'; icon='👫'; }
+  else if (t.includes('nature') || t.includes('thiên nhiên') || t.includes('plant') || t.includes('tree') || t.includes('cây')) { c1='#E8F5E9'; c2='#B2DFDB'; accent='#2E7D32'; icon='🌿'; }
+  else if (t.includes('tet') || t.includes('tết') || t.includes('holiday') || t.includes('lễ') || t.includes('festival')) { c1='#FFF3E0'; c2='#FFCDD2'; accent='#D32F2F'; icon='🎊'; }
+  else if (t.includes('animal') || t.includes('động vật') || t.includes('pet') || t.includes('thú')) { c1='#F3E5F5'; c2='#E1BEE7'; accent='#7B1FA2'; icon='🦁'; }
+  else if (t.includes('food') || t.includes('fruit') || t.includes('ăn') || t.includes('meal') || t.includes('cook') || t.includes('nấu')) { c1='#FFFDE7'; c2='#F0F4C3'; accent='#F57F17'; icon='🍎'; }
+  else if (t.includes('sport') || t.includes('thể thao') || t.includes('game') || t.includes('play')) { c1='#E3F2FD'; c2='#BBDEFB'; accent='#1565C0'; icon='⚽'; }
+  else if (t.includes('music') || t.includes('âm nhạc') || t.includes('song') || t.includes('sing')) { c1='#FCE4EC'; c2='#F8BBD0'; accent='#C2185B'; icon='🎵'; }
+  else if (t.includes('travel') || t.includes('du lịch') || t.includes('trip') || t.includes('tour')) { c1='#E0F7FA'; c2='#B2EBF2'; accent='#00838F'; icon='✈️'; }
+  else if (t.includes('weather') || t.includes('thời tiết') || t.includes('season') || t.includes('mùa')) { c1='#E1F5FE'; c2='#B3E5FC'; accent='#0277BD'; icon='☀️'; }
+  else if (t.includes('body') || t.includes('health') || t.includes('sức khỏe') || t.includes('medical') || t.includes('doctor')) { c1='#F1F8E9'; c2='#DCEDC8'; accent='#558B2F'; icon='💪'; }
+  else if (t.includes('cloth') || t.includes('quần áo') || t.includes('fashion') || t.includes('wear')) { c1='#FCE4EC'; c2='#EDE7F6'; accent='#AD1457'; icon='👗'; }
+  else if (t.includes('city') || t.includes('thành phố') || t.includes('town') || t.includes('urban')) { c1='#ECEFF1'; c2='#CFD8DC'; accent='#37474F'; icon='🏙️'; }
+  else if (t.includes('ocean') || t.includes('biển') || t.includes('sea') || t.includes('fish') || t.includes('cá')) { c1='#E0F7FA'; c2='#80DEEA'; accent='#006064'; icon='🐠'; }
+  else if (t.includes('tech') || t.includes('computer') || t.includes('phone') || t.includes('máy tính') || t.includes('robot')) { c1='#E8EAF6'; c2='#C5CAE9'; accent='#283593'; icon='💻'; }
+  else if (t.includes('art') || t.includes('draw') || t.includes('paint') || t.includes('vẽ') || t.includes('nghệ thuật')) { c1='#FFF8E1'; c2='#FFE082'; accent='#FF6F00'; icon='🎨'; }
+  else if (t.includes('book') || t.includes('read') || t.includes('sách') || t.includes('story') || t.includes('truyện')) { c1='#F3E5F5'; c2='#CE93D8'; accent='#6A1B9A'; icon='📖'; }
+  else if (t.includes('number') || t.includes('math') || t.includes('số') || t.includes('toán')) { c1='#E8F5E9'; c2='#A5D6A7'; accent='#1B5E20'; icon='🔢'; }
+  else if (t.includes('color') || t.includes('màu') || t.includes('colour')) { c1='#FFF9C4'; c2='#FFD54F'; accent='#E65100'; icon='🌈'; }
+  else if (t.includes('time') || t.includes('date') || t.includes('thời gian') || t.includes('ngày')) { c1='#E3F2FD'; c2='#90CAF9'; accent='#0D47A1'; icon='⏰'; }
+  else if (t.includes('work') || t.includes('job') || t.includes('office') || t.includes('nghề') || t.includes('công việc')) { c1='#FFF3E0'; c2='#FFCC80'; accent='#BF360C'; icon='💼'; }
+  else if (t.includes('greet') || t.includes('chào') || t.includes('hello') || t.includes('introduc')) { c1='#F9FBE7'; c2='#F0F4C3'; accent='#827717'; icon='👋'; }
+  else if (t.includes('transport') || t.includes('vehicle') || t.includes('car') || t.includes('xe') || t.includes('phương tiện')) { c1='#E0F2F1'; c2='#80CBC4'; accent='#004D40'; icon='🚗'; }
+  else if (t.includes('space') || t.includes('star') || t.includes('vũ trụ') || t.includes('planet')) { c1='#1A1A2E'; c2='#16213E'; accent='#E94560'; icon='🌟'; }
+  else if (t.includes('emotion') || t.includes('feel') || t.includes('cảm xúc') || t.includes('happy') || t.includes('sad')) { c1='#FCE4EC'; c2='#FFF9C4'; accent='#E91E63'; icon='😊'; }
+  const label = (topic || '').length > 18 ? (topic || '').substring(0, 18) + '…' : (topic || '');
   return `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgG" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="bgG_${Date.now()}" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${c1}"/>
       <stop offset="100%" stop-color="${c2}"/>
     </linearGradient>
-    <linearGradient id="groundG" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${accent}" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="${accent}" stop-opacity="0.05"/>
-    </linearGradient>
   </defs>
-  <rect width="200" height="130" fill="url(#bgG)" rx="0"/>
-  <ellipse cx="100" cy="110" rx="90" ry="22" fill="url(#groundG)"/>
-  <circle cx="100" cy="58" r="34" fill="white" opacity="0.45"/>
-  <text x="100" y="70" text-anchor="middle" font-size="36" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">${icon}</text>
+  <rect width="200" height="130" fill="url(#bgG_${Date.now()})" rx="0"/>
+  <circle cx="28" cy="25" r="10" fill="white" opacity="0.5"/>
+  <circle cx="38" cy="22" r="8" fill="white" opacity="0.45"/>
+  <circle cx="162" cy="28" r="9" fill="white" opacity="0.4"/>
+  <circle cx="173" cy="24" r="7" fill="white" opacity="0.4"/>
+  <circle cx="100" cy="58" r="36" fill="white" opacity="0.35"/>
+  <text x="100" y="72" text-anchor="middle" font-size="38" font-family="Segoe UI Emoji,Apple Color Emoji,sans-serif">${icon}</text>
   <text x="100" y="112" text-anchor="middle" font-size="11" font-weight="700" fill="${accent}" font-family="system-ui,sans-serif" opacity="0.85">${label}</text>
-  <circle cx="28" cy="25" r="10" fill="white" opacity="0.6"/>
-  <circle cx="38" cy="22" r="8" fill="white" opacity="0.6"/>
-  <circle cx="160" cy="30" r="9" fill="white" opacity="0.5"/>
-  <circle cx="172" cy="26" r="7" fill="white" opacity="0.5"/>
 </svg>`;
 }
 
-function setAiThumbLoading(loading, suffix = '') {
-  const preview = document.getElementById('aiThumbPreview' + suffix);
-  const row = document.getElementById('aiThumbRow' + suffix);
-  const regenBtn = document.getElementById('aiRegenBtn' + suffix);
-  if (!row) return;
-  if (loading) {
-    row.classList.add('generating'); row.classList.remove('done');
-    if (regenBtn) { regenBtn.style.display = 'none'; regenBtn.disabled = true; }
-    if (preview) preview.innerHTML = '<div class="ai-thumb-spinner"></div><div class="ai-thumb-shimmer"></div>';
-    setAiThumbStatus('\ud83c\udfa8 AI dang ve hinh minh hoa...', 'loading', suffix);
-  } else {
-    row.classList.remove('generating');
-    if (regenBtn) { regenBtn.style.display = 'inline-block'; regenBtn.disabled = false; }
+// Biến lưu pending thumbnail khi tạo/sửa bộ thẻ
+let _pendingThumbDataUrl = null;   // ảnh người dùng upload (data URL)
+let _pendingThumbSetId   = null;   // set đang chỉnh sửa thumbnail trực tiếp từ card
+
+// Mở file picker để upload ảnh thumbnail (trong modal tạo/sửa bộ thẻ)
+function openThumbUpload(suffix) {
+  const inp = document.getElementById('thumbFileInput' + (suffix || ''));
+  if (inp) inp.click();
+}
+
+// Xử lý file được chọn trong modal
+function onThumbFileSelected(event, suffix) {
+  const file = event.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _pendingThumbDataUrl = e.target.result;
+    // Hiển thị preview
+    const preview = document.getElementById('thumbPreviewImg' + (suffix || ''));
+    const wrapper = document.getElementById('thumbPreviewWrap' + (suffix || ''));
+    const placeholder = document.getElementById('thumbPreviewPlaceholder' + (suffix || ''));
+    if (preview) { preview.src = _pendingThumbDataUrl; }
+    if (wrapper) wrapper.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    // Reset file input để có thể chọn lại cùng file
+    event.target.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Xóa thumbnail đã upload (trong modal)
+function clearThumbUpload(suffix) {
+  _pendingThumbDataUrl = null;
+  const preview = document.getElementById('thumbPreviewImg' + (suffix || ''));
+  const wrapper = document.getElementById('thumbPreviewWrap' + (suffix || ''));
+  const placeholder = document.getElementById('thumbPreviewPlaceholder' + (suffix || ''));
+  if (preview) preview.src = '';
+  if (wrapper) wrapper.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'flex';
+}
+
+// Nút đổi ảnh thumbnail ngay trên card (ngoài modal)
+function openThumbPickerForSet(setId) {
+  _pendingThumbSetId = setId;
+  const inp = document.getElementById('thumbPickerGlobal');
+  if (inp) inp.click();
+}
+
+async function onThumbPickerGlobalChange(event) {
+  const file = event.target.files[0];
+  if (!file || !file.type.startsWith('image/') || !_pendingThumbSetId) return;
+  event.target.value = '';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const dataUrl = e.target.result;
+    const compressed = await compressThumbImage(dataUrl);
+    const sets = Storage.getSets();
+    const idx = sets.findIndex(s => s.id === _pendingThumbSetId);
+    if (idx === -1) return;
+    sets[idx].customThumb = compressed;
+    delete sets[idx].customSvg; // xóa SVG cũ nếu có
+    Storage.saveSets(sets);
+    // Upload lên Firebase Storage nếu đã đăng nhập
+    if (typeof FirebaseThumb !== 'undefined' && window.FirebaseAuth && window.FirebaseAuth.getUser()) {
+      FirebaseThumb.upload(_pendingThumbSetId, compressed).catch(e => console.warn('Thumb upload err:', e));
+    }
+    _pendingThumbSetId = null;
+    // Re-render
+    if (currentPage === 'sets') renderSetsPage();
+    else renderHome();
+  };
+  reader.readAsDataURL(file);
+}
+
+// Nén ảnh về JPEG ~300x200 để tiết kiệm dung lượng
+function compressThumbImage(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const TARGET_W = 300, TARGET_H = 195;
+      const canvas = document.createElement('canvas');
+      canvas.width = TARGET_W; canvas.height = TARGET_H;
+      const ctx = canvas.getContext('2d');
+      // Cover fit
+      const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height);
+      const sw = TARGET_W / scale, sh = TARGET_H / scale;
+      const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, TARGET_W, TARGET_H);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+// Lấy nội dung hiển thị thumbnail cho bộ thẻ (ưu tiên: ảnh upload > thumbUrl > SVG tùy chỉnh > SVG mặc định)
+function getSetThumbContent(set) {
+  if (set.customThumb) {
+    return `<img src="${set.customThumb}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="thumb"/>`;
   }
+  if (set.thumbUrl) {
+    return `<img src="${set.thumbUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="thumb" onerror="this.style.display='none'"/>`;
+  }
+  if (set.customSvg) return set.customSvg;
+  if (SET_TOPIC_SVG[set.id]) return SET_TOPIC_SVG[set.id];
+  // Tạo SVG icon dựa trên tên bộ thẻ
+  return generateTopicSVGNoKey(set.name || '');
 }
 
-function showAiThumb(svg, suffix = '') {
-  const preview = document.getElementById('aiThumbPreview' + suffix);
-  const row = document.getElementById('aiThumbRow' + suffix);
-  const regenBtn = document.getElementById('aiRegenBtn' + suffix);
-  if (preview) preview.innerHTML = svg;
-  if (row) row.classList.add('done');
-  if (regenBtn) { regenBtn.style.display = 'inline-block'; regenBtn.disabled = false; }
+// Render nút đổi ảnh thumbnail trên card
+function renderThumbChangeBtn(setId) {
+  return `<button class="thumb-change-btn" title="Đổi ảnh bìa" onclick="event.stopPropagation();openThumbPickerForSet('${setId}')">📷</button>`;
 }
 
-function setAiThumbStatus(msg, type, suffix = '') {
-  const el = document.getElementById('aiThumbStatus' + suffix);
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'ai-thumb-sublabel' + (type ? ' ' + type : '');
-}
-
-function resetAiThumb(suffix = '') {
-  _aiCurrentName[suffix] = '';
-  const preview = document.getElementById('aiThumbPreview' + suffix);
-  const row = document.getElementById('aiThumbRow' + suffix);
-  const regenBtn = document.getElementById('aiRegenBtn' + suffix);
-  if (preview) preview.innerHTML = '<div class="ai-thumb-placeholder"><span class="ai-thumb-icon">&#127912;</span><span class="ai-thumb-hint">AI se tu ve hinh minh hoa theo chu de</span></div>';
-  if (row) row.classList.remove('generating', 'done');
-  if (regenBtn) regenBtn.style.display = 'none';
-  setAiThumbStatus('Nhap ten bo the de AI tu tao hinh anh', '', suffix);
-}
-
-function regenAiThumb(suffix = '') {
-  const inputId = suffix === '2' ? 'aiSetName' : 'setNameInput';
-  const name = document.getElementById(inputId).value.trim();
-  if (!name) return;
-  delete _aiSvgCache[name];
-  _aiCurrentName[suffix] = '';
-  triggerAiThumb(name, suffix);
-}
-
-function getAiThumbSvg(suffix = '') {
-  const preview = document.getElementById('aiThumbPreview' + suffix);
-  const el = preview ? preview.querySelector('svg, img') : null;
-  return el ? el.outerHTML : null;
-}
 
 // ---- STATE ----
 let currentPage = 'home';
@@ -1016,6 +523,9 @@ function setupNav() {
   document.getElementById('fabCreate').addEventListener('click', openCreateModal);
   document.getElementById('btnCreateSet').addEventListener('click', openCreateModal);
   document.getElementById('btnSaveSet').addEventListener('click', saveSet);
+  // Global thumb picker (nút đổi ảnh trực tiếp trên card)
+  const thumbPickerGlobal = document.getElementById('thumbPickerGlobal');
+  if (thumbPickerGlobal) thumbPickerGlobal.addEventListener('change', onThumbPickerGlobalChange);
   document.getElementById('btnShowAnswer').addEventListener('click', showAnswer);
   document.getElementById('btnExitStudy').addEventListener('click', exitStudy);
   document.getElementById('btnStudyAgain').addEventListener('click', () => startStudy(studySetId));
@@ -1285,7 +795,7 @@ function createSetCard(set) {
     const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' đang học</span>' : '';
     wrap.innerHTML = `
       <div class="set-card-mobile">
-        <div class="sc-mobile-thumb">${getSetTopicSVG(set)}</div>
+        <div class="sc-mobile-thumb" style="position:relative">${getSetTopicSVG(set)}${renderThumbChangeBtn(set.id)}</div>
         <div class="sc-mobile-body">
           <div class="sc-mobile-name">${set.name}</div>
           <div class="sc-mobile-count">${total} từ vựng</div>
@@ -1317,6 +827,7 @@ function createSetCard(set) {
   div.innerHTML = `
     <div class="set-card-thumb">
       <div class="set-card-img-wrap">${getSetTopicSVG(set)}</div>
+      ${renderThumbChangeBtn(set.id)}
     </div>
     <div class="set-card-body">
       <div class="set-card-name">${set.name}</div>
@@ -1349,7 +860,7 @@ function createUserSetCardMobile(set) {
   const div = document.createElement('div');
   div.className = 'sc-mini-card set-color-' + (set.colorIndex || 0);
   div.innerHTML = `
-    <div class="sc-mini-thumb">${set.customSvg ? '<div style="width:100%;height:100%;overflow:hidden">' + set.customSvg + '</div>' : '<span class="sc-mini-emoji">' + getSetTopicEmoji(set) + '</span>'}</div>
+    <div class="sc-mini-thumb">${getSetThumbContent(set)}</div>
     <div class="sc-mini-body">
       <div class="sc-mini-name">${set.name}</div>
       <div class="sc-mini-count">${total} từ vựng</div>
@@ -1435,27 +946,46 @@ function closeDetailModal() {
 function openCreateModal() {
   editingSetId = null;
   selectedColorIndex = 0;
+  _pendingThumbDataUrl = null;
   document.getElementById('modalTitle').textContent = 'Tạo bộ thẻ mới';
   document.getElementById('setNameInput').value = '';
   document.getElementById('wordsInput').value = '';
   document.querySelectorAll('.color-dot').forEach((d, i) => d.classList.toggle('selected', i === 0));
-  resetAiThumb();
+  // Reset thumbnail preview
+  const wrapper = document.getElementById('thumbPreviewWrap');
+  const placeholder = document.getElementById('thumbPreviewPlaceholder');
+  const preview = document.getElementById('thumbPreviewImg');
+  if (wrapper) wrapper.style.display = 'none';
+  if (placeholder) placeholder.style.display = 'flex';
+  if (preview) preview.src = '';
   document.getElementById('modalCreateSet').classList.add('open');
-  // Wire AI input trigger
-  const inp = document.getElementById('setNameInput');
-  if (inp) { inp.removeEventListener('input', onSetNameInput); inp.addEventListener('input', onSetNameInput); }
 }
 function openEditModal(setId) {
   const set = getSetById(setId);
   if (!set) return;
   editingSetId = setId;
   selectedColorIndex = set.colorIndex || 0;
+  _pendingThumbDataUrl = null;
   document.getElementById('modalTitle').textContent = 'Sửa bộ thẻ';
   document.getElementById('setNameInput').value = set.name;
   document.getElementById('wordsInput').value = set.cards.map(c =>
     `${c.word} | ${c.phonetic || ''} | ${c.meaning} | ${c.example || ''}`
   ).join('\n');
   document.querySelectorAll('.color-dot').forEach((d, i) => d.classList.toggle('selected', i === selectedColorIndex));
+  // Hiển thị thumbnail hiện tại
+  const existingThumb = set.customThumb || null;
+  const wrapper = document.getElementById('thumbPreviewWrap');
+  const placeholder = document.getElementById('thumbPreviewPlaceholder');
+  const preview = document.getElementById('thumbPreviewImg');
+  if (existingThumb && preview && wrapper && placeholder) {
+    preview.src = existingThumb;
+    wrapper.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    if (wrapper) wrapper.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
+    if (preview) preview.src = '';
+  }
   document.getElementById('modalCreateSet').classList.add('open');
 }
 function closeCreateModal() {
@@ -1483,32 +1013,49 @@ function saveSet() {
   if (cards.length === 0) { showNotif('Định dạng: <code>từ | phiên âm | nghĩa | ví dụ</code>', '📋'); ; return; }
 
   const sets = Storage.getSets();
-  if (editingSetId) {
-    const idx = sets.findIndex(s => s.id === editingSetId);
-    if (idx !== -1) {
-      sets[idx] = { ...sets[idx], name, colorIndex: selectedColorIndex, cards };
+
+  // Hàm lưu sau khi có (hoặc không có) ảnh nén
+  const doSave = (thumbDataUrl) => {
+    if (editingSetId) {
+      const idx = sets.findIndex(s => s.id === editingSetId);
+      if (idx !== -1) {
+        sets[idx] = { ...sets[idx], name, colorIndex: selectedColorIndex, cards };
+        if (thumbDataUrl) {
+          sets[idx].customThumb = thumbDataUrl;
+          delete sets[idx].customSvg;
+        }
+      }
+    } else {
+      const newSet = { id: setId, name, colorIndex: selectedColorIndex, cards };
+      if (thumbDataUrl) {
+        newSet.customThumb = thumbDataUrl;
+      }
+      sets.push(newSet);
     }
+    try {
+      Storage.saveSets(sets);
+    } catch (e) {
+      if (e.message === 'STORAGE_QUOTA_EXCEEDED') {
+        showNotif('⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ rồi thử lại.', '💾');
+        return;
+      }
+      throw e;
+    }
+    // Upload lên Firebase Storage nếu đã đăng nhập
+    if (thumbDataUrl && typeof FirebaseThumb !== 'undefined' && window.FirebaseAuth && window.FirebaseAuth.getUser()) {
+      FirebaseThumb.upload(setId, thumbDataUrl).catch(e => console.warn('Thumb upload err:', e));
+    }
+    _pendingThumbDataUrl = null;
+    closeCreateModal();
+    if (currentPage === 'sets') renderSetsPage();
+    else renderHome();
+  };
+
+  if (_pendingThumbDataUrl) {
+    compressThumbImage(_pendingThumbDataUrl).then(doSave);
   } else {
-    const aiSvg = getAiThumbSvg();
-    const newSet = {
-      id: setId,
-      name, colorIndex: selectedColorIndex, cards,
-      ...(aiSvg ? { customSvg: aiSvg } : {})
-    };
-    sets.push(newSet);
+    doSave(null);
   }
-  try {
-    Storage.saveSets(sets);
-  } catch (e) {
-    if (e.message === 'STORAGE_QUOTA_EXCEEDED') {
-      showNotif('⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ hoặc bỏ ảnh AI rồi thử lại.', '💾');
-      return;
-    }
-    throw e;
-  }
-  closeCreateModal();
-  if (currentPage === 'sets') renderSetsPage();
-  else renderHome();
 }
 
 async function deleteSet(setId) {
@@ -2802,10 +2349,6 @@ function openAIModal() {
   document.getElementById('aiLoading').style.display = 'none';
   document.getElementById('btnGenerateAI').style.display = '';
   document.getElementById('btnSaveAISet').style.display = 'none';
-  resetAiThumb('2');
-  // Wire AI input trigger for thumbnail
-  const aiNameInp = document.getElementById('aiSetName');
-  if (aiNameInp) { aiNameInp.removeEventListener('input', onAiSetNameInput); aiNameInp.addEventListener('input', onAiSetNameInput); }
   // Load API key đã lưu
   const savedKey = localStorage.getItem('vocalearn_gemini_key') || '';
   document.getElementById('geminiApiKey').value = savedKey;
@@ -2839,7 +2382,6 @@ function clearAIResult() {
   document.getElementById('aiResult').style.display = 'none';
   document.getElementById('btnGenerateAI').style.display = '';
   document.getElementById('btnSaveAISet').style.display = 'none';
-  resetAiThumb('2');
 }
 
 async function generateWithAI() {
@@ -2959,9 +2501,6 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('btnSaveAISet').style.display = '';
 
-    // AI tự vẽ ảnh chủ đề dựa trên tên bộ thẻ
-    triggerAiThumb(finalSetName, '2');
-
   } catch (err) {
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('btnGenerateAI').style.display = '';
@@ -2983,8 +2522,7 @@ function saveAISet() {
   if (cards.length === 0) { showNotif('Không có từ hợp lệ!', '❌'); ; return; }
 
   const sets = Storage.getSets();
-  const aiSvg = getAiThumbSvg('2');
-  sets.push({ id: setId, name, colorIndex: aiSelectedColor, cards, ...(aiSvg ? { customSvg: aiSvg } : {}) });
+  sets.push({ id: setId, name, colorIndex: aiSelectedColor, cards });
   try {
     Storage.saveSets(sets);
   } catch (e) {
@@ -4918,6 +4456,8 @@ async function deletePermanently(setId) {
   );
   if (!ok) return;
   Trash.deletePermanently(setId);
+  // Xóa ảnh trên Firebase Storage nếu có
+  if (typeof FirebaseThumb !== 'undefined') FirebaseThumb.delete(setId).catch(() => {});
   showNotif('Đã xóa vĩnh viễn bộ thẻ.', '🗑️');
   renderTrashPage();
 }
@@ -4930,6 +4470,10 @@ async function emptyTrash() {
     '⚠️'
   );
   if (!ok) return;
+  // Xóa ảnh trên Firebase Storage cho từng bộ thẻ
+  if (typeof FirebaseThumb !== 'undefined') {
+    Trash.getAll().forEach(s => FirebaseThumb.delete(s.id).catch(() => {}));
+  }
   Trash.emptyAll();
   showNotif('Đã làm trống thùng rác.', '🗑️');
   renderTrashPage();

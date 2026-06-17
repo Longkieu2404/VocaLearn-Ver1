@@ -985,19 +985,17 @@
     <div class="modal-body">
       <label class="form-label">Tên bộ thẻ</label>
       <input type="text" class="form-input" id="setNameInput" placeholder="VD: Unit 1 – Greetings"/>
-      <!-- AI thumbnail preview -->
-      <div class="ai-thumb-row" id="aiThumbRow">
-        <div class="ai-thumb-preview" id="aiThumbPreview">
-          <div class="ai-thumb-placeholder" id="aiThumbPlaceholder">
-            <span class="ai-thumb-icon">&#127912;</span>
-            <span class="ai-thumb-hint">AI sẽ tự vẽ hình minh họa theo chủ đề</span>
-          </div>
+      <!-- Thumbnail upload -->
+      <div class="thumb-upload-row">
+        <div class="thumb-upload-preview" id="thumbPreviewWrap" style="display:none">
+          <img id="thumbPreviewImg" src="" alt="Thumbnail preview"/>
+          <button class="thumb-clear-btn" onclick="clearThumbUpload()" title="Xóa ảnh">✕</button>
         </div>
-        <div class="ai-thumb-info">
-          <div class="ai-thumb-label">Hình minh họa AI</div>
-          <div class="ai-thumb-sublabel" id="aiThumbStatus">Nhập tên bộ thẻ để AI tự tạo hình ảnh</div>
-          <button class="ai-regen-btn" id="aiRegenBtn" onclick="regenAiThumb()" style="display:none">&#128260; Vẽ lại</button>
+        <div class="thumb-upload-placeholder" id="thumbPreviewPlaceholder" onclick="openThumbUpload('')">
+          <span class="thumb-upload-icon">🖼️</span>
+          <span class="thumb-upload-hint">Nhấn để tải ảnh bìa lên<br><small>(tuỳ chọn)</small></span>
         </div>
+        <input type="file" id="thumbFileInput" accept="image/*" style="display:none" onchange="onThumbFileSelected(event, '')"/>
       </div>
       <label class="form-label">Màu sắc</label>
       <div class="color-picker" id="colorPicker"></div>
@@ -1011,6 +1009,9 @@
     </div>
   </div>
 </div>
+
+<!-- Global thumbnail picker (dùng cho nút đổi ảnh trực tiếp trên card) -->
+<input type="file" id="thumbPickerGlobal" accept="image/*" style="display:none"/>
 
 <!-- MODAL: SET DETAIL -->
 <div class="modal-overlay" id="modalSetDetail">
@@ -1123,20 +1124,6 @@
         </div>
         <label class="form-label">Tên bộ thẻ</label>
         <input type="text" class="form-input" id="aiSetName" placeholder="Tên bộ thẻ"/>
-        <!-- AI thumbnail preview -->
-        <div class="ai-thumb-row" id="aiThumbRow2">
-          <div class="ai-thumb-preview" id="aiThumbPreview2">
-            <div class="ai-thumb-placeholder" id="aiThumbPlaceholder2">
-              <span class="ai-thumb-icon">&#127912;</span>
-              <span class="ai-thumb-hint">AI sẽ tự vẽ hình minh họa theo chủ đề</span>
-            </div>
-          </div>
-          <div class="ai-thumb-info">
-            <div class="ai-thumb-label">Hình minh họa AI</div>
-            <div class="ai-thumb-sublabel" id="aiThumbStatus2">Tên bộ thẻ sẽ được dùng để AI tự tạo hình ảnh</div>
-            <button class="ai-regen-btn" id="aiRegenBtn2" onclick="regenAiThumb('2')" style="display:none">&#128260; Vẽ lại</button>
-          </div>
-        </div>
         <label class="form-label">Màu sắc</label>
         <div class="color-picker" id="aiColorPicker"></div>
         <label class="form-label">Danh sách từ (có thể chỉnh sửa)</label>
