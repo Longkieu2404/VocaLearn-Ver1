@@ -713,8 +713,8 @@ function getDueCount() {
 
 // ---- RENDER HOME ----
 function renderHome() {
-  // Greeting với tên người dùng
-  const name = localStorage.getItem('vocalearn_username') || '';
+  // Greeting với tên người dùng (tự đặt hoặc lấy từ tài khoản Google nếu chưa đặt)
+  const name = getDisplayName();
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Chào buổi sáng' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
   document.getElementById('homeGreeting').textContent = name ? `${greet}, ${name}! 👋` : 'Xin chào! 👋';
@@ -3206,6 +3206,20 @@ function exitReview() {
 // ======================================================
 // ĐẶT TÊN NGƯỜI DÙNG
 // ======================================================
+// Lấy tên hiển thị: ưu tiên tên người dùng tự đặt → tên tài khoản Google → phần trước @ của email Google → rỗng
+function getDisplayName() {
+  const custom = (localStorage.getItem('vocalearn_username') || '').trim();
+  if (custom) return custom;
+  if (window.FirebaseAuth && typeof FirebaseAuth.getUser === 'function') {
+    const user = FirebaseAuth.getUser();
+    if (user) {
+      if (user.displayName) return user.displayName;
+      if (user.email) return user.email.split('@')[0];
+    }
+  }
+  return '';
+}
+
 async function promptSetName() {
   const current = localStorage.getItem('vocalearn_username') || '';
   const name = await showPromptModal('Nhập tên của bạn:', current, '✏️', 'VD: Lê Quốc Thái');
@@ -3374,7 +3388,7 @@ function _loadSession(id) {
   chatHistory = sess.messages.map(m => ({ role: m.role, content: m.content, ts: m.ts }));
   const box = document.getElementById('chatMessages');
   box.innerHTML = '';
-  const username = localStorage.getItem('vocalearn_username') || '';
+  const username = getDisplayName();
   const name = username ? ' <strong>' + username + '</strong>' : '';
   box.innerHTML = '<div class="chat-bubble chat-bubble-ai"><div class="chat-avatar">🤖</div><div class="chat-text">Lịch sử hội thoại' + name + ' 📖</div></div>';
   sess.messages.forEach(m => appendBubble(m.role === 'user' ? 'user' : 'ai', m.content));
@@ -3386,7 +3400,7 @@ function _showWelcome() {
   const box = document.getElementById('chatMessages');
   if (!box) return;
   box.innerHTML = '';
-  const username = localStorage.getItem('vocalearn_username') || '';
+  const username = getDisplayName();
   const greeting = username ? 'Xin chào <strong>' + username + '</strong>!' : 'Xin chào!';
   box.innerHTML = '<div class="chat-bubble chat-bubble-ai"><div class="chat-avatar">🤖</div><div class="chat-text">' + greeting + ' Tôi là trợ lý AI của VocaLearn. Tôi có thể giúp bạn:<br><br>• Giải thích nghĩa và cách dùng từ vựng<br>• Giải thích ngữ pháp tiếng Anh<br>• Gợi ý cách học từ vựng hiệu quả<br>• Đặt câu ví dụ với từ bạn muốn<br><br>Bạn muốn hỏi gì nào? 😊</div></div>';
 }
