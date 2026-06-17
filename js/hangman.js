@@ -3,10 +3,13 @@
 // Gợi ý AI dùng Gemini API key đã lưu (giống Word Detective)
 
 // ---- CONFIG ----
-const HANG_MAX_WRONG   = 6;     // số lần sai tối đa trước khi thua
-const HANG_AI_PENALTY  = 30;    // điểm bị trừ khi xin 1 gợi ý AI
-const HANG_BASE_SCORE  = 100;   // điểm cơ bản nếu thắng không sai, không gợi ý
-const HANG_MODELS      = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b'];
+const HANG_MAX_WRONG        = 6;    // số lần sai tối đa trước khi thua
+const HANG_AI_PENALTY       = 30;   // điểm bị trừ khi xin 1 gợi ý AI
+const HANG_BASE_SCORE       = 100;  // điểm cơ bản nếu thắng không sai, không gợi ý
+const HANG_HINT_BUDGET       = 60;  // quỹ điểm gợi ý cho mỗi từ
+const HANG_HINT_MEANING_COST = 20;  // chi phí gợi ý nghĩa (không dùng AI)
+const HANG_HINT_REVEAL_COST  = 25;  // chi phí mở 1 ô chữ ngẫu nhiên
+const HANG_MODELS            = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b'];
 
 // ---- STATE ----
 let hangCards       = [];
@@ -17,13 +20,16 @@ let hangRoundWrong  = 0;
 let hangResults      = [];   // { word, won, wrongCount, aiHintsUsed }
 
 // Per-word state
-let hangWord         = '';   // từ hiện tại, lowercase
-let hangGuessed       = [];  // các chữ cái đã đoán (lowercase, unique)
-let hangWrongCount    = 0;
-let hangAIHint         = null; // gợi ý AI hiện tại (string) hoặc null
-let hangAIHintsUsedWord = 0;   // số gợi ý AI đã xin cho từ hiện tại
-let hangAIGenerating    = false;
-let hangRoundOver       = false;
+let hangWord              = '';    // từ hiện tại, lowercase
+let hangGuessed            = [];   // các chữ cái đã đoán (lowercase, unique)
+let hangWrongCount         = 0;
+let hangAIHint             = null; // gợi ý AI hiện tại (string) hoặc null
+let hangAIHintsUsedWord    = 0;    // số gợi ý AI đã xin cho từ hiện tại
+let hangAIGenerating       = false;
+let hangRoundOver          = false;
+let hangHintBudget         = HANG_HINT_BUDGET;  // quỹ điểm gợi ý còn lại
+let hangMeaningHintShown   = false;             // đã dùng gợi ý nghĩa chưa
+let hangRevealHintsUsed    = 0;                 // số lần mở ô chữ
 
 // ---- KEYBOARD LAYOUT ----
 const HANG_KB_ROWS = [
@@ -107,6 +113,9 @@ function _hangLoadWord() {
   hangAIHintsUsedWord = 0;
   hangAIGenerating = false;
   hangRoundOver = false;
+  hangHintBudget = HANG_HINT_BUDGET;
+  hangMeaningHintShown = false;
+  hangRevealHintsUsed = 0;
 
   // Progress
   const pct = ((hangIndex) / hangCards.length) * 100;
@@ -114,13 +123,23 @@ function _hangLoadWord() {
   document.getElementById('hangProgressText').textContent = `Từ ${hangIndex + 1} / ${hangCards.length}`;
   document.getElementById('hangScore').textContent = hangTotalScore;
 
-  // Gợi ý ban đầu: chỉ hiện số chữ cái và loại từ (không lộ nghĩa)
+  // Gợi ý BẮT BUỘC ban đầu: luôn hiện 1 gợi ý để người chơi có dữ liệu
   const wordLen = hangWord.replace(/ /g, '').length;
   const partOfSpeech = card.partOfSpeech || card.type || '';
-  const initialHint = partOfSpeech
-    ? `${wordLen} chữ cái • ${partOfSpeech}`
-    : `${wordLen} chữ cái`;
-  document.getElementById('hangMeaning').textContent = initialHint;
+  // Xây dựng gợi ý ban đầu gồm: loại từ + ký tự đầu + số chữ cái
+  const firstLetter = hangWord[0].toUpperCase();
+  let mandatoryHint = `Bắt đầu bằng "${firstLetter}" • ${wordLen} chữ cái`;
+  if (partOfSpeech) mandatoryHint += ` • ${partOfSpeech}`;
+  // Nếu có example, thêm câu ví dụ với từ bị che
+  const example = card.example || '';
+  if (example) {
+    const regex = new RegExp(card.term || card.word || '', 'gi');
+    const maskedExample = example.replace(regex, '___');
+    mandatoryHint = `💡 ${maskedExample}`;
+  }
+
+  document.getElementById('hangMeaning').textContent = mandatoryHint;
+  document.getElementById('hangMeaning').classList.remove('hang-meaning-reveal');
   document.getElementById('hangMeaning').classList.add('hang-meaning-hint');
   document.getElementById('hangPhonetic').textContent = '';
 
@@ -138,9 +157,107 @@ function _hangLoadWord() {
   document.getElementById('hangBtnSkip').style.display = '';
   document.getElementById('hangBtnSkip').disabled = false;
 
+  // Render hint budget bar
+  _hangRenderHintBudget();
+
   _hangRenderFigure();
   _hangRenderWordSlots();
   _hangRenderKeyboard();
+}
+
+// ---- RENDER HINT BUDGET BAR ----
+function _hangRenderHintBudget() {
+  const bar = document.getElementById('hangHintBudgetBar');
+  const label = document.getElementById('hangHintBudgetLabel');
+  if (!bar || !label) return;
+  const pct = Math.max(0, (hangHintBudget / HANG_HINT_BUDGET) * 100);
+  bar.style.width = pct + '%';
+  bar.className = 'hang-hint-budget-fill' +
+    (pct > 50 ? ' budget-high' : pct > 20 ? ' budget-mid' : ' budget-low');
+  label.textContent = `Quỹ gợi ý: ${hangHintBudget}đ`;
+
+  // Cập nhật trạng thái 2 nút gợi ý
+  const btnMeaning = document.getElementById('hangBtnHintMeaning');
+  const btnReveal  = document.getElementById('hangBtnHintReveal');
+  if (btnMeaning) {
+    const canAfford = hangHintBudget >= HANG_HINT_MEANING_COST;
+    btnMeaning.disabled = !canAfford || hangRoundOver || hangMeaningHintShown;
+    btnMeaning.title = hangMeaningHintShown ? 'Đã dùng' :
+      (canAfford ? `Gợi ý nghĩa (−${HANG_HINT_MEANING_COST}đ)` : 'Không đủ quỹ');
+  }
+  if (btnReveal) {
+    const canAfford = hangHintBudget >= HANG_HINT_REVEAL_COST;
+    // Kiểm tra còn ô chưa mở không
+    const hiddenLetters = hangWord.split('').filter(ch => ch !== ' ' && !hangGuessed.includes(ch));
+    btnReveal.disabled = !canAfford || hangRoundOver || hiddenLetters.length === 0;
+    btnReveal.title = canAfford ? `Mở 1 ô chữ (−${HANG_HINT_REVEAL_COST}đ)` : 'Không đủ quỹ';
+  }
+}
+
+// ---- HINT: GỢI Ý NGHĨA ----
+function _hangHintMeaning() {
+  if (hangRoundOver || hangMeaningHintShown) return;
+  if (hangHintBudget < HANG_HINT_MEANING_COST) {
+    showNotif('Không đủ quỹ gợi ý! Hãy tiết kiệm điểm hơn nhé 💸', '⚠️');
+    return;
+  }
+  const card = hangCards[hangIndex];
+  const meaning = card.meaning || card.definition || '';
+  if (!meaning) { showNotif('Không có nghĩa để gợi ý cho từ này.', 'ℹ️'); return; }
+
+  hangHintBudget -= HANG_HINT_MEANING_COST;
+  hangMeaningHintShown = true;
+
+  // Hiện nghĩa trong ô gợi ý
+  const aiWrap = document.getElementById('hangAIHintWrap');
+  aiWrap.style.display = '';
+  // Thêm vào sau AI hint nếu có
+  const existingBox = aiWrap.querySelector('.hang-meaning-hint-box');
+  if (!existingBox) {
+    const box = document.createElement('div');
+    box.className = 'hang-ai-hint-box hang-meaning-hint-box';
+    box.innerHTML = `<span class="hang-ai-icon">📖</span><span><b>Nghĩa:</b> ${meaning}</span>`;
+    aiWrap.insertBefore(box, aiWrap.firstChild);
+  }
+
+  _hangRenderHintBudget();
+  showNotif(`Đã dùng gợi ý nghĩa (−${HANG_HINT_MEANING_COST}đ)`, '📖');
+}
+
+// ---- HINT: MỞ Ô CHỮ NGẪU NHIÊN ----
+function _hangHintRevealLetter() {
+  if (hangRoundOver) return;
+  if (hangHintBudget < HANG_HINT_REVEAL_COST) {
+    showNotif('Không đủ quỹ gợi ý! Hãy tiết kiệm điểm hơn nhé 💸', '⚠️');
+    return;
+  }
+
+  // Lấy các chữ chưa được đoán và chưa mở
+  const hiddenLetters = [...new Set(
+    hangWord.split('').filter(ch => ch !== ' ' && !hangGuessed.includes(ch))
+  )];
+  if (hiddenLetters.length === 0) {
+    showNotif('Tất cả ô chữ đã được mở rồi!', 'ℹ️');
+    return;
+  }
+
+  // Chọn ngẫu nhiên 1 chữ chưa mở
+  const randLetter = hiddenLetters[Math.floor(Math.random() * hiddenLetters.length)];
+  hangHintBudget -= HANG_HINT_REVEAL_COST;
+  hangRevealHintsUsed++;
+
+  // Tự động "đoán đúng" chữ đó (không tính vào wrong)
+  hangGuessed.push(randLetter);
+  AudioFX.correct();
+  _hangRenderWordSlots();
+  _hangRenderKeyboard();
+  _hangRenderHintBudget();
+
+  // Kiểm tra thắng
+  const allRevealed = hangWord.split('').every(ch => ch === ' ' || hangGuessed.includes(ch));
+  if (allRevealed) {
+    _hangEndRound(true);
+  }
 }
 
 // ---- RENDER HANGMAN FIGURE (SVG, animated stroke-draw per wrong guess) ----
@@ -387,10 +504,11 @@ function _hangEndRound(won, skipped = false) {
 
   if (won) hangRoundCorrect++; else hangRoundWrong++;
 
-  // Score for this word
+  // Score for this word — trừ thêm điểm đã dùng từ quỹ gợi ý
   let wordScore = 0;
+  const hintSpent = HANG_HINT_BUDGET - hangHintBudget; // tổng quỹ đã dùng (nghĩa + mở ô)
   if (won) {
-    wordScore = Math.max(10, HANG_BASE_SCORE - (hangWrongCount * 10) - (hangAIHintsUsedWord * HANG_AI_PENALTY));
+    wordScore = Math.max(10, HANG_BASE_SCORE - (hangWrongCount * 10) - (hangAIHintsUsedWord * HANG_AI_PENALTY) - hintSpent);
     hangTotalScore += wordScore;
   }
   document.getElementById('hangScore').textContent = hangTotalScore;
@@ -398,13 +516,20 @@ function _hangEndRound(won, skipped = false) {
   hangResults.push({
     word: card.term || card.word || '',
     meaning: card.meaning || card.definition || '',
-    won, wrongCount: hangWrongCount, aiHintsUsed: hangAIHintsUsedWord, score: wordScore
+    won, wrongCount: hangWrongCount, aiHintsUsed: hangAIHintsUsedWord,
+    revealHints: hangRevealHintsUsed, score: wordScore
   });
 
   // Reveal full word + meaning + lock UI
   _hangRenderWordSlots();
   _hangRenderKeyboard();
   if (!won) _hangRenderFigure();
+
+  // Ẩn hint buttons
+  const btnMeaning = document.getElementById('hangBtnHintMeaning');
+  const btnReveal  = document.getElementById('hangBtnHintReveal');
+  if (btnMeaning) btnMeaning.disabled = true;
+  if (btnReveal)  btnReveal.disabled = true;
 
   // Bây giờ mới hiện nghĩa thật + phiên âm
   const meaningEl = document.getElementById('hangMeaning');
@@ -545,4 +670,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (aiHintBtn) aiHintBtn.onclick = _hangRequestAIHint;
   const skipBtn = document.getElementById('hangBtnSkip');
   if (skipBtn) skipBtn.onclick = _hangSkip;
+  // Nút gợi ý mới
+  const btnMeaning = document.getElementById('hangBtnHintMeaning');
+  if (btnMeaning) btnMeaning.onclick = _hangHintMeaning;
+  const btnReveal = document.getElementById('hangBtnHintReveal');
+  if (btnReveal) btnReveal.onclick = _hangHintRevealLetter;
 });
