@@ -4374,26 +4374,33 @@ body.game-fullscreen #detDone {
   .sc-mobile-actions {
     display: flex;
     gap: 8px;
-    padding: 8px 10px 10px;
+    padding: 10px 12px 12px;
     border-top: 1px solid var(--border);
     background: var(--surface);
+    align-items: stretch;
   }
   .sc-mobile-btn {
     flex: 1;
-    padding: 7px 0;
+    height: 38px;
+    padding: 0 8px;
     border-radius: 10px;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     background: var(--bg3);
     color: var(--text2);
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
   }
   .sc-btn-study {
     background: rgba(255, 209, 102, 0.1);
-    border-color: rgba(255, 209, 102, 0.4);
+    border-color: rgba(255, 209, 102, 0.5);
     color: var(--yellow);
   }
   .sc-btn-study:active {
@@ -4401,7 +4408,7 @@ body.game-fullscreen #detDone {
   }
   .sc-btn-quiz {
     background: rgba(199, 125, 255, 0.1);
-    border-color: rgba(199, 125, 255, 0.35);
+    border-color: rgba(199, 125, 255, 0.45);
     color: var(--accent5);
   }
   .sc-btn-quiz:active {
