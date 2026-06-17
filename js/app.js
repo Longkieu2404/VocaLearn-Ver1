@@ -148,15 +148,25 @@ async function onThumbPickerGlobalChange(event) {
   reader.onload = async (e) => {
     const dataUrl = e.target.result;
     const compressed = await compressThumbImage(dataUrl);
-    const sets = Storage.getSets();
-    const idx = sets.findIndex(s => s.id === _pendingThumbSetId);
-    if (idx === -1) return;
-    sets[idx].customThumb = compressed;
-    delete sets[idx].customSvg; // xóa SVG cũ nếu có
-    Storage.saveSets(sets);
+    const setId = _pendingThumbSetId;
+    const targetSet = getSetById(setId);
+
+    if (targetSet && targetSet.issample) {
+      // Bộ thẻ mẫu: lưu ảnh bìa vào kho riêng (không thể sửa trực tiếp dữ liệu SAMPLE_SETS)
+      Storage.setSampleThumb(setId, compressed);
+    } else {
+      // Bộ thẻ của người dùng: lưu trực tiếp vào set
+      const sets = Storage.getSets();
+      const idx = sets.findIndex(s => s.id === setId);
+      if (idx === -1) { _pendingThumbSetId = null; return; }
+      sets[idx].customThumb = compressed;
+      delete sets[idx].customSvg; // xóa SVG cũ nếu có
+      Storage.saveSets(sets);
+    }
+
     // Upload lên Firebase Storage nếu đã đăng nhập
     if (typeof FirebaseThumb !== 'undefined' && window.FirebaseAuth && window.FirebaseAuth.getUser()) {
-      FirebaseThumb.upload(_pendingThumbSetId, compressed).catch(e => console.warn('Thumb upload err:', e));
+      FirebaseThumb.upload(setId, compressed).catch(e => console.warn('Thumb upload err:', e));
     }
     _pendingThumbSetId = null;
     // Re-render
@@ -189,6 +199,13 @@ function compressThumbImage(dataUrl) {
 
 // Lấy nội dung hiển thị thumbnail cho bộ thẻ (ưu tiên: ảnh upload > thumbUrl > SVG tùy chỉnh > SVG mặc định)
 function getSetThumbContent(set) {
+  // Bộ thẻ mẫu: ảnh bìa tùy chỉnh được lưu riêng (vì SAMPLE_SETS là dữ liệu tĩnh)
+  if (set.issample) {
+    const sampleThumb = Storage.getSampleThumbs()[set.id];
+    if (sampleThumb) {
+      return `<img src="${sampleThumb}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="thumb"/>`;
+    }
+  }
   if (set.customThumb) {
     return `<img src="${set.customThumb}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="thumb"/>`;
   }

@@ -14,6 +14,7 @@ const Storage = {
   KEY_PROGRESS: 'vocalearn_progress',
   KEY_STATS: 'vocalearn_stats',
   KEY_STREAK: 'vocalearn_streak',
+  KEY_SAMPLE_THUMBS: 'vocalearn_sample_thumbs',
 
   getSets() {
     try { return JSON.parse(localStorage.getItem(this.KEY_SETS)) || []; }
@@ -27,6 +28,26 @@ const Storage = {
       throw new Error('STORAGE_QUOTA_EXCEEDED');
     }
     if (typeof AutoSave !== 'undefined') AutoSave.triggerSave();
+  },
+  // Ảnh bìa tùy chỉnh cho bộ thẻ mẫu (vì SAMPLE_SETS là dữ liệu tĩnh, không thể sửa trực tiếp).
+  // Lưu dạng map: { [sampleSetId]: dataUrl }
+  getSampleThumbs() {
+    try { return JSON.parse(localStorage.getItem(this.KEY_SAMPLE_THUMBS)) || {}; }
+    catch { return {}; }
+  },
+  saveSampleThumbs(map) {
+    try {
+      localStorage.setItem(this.KEY_SAMPLE_THUMBS, JSON.stringify(map));
+    } catch (e) {
+      console.error('Storage.saveSampleThumbs failed:', e);
+      throw new Error('STORAGE_QUOTA_EXCEEDED');
+    }
+    if (typeof AutoSave !== 'undefined') AutoSave.triggerSave();
+  },
+  setSampleThumb(setId, dataUrl) {
+    const map = this.getSampleThumbs();
+    map[setId] = dataUrl;
+    this.saveSampleThumbs(map);
   },
   getProgress() {
     try { return JSON.parse(localStorage.getItem(this.KEY_PROGRESS)) || {}; }

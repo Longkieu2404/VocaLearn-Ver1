@@ -4766,9 +4766,20 @@ body.game-fullscreen #hangSession .study-header {
   background: rgba(0,0,0,0.75);
   transform: scale(1.1);
 }
-/* Mobile: luôn hiện nút */
+/* Mobile: icon nhỏ, mờ, kín đáo — chỉ nổi rõ khi chạm vào card */
 @media (max-width: 768px) {
-  .thumb-change-btn { opacity: 0.75; width: 26px; height: 26px; font-size: 0.75rem; }
+  .thumb-change-btn {
+    opacity: 0.55;
+    width: 20px; height: 20px;
+    font-size: 0.62rem;
+    bottom: 5px; right: 5px;
+    background: rgba(0,0,0,0.4);
+  }
+  .set-card-mobile-wrap:active .thumb-change-btn,
+  .set-card:active .thumb-change-btn {
+    opacity: 1;
+    background: rgba(0,0,0,0.65);
+  }
 }
 
 .ai-thumb-row {
