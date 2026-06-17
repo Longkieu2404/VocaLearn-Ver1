@@ -183,14 +183,22 @@ const FirebaseSync = {
       this._updateStatus('syncing');
 
       const ownerUid        = localStorage.getItem('vocalearn_owner_uid');
-      const isNewUser       = !ownerUid;
-      const isAccountSwitch = !!(ownerUid && ownerUid !== user.uid);
+      const loggedOutUid    = localStorage.getItem('vocalearn_logged_out_uid');
+      const isNewUser       = !ownerUid && !loggedOutUid;
+      const isAccountSwitch = !!(
+        (ownerUid && ownerUid !== user.uid) ||
+        (loggedOutUid && loggedOutUid !== user.uid)
+      );
 
       // Nếu đổi tài khoản: xóa sạch local + reset pending flag TRƯỚC KHI làm gì khác
       if (isAccountSwitch) {
         this._clearLocal();
         this._hasPendingOfflineWrites = false;
         clearTimeout(this._saveTimer);
+        localStorage.removeItem('vocalearn_logged_out_uid');
+      } else if (loggedOutUid && loggedOutUid === user.uid) {
+        // Cùng tài khoản đăng nhập lại — xóa flag
+        localStorage.removeItem('vocalearn_logged_out_uid');
       }
 
       // Ghi nhận owner sau khi đã xử lý switch

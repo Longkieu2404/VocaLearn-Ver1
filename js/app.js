@@ -4354,9 +4354,16 @@ function setupFirebaseUI() {
       if (typeof hideLoginScreen === 'function') hideLoginScreen();
 
       // Snapshot local sets trước pull — dùng cho merge khi lần đầu đăng nhập
-      const _prePullSets = Storage.getSets();
-      if (_prePullSets.length > 0) {
-        localStorage.setItem('_pre_pull_sets', JSON.stringify(_prePullSets));
+      // Chỉ lấy nếu đây là lần đầu dùng app (không phải account switch / đăng nhập lại)
+      const _isAccountSwitch = !!(
+        (localStorage.getItem('vocalearn_owner_uid') && localStorage.getItem('vocalearn_owner_uid') !== user.uid) ||
+        (localStorage.getItem('vocalearn_logged_out_uid') && localStorage.getItem('vocalearn_logged_out_uid') !== user.uid)
+      );
+      if (!_isAccountSwitch) {
+        const _prePullSets = Storage.getSets();
+        if (_prePullSets.length > 0) {
+          localStorage.setItem('_pre_pull_sets', JSON.stringify(_prePullSets));
+        }
       }
 
       const ok = await FirebaseSync.pull();
@@ -4392,12 +4399,20 @@ function setupFirebaseUI() {
     FirebaseSync._hasPendingOfflineWrites = false;
     clearTimeout(FirebaseSync._saveTimer);
 
+    // Lưu uid của tài khoản vừa đăng xuất để phát hiện account switch
+    const loggedOutUid = FirebaseAuth.getUser()?.uid || localStorage.getItem('vocalearn_owner_uid');
+    if (loggedOutUid) {
+      localStorage.setItem('vocalearn_logged_out_uid', loggedOutUid);
+    }
+
     await FirebaseAuth.signOut();
 
-    // Xóa owner_uid để lần đăng nhập tiếp theo biết đây là phiên mới
+    // Xóa dữ liệu người dùng khỏi localStorage khi đăng xuất
+    FirebaseSync._clearLocal();
     localStorage.removeItem('vocalearn_owner_uid');
     localStorage.removeItem('vocalearn_auth_mode');
     localStorage.removeItem('vocalearn_local_updatedAt');
+    localStorage.removeItem('_pre_pull_sets');
 
     if (typeof showLoginScreen === 'function') showLoginScreen();
   });
