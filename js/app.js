@@ -554,6 +554,8 @@ function setupNav() {
 
 function navigateTo(page) {
   currentPage = page;
+  // Cuộn về đầu trang khi chuyển trang
+  window.scrollTo({ top: 0, behavior: 'instant' });
   // Thoát fullscreen nếu rời khỏi trang game
   if (page !== 'scramble') {
     document.body.classList.remove('game-fullscreen');
