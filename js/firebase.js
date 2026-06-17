@@ -182,64 +182,58 @@ const FirebaseSync = {
     try {
       this._updateStatus('syncing');
 
-      const ownerUid           = localStorage.getItem('vocalearn_owner_uid');
-      const isFirstOnDevice    = !ownerUid;
-      const belongsToOtherUser = !!(ownerUid && ownerUid !== user.uid);
+      const ownerUid        = localStorage.getItem('vocalearn_owner_uid');
+      const isNewUser       = !ownerUid;
+      const isAccountSwitch = !!(ownerUid && ownerUid !== user.uid);
 
-      const localSetsBeforePull     = Storage.getSets();
-      const localProgressBeforePull = Storage.getProgress();
+      // Nếu đổi tài khoản: xóa sạch local + reset pending flag TRƯỚC KHI làm gì khác
+      if (isAccountSwitch) {
+        this._clearLocal();
+        this._hasPendingOfflineWrites = false;
+        clearTimeout(this._saveTimer);
+      }
 
-      if (belongsToOtherUser) this._clearLocal();
-
+      // Ghi nhận owner sau khi đã xử lý switch
       localStorage.setItem('vocalearn_owner_uid', user.uid);
 
-      // Dùng getDoc() thay vì getDocFromServer() —
-      // getDocFromServer() fail ngay nếu Firestore chưa kết nối xong (mobile).
-      // getDoc() dùng cache nếu offline, server nếu online — an toàn hơn.
       const snap = await getDoc(ref);
 
       if (!snap.exists()) {
-        if (localSetsBeforePull.length > 0) await this._rawPush();
+        // Tài khoản mới hoàn toàn trên Firestore
+        if (isNewUser && Storage.getSets().length > 0) {
+          // Lần đầu đăng nhập trên thiết bị này có data local → push lên
+          await this._rawPush();
+        }
+        // Nếu isAccountSwitch thì đã clear rồi, không push gì cả
         return true;
       }
 
       const srv = snap.data();
 
-      if (isFirstOnDevice || belongsToOtherUser) {
-        this._applyToLocal(srv);
-        if (localSetsBeforePull.length > 0 && !belongsToOtherUser) {
-          const srvIds    = new Set((srv.sets || []).map(s => s.id));
-          const onlyLocal = localSetsBeforePull.filter(s => !srvIds.has(s.id));
+      // Luôn ưu tiên pull data từ server về
+      this._applyToLocal(srv);
+      if (srv.updatedAt) {
+        localStorage.setItem('vocalearn_local_updatedAt', srv.updatedAt.toMillis().toString());
+      }
+
+      // Nếu là lần đầu đăng nhập trên thiết bị (chưa từng có owner_uid):
+      // merge thêm các bộ thẻ local mà server chưa có (không ghi đè server)
+      if (isNewUser) {
+        const localSets = JSON.parse(localStorage.getItem('_pre_pull_sets') || '[]');
+        if (localSets.length > 0) {
+          const srvIds   = new Set((srv.sets || []).map(s => s.id));
+          const onlyLocal = localSets.filter(s => !srvIds.has(s.id));
           if (onlyLocal.length > 0) {
             const merged = [...(srv.sets || []), ...onlyLocal];
             localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
-            const mergedProg = Object.assign({}, localProgressBeforePull, srv.progress || {});
-            localStorage.setItem('vocalearn_progress', JSON.stringify(mergedProg));
             await this._rawPush();
           }
         }
-        return true;
       }
 
-      if (this._hasPendingOfflineWrites) {
-        const srvTs   = srv.updatedAt ? srv.updatedAt.toMillis() : 0;
-        const localTs = parseInt(localStorage.getItem('vocalearn_local_updatedAt') || '0');
-        if (srvTs > localTs) {
-          const localSets  = Storage.getSets();
-          const srvSetIds  = new Set((srv.sets || []).map(s => s.id));
-          const onlyLocal  = localSets.filter(s => !srvSetIds.has(s.id));
-          this._applyToLocal(srv);
-          if (onlyLocal.length > 0) {
-            const merged = [...(srv.sets || []), ...onlyLocal];
-            localStorage.setItem('vocalearn_sets', JSON.stringify(merged));
-          }
-        }
+      // Nếu có pending offline writes của CÙNG tài khoản → push lên
+      if (!isAccountSwitch && this._hasPendingOfflineWrites) {
         await this._rawPush();
-      } else {
-        this._applyToLocal(srv);
-        if (srv.updatedAt) {
-          localStorage.setItem('vocalearn_local_updatedAt', srv.updatedAt.toMillis().toString());
-        }
       }
 
       return true;
@@ -255,6 +249,7 @@ const FirebaseSync = {
       window._firebaseDataLoaded = true;
       if (typeof checkStreakExpiry === 'function') checkStreakExpiry();
       window._firebaseDataLoaded = false;
+      localStorage.removeItem('_pre_pull_sets');
       setTimeout(() => this.startListening(), 500);
     }
   },

@@ -4353,6 +4353,12 @@ function setupFirebaseUI() {
       // Ẩn login screen NGAY (không chờ pull xong) để tránh user thấy màn hình đăng nhập
       if (typeof hideLoginScreen === 'function') hideLoginScreen();
 
+      // Snapshot local sets trước pull — dùng cho merge khi lần đầu đăng nhập
+      const _prePullSets = Storage.getSets();
+      if (_prePullSets.length > 0) {
+        localStorage.setItem('_pre_pull_sets', JSON.stringify(_prePullSets));
+      }
+
       const ok = await FirebaseSync.pull();
       if (ok) {
         renderHome();
@@ -4382,15 +4388,17 @@ function setupFirebaseUI() {
     const ok = await showConfirm('Đăng xuất khỏi tài khoản Google?<br><small style="opacity:.7">Dữ liệu vẫn còn trên thiết bị này. Đăng nhập lại để đồng bộ tiếp.</small>', '👋');
     if (!ok) return;
 
-    // Dừng real-time listener trước khi sign out
     FirebaseSync.stopListening();
+    FirebaseSync._hasPendingOfflineWrites = false;
+    clearTimeout(FirebaseSync._saveTimer);
 
     await FirebaseAuth.signOut();
 
-    // Xóa cờ auth_mode để màn hình login hiện lại
+    // Xóa owner_uid để lần đăng nhập tiếp theo biết đây là phiên mới
+    localStorage.removeItem('vocalearn_owner_uid');
     localStorage.removeItem('vocalearn_auth_mode');
+    localStorage.removeItem('vocalearn_local_updatedAt');
 
-    // Hiện màn hình đăng nhập (dữ liệu local GIỮ NGUYÊN)
     if (typeof showLoginScreen === 'function') showLoginScreen();
   });
 
