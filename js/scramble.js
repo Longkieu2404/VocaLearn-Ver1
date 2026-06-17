@@ -609,6 +609,10 @@ function _scrShowSection(section) {
   document.getElementById('scrambleConfig').style.display    = section === 'config'  ? '' : 'none';
   document.getElementById('scrambleSession').style.display   = section === 'session' ? '' : 'none';
   document.getElementById('scrambleDone').style.display      = section === 'done'    ? '' : 'none';
+  ['hangConfig','hangSession','hangDone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
   document.body.classList.toggle('game-in-session', section === 'session');
 }
 

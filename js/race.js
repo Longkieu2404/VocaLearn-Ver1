@@ -362,6 +362,10 @@ function _raceShowSection(section) {
     const el = document.getElementById(id);
     if (el && hideScramble) el.style.display = 'none';
   });
+  ['hangConfig','hangSession','hangDone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
   // session có nhiều nội dung — căn từ trên; config/done — căn giữa
   document.body.classList.toggle('game-in-session', section === 'session');
 }

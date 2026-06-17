@@ -536,7 +536,8 @@ function _detShowSection(section) {
   if (hub) hub.style.display = section === 'hub-placeholder' ? '' : 'none';
 
   ['scrambleSelectSet','scrambleConfig','scrambleSession','scrambleDone',
-   'raceConfig','raceSession','raceDone'].forEach(id => {
+   'raceConfig','raceSession','raceDone',
+   'hangConfig','hangSession','hangDone'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });

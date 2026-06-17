@@ -468,33 +468,22 @@
             <span style="background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">⭐ 500→50 điểm</span>
           </div>
         </div>
-        <!-- Coming Soon card -->
-        <div class="set-card game-card coming-soon-card" style="border:2px dashed rgba(255,255,255,0.12);background:rgba(255,255,255,0.02);cursor:default;position:relative;overflow:hidden;">
-          <div style="position:absolute;top:12px;right:12px;">
-            <span style="background:rgba(251,191,36,0.18);color:#f59e0b;padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;letter-spacing:0.04em">SẮP RA MẮT</span>
-          </div>
+        <!-- Word Hangman card -->
+        <div class="set-card game-card" style="cursor:pointer;border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#f87171,#fb923c) border-box;" onclick="startHangmanFromHub()">
           <div class="set-card-header">
-            <span style="font-size:2rem;opacity:0.5">🎲</span>
+            <span style="font-size:2rem">🎯</span>
             <div>
-              <div class="set-card-name" style="color:var(--text3)">Trò chơi mới</div>
-              <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px;opacity:0.6">Đang phát triển bởi VocaLearn</div>
+              <div class="set-card-name">Word Hangman</div>
+              <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán chữ cái trước khi hết lượt</div>
             </div>
           </div>
-          <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5;opacity:0.6">
-            Chúng tôi đang phát triển thêm nhiều tựa game thú vị. Hãy đón chờ các cập nhật sắp tới!
+          <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
+            Đoán từng chữ cái để tìm ra từ tiếng Anh. Sai 6 lần là thua! Bí quá thì xin AI gợi ý.
           </div>
-          <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem;">
-            <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text3);opacity:0.5">
-              <span>🔤</span><span>Word Match — Nối từ với nghĩa</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text3);opacity:0.5">
-              <span>✍️</span><span>Word Spelling — Nghe và viết</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text3);opacity:0.5">
-              <span>🧠</span><span>Memory Cards — Lật thẻ ghi nhớ</span>
-            </div>
+          <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+            <span style="background:rgba(248,113,113,0.15);color:#f87171;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">💀 6 lượt sai</span>
+            <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🤖 AI gợi ý</span>
           </div>
-          <div style="margin-top:1rem;height:3px;border-radius:99px;background:linear-gradient(90deg,rgba(167,139,250,0.4),rgba(96,165,250,0.4));background-size:200%;animation:comingSoonShimmer 2s linear infinite;"></div>
         </div>
       </div>
     </div>
@@ -876,6 +865,89 @@
     <!-- WORD DETECTIVE: DONE -->
     <div id="detDone" style="display:none;position:relative;overflow:hidden;padding:1rem"></div>
 
+    <!-- WORD HANGMAN: CONFIG -->
+    <div id="hangConfig" style="display:none">
+      <div class="scramble-config-card">
+        <div class="scramble-config-title" id="hangConfigInfo">🎯 Word Hangman</div>
+        <div class="scramble-config-row">
+          <div class="scramble-config-item">
+            <label class="form-label">Số từ chơi</label>
+            <select class="det-select" id="hangWordCount">
+              <option value="5">5 từ</option>
+              <option value="8" selected>8 từ</option>
+              <option value="10">10 từ</option>
+              <option value="15">15 từ</option>
+            </select>
+          </div>
+        </div>
+        <div class="scramble-config-row" style="align-items:center;">
+          <div style="font-size:0.85rem;color:var(--text2)">💀 Sai <b>6 lần</b> là thua &nbsp; 🤖 Gợi ý AI: <b>−30 điểm/lần</b></div>
+        </div>
+        <button class="btn-primary btn-large" id="btnStartHangman" style="width:100%;margin-bottom:0.75rem">🎯 Bắt đầu!</button>
+        <button class="btn-ghost" id="btnBackHangConfig" style="margin-top:0.5rem;width:100%">← Quay lại trò chơi</button>
+      </div>
+    </div>
+
+    <!-- WORD HANGMAN: SESSION -->
+    <div id="hangSession" style="display:none">
+      <div class="study-header">
+        <button class="btn-ghost" id="btnExitHangman">← Thoát</button>
+        <div class="det-progress-wrap" style="flex:1;margin:0 1rem;">
+          <div class="det-progress-track"><div class="det-progress-bar" id="hangProgressFill" style="width:0%"></div></div>
+          <span id="hangProgressText" class="det-progress-text">Từ 1 / 0</span>
+        </div>
+        <div class="scramble-score-badge" id="hangScoreBadge">🏅 <span id="hangScore">0</span></div>
+      </div>
+
+      <div class="scramble-game-area hang-game-area">
+        <!-- Hangman figure -->
+        <div class="hang-figure-wrap">
+          <svg id="hangFigureSvg" class="hang-figure-svg" viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+
+        <!-- Clue: meaning + phonetic -->
+        <div class="hang-clue-row">
+          <div class="hang-meaning" id="hangMeaning">–</div>
+          <div class="hang-phonetic" id="hangPhonetic"></div>
+        </div>
+
+        <!-- Word slots -->
+        <div class="hang-word-slots" id="hangWordSlots"></div>
+
+        <!-- AI hint -->
+        <div class="hang-ai-hint-wrap" id="hangAIHintWrap" style="display:none"></div>
+
+        <!-- Feedback -->
+        <div class="hang-feedback" id="hangFeedback" style="display:none"></div>
+
+        <!-- Virtual keyboard -->
+        <div class="hang-keyboard" id="hangKeyboard"></div>
+
+        <!-- Actions -->
+        <div class="hang-action-row">
+          <button class="det-hint-btn" id="hangBtnAIHint">🤖 Gợi ý AI (−30đ)</button>
+          <button class="det-skip-btn" id="hangBtnSkip">⏭ Bỏ qua</button>
+          <button class="det-next-btn" id="hangBtnNext" style="display:none">Từ tiếp theo →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORD HANGMAN: DONE -->
+    <div class="study-done" id="hangDone" style="display:none;position:relative;overflow:hidden">
+      <div class="done-icon" id="hangDoneIcon">🏆</div>
+      <h2 id="hangDoneTitle">Hoàn thành!</h2>
+      <div class="scramble-result-score" id="hangDoneScore" style="font-size:2.5rem;font-weight:800;color:var(--accent2);margin:0.5rem 0"></div>
+      <div id="hangDoneHighScore" style="font-size:0.9rem;margin-bottom:1rem"></div>
+      <div class="done-stats">
+        <div class="done-stat correct-stat"><span id="hangDoneCorrect">0</span><small>Đoán đúng</small></div>
+        <div class="done-stat wrong-stat"><span id="hangDoneWrong">0</span><small>Thua/Bỏ qua</small></div>
+        <div class="done-stat"><span id="hangDoneAvgWrong">0</span><small>Sai TB/từ</small></div>
+      </div>
+      <div class="hang-results-list" id="hangResultsList"></div>
+      <button class="btn-primary" id="btnHangAgain" style="margin-top:1.5rem">🔄 Chơi lại</button>
+      <button class="btn-ghost" onclick="document.body.classList.remove('game-fullscreen');_hangShowSection('hub');">Về trò chơi</button>
+    </div>
+
   </div><!-- end page-scramble -->
 
   <!-- PAGE: STATS -->
@@ -1212,6 +1284,7 @@
 <script src="js/scramble.js?v=2"></script>
 <script src="js/race.js?v=2"></script>
 <script src="js/detective.js?v=2"></script>
+<script src="js/hangman.js?v=2"></script>
 <!-- Firebase – phải để type="module" và đặt SAU app.js -->
 <script type="module" src="js/firebase.js?v=2"></script>
 </body>
