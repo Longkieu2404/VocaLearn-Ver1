@@ -418,71 +418,87 @@
     <div id="gamesHub">
       <p class="page-subtitle">Chọn trò chơi để bắt đầu:</p>
       <div class="sets-grid" id="gamesGrid">
-        <div class="set-card game-card" style="cursor:pointer;border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#a78bfa,#60a5fa) border-box;" onclick="startScrambleFromHub()">
-          <div class="set-card-header">
-            <span style="font-size:2rem">🧩</span>
-            <div>
-              <div class="set-card-name">Word Scramble</div>
-              <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Sắp xếp chữ cái thành từ đúng</div>
+        <div class="set-card game-card" style="cursor:pointer" onclick="startScrambleFromHub()">
+          <div class="game-card-thumb">
+            <img src="assets/games/word-scramble.jpg" alt="Word Scramble" loading="lazy"/>
+          </div>
+          <div class="game-card-body">
+            <div class="set-card-header">
+              <span style="font-size:2rem">🧩</span>
+              <div>
+                <div class="set-card-name">Word Scramble</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Sắp xếp chữ cái thành từ đúng</div>
+              </div>
             </div>
-          </div>
-          <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-            Từ vựng được chọn ngẫu nhiên từ tất cả các bộ thẻ bạn đang học hoặc đã thuộc.
-          </div>
-          <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap">
-            <span style="background:var(--accent-dim,rgba(139,92,246,0.15));color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🌿 Thư giãn</span>
-            <span style="background:rgba(251,191,36,0.12);color:#f59e0b;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">⚡ Thử thách</span>
+            <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
+              Từ vựng được chọn ngẫu nhiên từ tất cả các bộ thẻ bạn đang học hoặc đã thuộc.
+            </div>
+            <div style="margin-top:0.75rem">
+              <span style="background:var(--accent-dim,rgba(139,92,246,0.15));color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🌿 Thư giãn</span>
+            </div>
           </div>
         </div>
         <!-- Word Race card -->
-        <div class="set-card game-card" style="cursor:pointer;border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#ff6b6b,#ffd166) border-box;" onclick="startRaceFromHub()">
-          <div class="set-card-header">
-            <span style="font-size:2rem">🏎️</span>
-            <div>
-              <div class="set-card-name">Word Race</div>
-              <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Trả lời nhanh nhất có thể</div>
+        <div class="set-card game-card" style="cursor:pointer" onclick="startRaceFromHub()">
+          <div class="game-card-thumb">
+            <img src="assets/games/word-race.jpg" alt="Word Race" loading="lazy"/>
+          </div>
+          <div class="game-card-body">
+            <div class="set-card-header">
+              <span style="font-size:2rem">🏎️</span>
+              <div>
+                <div class="set-card-name">Word Race</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Trả lời nhanh nhất có thể</div>
+              </div>
             </div>
-          </div>
-          <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-            Chọn nghĩa đúng trong 4 đáp án. Đúng +10 điểm, sai −5 giây. Trả lời nhiều nhất trong thời gian cho phép!
-          </div>
-          <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap">
-            <span style="background:rgba(255,107,107,0.15);color:#ff6b6b;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">⚡ 30 / 60 / 90 giây</span>
-            <span style="background:rgba(255,209,102,0.15);color:var(--accent2);padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🏆 High score</span>
+            <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
+              Chọn nghĩa đúng trong 4 đáp án. Đúng +10 điểm, sai −5 giây. Trả lời nhiều nhất trong thời gian cho phép!
+            </div>
+            <div style="margin-top:0.75rem">
+              <span style="background:rgba(255,107,107,0.15);color:#ff6b6b;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🏆 High score</span>
+            </div>
           </div>
         </div>
         <!-- Word Detective card -->
-        <div class="set-card game-card" style="cursor:pointer;border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#34d399,#60a5fa) border-box;" onclick="startDetectiveFromHub()">
-          <div class="set-card-header">
-            <span style="font-size:2rem">🕵️</span>
-            <div>
-              <div class="set-card-name">Word Detective</div>
-              <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán từ qua gợi ý AI</div>
+        <div class="set-card game-card" style="cursor:pointer" onclick="startDetectiveFromHub()">
+          <div class="game-card-thumb">
+            <img src="assets/games/word-detective.jpg" alt="Word Detective" loading="lazy"/>
+          </div>
+          <div class="game-card-body">
+            <div class="set-card-header">
+              <span style="font-size:2rem">🕵️</span>
+              <div>
+                <div class="set-card-name">Word Detective</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán từ qua gợi ý AI</div>
+              </div>
             </div>
-          </div>
-          <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-            AI mô tả một từ bằng 5 gợi ý dần dần — từ mơ hồ đến rõ ràng. Đoán sớm để ghi điểm cao!
-          </div>
-          <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap">
-            <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🧠 AI gợi ý</span>
-            <span style="background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">⭐ 500→50 điểm</span>
+            <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
+              AI mô tả một từ bằng 5 gợi ý dần dần — từ mơ hồ đến rõ ràng. Đoán sớm để ghi điểm cao!
+            </div>
+            <div style="margin-top:0.75rem">
+              <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🧠 AI gợi ý</span>
+            </div>
           </div>
         </div>
         <!-- Word Hangman card -->
-        <div class="set-card game-card" style="cursor:pointer;border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#f87171,#fb923c) border-box;" onclick="startHangmanFromHub()">
-          <div class="set-card-header">
-            <span style="font-size:2rem">🎯</span>
-            <div>
-              <div class="set-card-name">Word Hangman</div>
-              <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán chữ cái trước khi hết lượt</div>
+        <div class="set-card game-card" style="cursor:pointer" onclick="startHangmanFromHub()">
+          <div class="game-card-thumb">
+            <img src="assets/games/word-hangman.jpg" alt="Word Hangman" loading="lazy" style="object-position:center 78%"/>
+          </div>
+          <div class="game-card-body">
+            <div class="set-card-header">
+              <span style="font-size:2rem">🎯</span>
+              <div>
+                <div class="set-card-name">Word Hangman</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán chữ cái trước khi hết lượt</div>
+              </div>
             </div>
-          </div>
-          <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-            Đoán từng chữ cái để tìm ra từ tiếng Anh. Sai 6 lần là thua! Bí quá thì xin AI gợi ý.
-          </div>
-          <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap">
-            <span style="background:rgba(248,113,113,0.15);color:#f87171;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">💀 6 lượt sai</span>
-            <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🤖 AI gợi ý</span>
+            <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
+              Đoán từng chữ cái để tìm ra từ tiếng Anh. Sai 6 lần là thua! Bí quá thì xin AI gợi ý.
+            </div>
+            <div style="margin-top:0.75rem">
+              <span style="background:rgba(248,113,113,0.15);color:#f87171;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">💀 6 lượt sai</span>
+            </div>
           </div>
         </div>
       </div>
