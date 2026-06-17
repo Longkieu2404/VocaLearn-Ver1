@@ -4931,6 +4931,7 @@ body.game-fullscreen #detDone {
 .hang-figure-svg {
   width: 100%;
   height: 100%;
+  transition: filter 0.4s ease;
 }
 .hang-figure-svg .hang-part {
   stroke: var(--text2);
@@ -4944,28 +4945,71 @@ body.game-fullscreen #detDone {
 }
 .hang-figure-svg .hang-body {
   stroke: var(--accent);
-  animation: hangPartDraw 0.3s ease-out;
-}
-.hang-figure-svg circle.hang-body {
   fill: none;
+  /* stroke-dasharray/offset set inline per element for draw animation */
 }
 .hang-figure-svg .hang-face {
-  stroke: var(--bg);
+  stroke: #f87171;
   stroke-width: 2.5;
+  fill: none;
 }
 .hang-figure-svg .hang-face-mouth {
   fill: none;
 }
-.hang-figure-svg.hang-danger .hang-base {
-  animation: hangDangerPulse 0.8s ease-in-out infinite;
+
+/* Mặt buồn fade-in */
+.hang-face-animate {
+  animation: hangFaceIn 0.4s ease-out both;
 }
-@keyframes hangPartDraw {
-  from { opacity: 0; transform: scale(0.6); transform-origin: 75px 38px; }
+@keyframes hangFaceIn {
+  from { opacity: 0; transform: scale(0.5); transform-origin: 75px 38px; }
   to   { opacity: 1; transform: scale(1); }
 }
+
+/* Lắc nhẹ mỗi khi sai */
+.hang-figure-svg.hang-shake {
+  animation: hangShake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+  transform-origin: 75px 10px;
+}
+@keyframes hangShake {
+  0%,100% { transform: rotate(0deg); }
+  15%     { transform: rotate(-4deg); }
+  30%     { transform: rotate(4deg); }
+  45%     { transform: rotate(-3deg); }
+  60%     { transform: rotate(3deg); }
+  75%     { transform: rotate(-1.5deg); }
+  90%     { transform: rotate(1deg); }
+}
+
+/* Nguy hiểm — nhân vật đỏ dần */
+.hang-figure-svg.hang-danger .hang-body {
+  stroke: #f87171;
+  filter: drop-shadow(0 0 4px rgba(248,113,113,0.6));
+  animation: hangDangerPulse 0.9s ease-in-out infinite;
+}
+.hang-figure-svg.hang-danger .hang-base {
+  animation: hangDangerPulse 0.9s ease-in-out infinite;
+}
 @keyframes hangDangerPulse {
-  0%, 100% { stroke: var(--text3); }
-  50%      { stroke: var(--accent); }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* Khi thua — toàn bộ ngả đỏ + lắc lớn hơn */
+.hang-figure-svg.hang-lost {
+  animation: hangLostSwing 1.2s ease-in-out;
+  transform-origin: 75px 10px;
+  filter: drop-shadow(0 0 8px rgba(248,113,113,0.5));
+}
+@keyframes hangLostSwing {
+  0%   { transform: rotate(0); }
+  10%  { transform: rotate(-7deg); }
+  25%  { transform: rotate(7deg); }
+  40%  { transform: rotate(-5deg); }
+  55%  { transform: rotate(4deg); }
+  70%  { transform: rotate(-2deg); }
+  85%  { transform: rotate(1deg); }
+  100% { transform: rotate(0); }
 }
 
 /* --- Clue (meaning + phonetic) --- */
@@ -4976,12 +5020,37 @@ body.game-fullscreen #detDone {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text);
+  transition: color 0.4s ease, font-size 0.3s ease;
+}
+/* Trạng thái gợi ý ban đầu — nhỏ hơn, màu mờ */
+.hang-meaning.hang-meaning-hint {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.04em;
+  background: var(--surface2);
+  border-radius: 20px;
+  padding: 4px 14px;
+  display: inline-block;
+}
+/* Khi reveal — hiệu ứng pop */
+.hang-meaning.hang-meaning-reveal {
+  animation: hangMeaningReveal 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes hangMeaningReveal {
+  from { opacity: 0; transform: scale(0.85) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 .hang-phonetic {
   font-size: 0.85rem;
   color: var(--text3);
   margin-top: 2px;
   font-style: italic;
+  animation: hangPhoneticIn 0.35s ease both;
+}
+@keyframes hangPhoneticIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* --- Word slots --- */

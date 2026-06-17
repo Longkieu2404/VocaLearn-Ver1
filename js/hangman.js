@@ -114,9 +114,15 @@ function _hangLoadWord() {
   document.getElementById('hangProgressText').textContent = `Từ ${hangIndex + 1} / ${hangCards.length}`;
   document.getElementById('hangScore').textContent = hangTotalScore;
 
-  // Meaning clue (luôn hiện — giống Scramble dùng meaning làm gợi ý nền)
-  document.getElementById('hangMeaning').textContent = card.meaning || card.definition || '–';
-  document.getElementById('hangPhonetic').textContent = card.phonetic || card.ipa || '';
+  // Gợi ý ban đầu: chỉ hiện số chữ cái và loại từ (không lộ nghĩa)
+  const wordLen = hangWord.replace(/ /g, '').length;
+  const partOfSpeech = card.partOfSpeech || card.type || '';
+  const initialHint = partOfSpeech
+    ? `${wordLen} chữ cái • ${partOfSpeech}`
+    : `${wordLen} chữ cái`;
+  document.getElementById('hangMeaning').textContent = initialHint;
+  document.getElementById('hangMeaning').classList.add('hang-meaning-hint');
+  document.getElementById('hangPhonetic').textContent = '';
 
   // AI hint area reset
   const aiWrap = document.getElementById('hangAIHintWrap');
@@ -137,46 +143,68 @@ function _hangLoadWord() {
   _hangRenderKeyboard();
 }
 
-// ---- RENDER HANGMAN FIGURE (SVG, drawn part-by-part based on wrong count) ----
+// ---- RENDER HANGMAN FIGURE (SVG, animated stroke-draw per wrong guess) ----
 function _hangRenderFigure() {
   const svg = document.getElementById('hangFigureSvg');
   if (!svg) return;
 
-  // Always-visible gallows (stand)
+  // Gallows luôn hiện (không animate)
   const gallows = `
     <line x1="10" y1="118" x2="90" y2="118" class="hang-part hang-base" />
-    <line x1="30" y1="118" x2="30" y2="10" class="hang-part hang-base" />
-    <line x1="30" y1="10" x2="75" y2="10" class="hang-part hang-base" />
-    <line x1="75" y1="10" x2="75" y2="25" class="hang-part hang-base" />
+    <line x1="30" y1="118" x2="30" y2="10"  class="hang-part hang-base" />
+    <line x1="30" y1="10"  x2="75" y2="10"  class="hang-part hang-base" />
+    <line x1="75" y1="10"  x2="75" y2="25"  class="hang-part hang-base" />
   `;
 
+  // Mỗi phần body: [svg_element, stroke_length_approx]
+  // stroke-dasharray trick để animate "vẽ nét"
   const bodyParts = [
-    `<circle cx="75" cy="38" r="13" class="hang-part hang-body" />`,                  // 1: head
-    `<line x1="75" y1="51" x2="75" y2="85" class="hang-part hang-body" />`,           // 2: torso
-    `<line x1="75" y1="60" x2="58" y2="75" class="hang-part hang-body" />`,           // 3: left arm
-    `<line x1="75" y1="60" x2="92" y2="75" class="hang-part hang-body" />`,           // 4: right arm
-    `<line x1="75" y1="85" x2="60" y2="108" class="hang-part hang-body" />`,          // 5: left leg
-    `<line x1="75" y1="85" x2="90" y2="108" class="hang-part hang-body" />`,          // 6: right leg
+    // 1: head — circle, dùng stroke-dasharray = circumference ≈ 82
+    `<circle cx="75" cy="38" r="13" class="hang-part hang-body hang-draw-circle" style="stroke-dasharray:82;stroke-dashoffset:82" />`,
+    // 2: torso
+    `<line x1="75" y1="51" x2="75" y2="85" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:34;stroke-dashoffset:34" />`,
+    // 3: left arm
+    `<line x1="75" y1="60" x2="58" y2="75" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:23;stroke-dashoffset:23" />`,
+    // 4: right arm
+    `<line x1="75" y1="60" x2="92" y2="75" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:23;stroke-dashoffset:23" />`,
+    // 5: left leg
+    `<line x1="75" y1="85" x2="60" y2="108" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:28;stroke-dashoffset:28" />`,
+    // 6: right leg
+    `<line x1="75" y1="85" x2="90" y2="108" class="hang-part hang-body hang-draw-line" style="stroke-dasharray:28;stroke-dashoffset:28" />`,
   ];
 
   let html = gallows;
   for (let i = 0; i < hangWrongCount && i < bodyParts.length; i++) {
     html += bodyParts[i];
   }
-  // Sad face once fully drawn (lost)
+
+  // Mặt buồn khi thua — animate fade in
   if (hangWrongCount >= HANG_MAX_WRONG) {
     html += `
-      <line x1="70" y1="34" x2="73" y2="37" class="hang-part hang-face" />
-      <line x1="73" y1="34" x2="70" y2="37" class="hang-part hang-face" />
-      <line x1="77" y1="34" x2="80" y2="37" class="hang-part hang-face" />
-      <line x1="80" y1="34" x2="77" y2="37" class="hang-part hang-face" />
-      <path d="M70 44 Q75 40 80 44" class="hang-part hang-face hang-face-mouth" />
+      <g class="hang-face-group hang-face-animate">
+        <line x1="70" y1="33" x2="73" y2="36" class="hang-part hang-face" />
+        <line x1="73" y1="33" x2="70" y2="36" class="hang-part hang-face" />
+        <line x1="77" y1="33" x2="80" y2="36" class="hang-part hang-face" />
+        <line x1="80" y1="33" x2="77" y2="36" class="hang-part hang-face" />
+        <path d="M70 45 Q75 41 80 45" class="hang-part hang-face hang-face-mouth" fill="none" />
+      </g>
     `;
   }
   svg.innerHTML = html;
 
-  // Danger pulse on figure when close to losing
-  svg.classList.toggle('hang-danger', hangWrongCount >= HANG_MAX_WRONG - 2 && hangWrongCount < HANG_MAX_WRONG);
+  // Kích hoạt animation bằng cách xóa dashoffset sau 1 frame
+  requestAnimationFrame(() => {
+    svg.querySelectorAll('.hang-draw-line, .hang-draw-circle').forEach(el => {
+      el.style.transition = 'stroke-dashoffset 0.5s cubic-bezier(0.4,0,0.2,1)';
+      el.style.strokeDashoffset = '0';
+    });
+  });
+
+  // Lắc nhẹ khi nguy hiểm (5 sai / 6 tối đa)
+  const isDanger = hangWrongCount >= HANG_MAX_WRONG - 1 && hangWrongCount < HANG_MAX_WRONG;
+  svg.classList.toggle('hang-danger', isDanger);
+  svg.classList.toggle('hang-shake', hangWrongCount > 0 && hangWrongCount < HANG_MAX_WRONG);
+  svg.classList.toggle('hang-lost', hangWrongCount >= HANG_MAX_WRONG);
 }
 
 // ---- RENDER WORD SLOTS ----
@@ -373,10 +401,19 @@ function _hangEndRound(won, skipped = false) {
     won, wrongCount: hangWrongCount, aiHintsUsed: hangAIHintsUsedWord, score: wordScore
   });
 
-  // Reveal full word + lock UI
+  // Reveal full word + meaning + lock UI
   _hangRenderWordSlots();
   _hangRenderKeyboard();
   if (!won) _hangRenderFigure();
+
+  // Bây giờ mới hiện nghĩa thật + phiên âm
+  const meaningEl = document.getElementById('hangMeaning');
+  // Force restart animation
+  meaningEl.classList.remove('hang-meaning-hint', 'hang-meaning-reveal');
+  void meaningEl.offsetWidth; // reflow
+  meaningEl.textContent = card.meaning || card.definition || '–';
+  meaningEl.classList.add('hang-meaning-reveal');
+  document.getElementById('hangPhonetic').textContent = card.phonetic || card.ipa || '';
 
   document.getElementById('hangBtnAIHint').style.display = 'none';
   document.getElementById('hangBtnSkip').style.display = 'none';
