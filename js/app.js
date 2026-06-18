@@ -742,11 +742,16 @@ function renderHome() {
   // Sample sets — hiển thị tất cả, nếu nhiều hơn SAMPLE_PREVIEW_COUNT thì ẩn bớt và có nút "Hiện tất cả"
   const SAMPLE_PREVIEW_COUNT = 6;
   const sg = document.getElementById('sampleSets');
+  // Ghi nhớ trạng thái "đã bấm Hiện tất cả" trước khi xóa DOM
+  const prevShowAllBtn = document.getElementById('btnShowAllSamples');
+  const wasShowingAll = sg.querySelectorAll(':scope > .set-card').length > SAMPLE_PREVIEW_COUNT ||
+                        (prevShowAllBtn && prevShowAllBtn.style.display === 'none');
   sg.innerHTML = '';
   const allSamples = SAMPLE_SETS;
   if (allSamples.length === 0) {
     sg.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">Không có bộ thẻ mẫu.</p>';
-  } else if (allSamples.length <= SAMPLE_PREVIEW_COUNT) {
+  } else if (allSamples.length <= SAMPLE_PREVIEW_COUNT || wasShowingAll) {
+    // Hiển thị tất cả nếu ít hơn giới hạn hoặc user đã bấm "Hiện tất cả" trước đó
     allSamples.forEach(s => sg.appendChild(createSetCard(s)));
   } else {
     // Hiển thị một phần, ẩn phần còn lại
