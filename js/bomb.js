@@ -198,12 +198,14 @@ async function _bombPrefetch(card) {
 }
 
 async function _bombLoadCard() {
-  if (bombIndex >= bombCards.length) { _bombFinish(); return; }\n
-  const card = bombCards[bombIndex];\n  bombAnswered   = false;
+  if (bombIndex >= bombCards.length) { _bombFinish(); return; }
+
+  const card = bombCards[bombIndex];
+  bombAnswered   = false;
   bombGenerating = true;
 
   // UI reset
-  const pct = (bombIndex / bombCards.length) * 100;
+  const pct = ((bombIndex + 1) / bombCards.length) * 100;
   document.getElementById('bombProgressFill').style.width = pct + '%';
   document.getElementById('bombProgressText').textContent = `Từ ${bombIndex + 1} / ${bombCards.length}`;
   const scoreEl = document.getElementById('bombScore');
@@ -544,17 +546,24 @@ function _bombFuzzyMatch(answer, correct) {
 // ---- CONFIRM EXIT ----
 function _bombConfirmExit() {
   _bombStopTimer();
-  const confirmed = confirm('Bạn có chắc muốn thoát? Tiến trình hiện tại sẽ không được lưu.');
-  if (confirmed) {
-    _bombBackToHub();
-  } else {
-    // Tiếp tục đếm giờ nếu chưa trả lời
-    if (!bombAnswered && !bombGenerating) {
-      const remaining = parseInt(document.getElementById('bombTimerCount')?.textContent || '0');
-      if (remaining > 0) {
-        bombTimerSec = remaining; // giữ lại giây còn lại
-        _bombStartTimer();
-      }
+  // Hiện modal tùy chỉnh thay vì confirm()
+  const overlay = document.getElementById('bombExitModal');
+  if (overlay) overlay.classList.add('open');
+}
+
+function _bombExitConfirmed() {
+  document.getElementById('bombExitModal')?.classList.remove('open');
+  _bombBackToHub();
+}
+
+function _bombExitCancelled() {
+  document.getElementById('bombExitModal')?.classList.remove('open');
+  // Tiếp tục đếm giờ nếu chưa trả lời
+  if (!bombAnswered && !bombGenerating) {
+    const remaining = parseInt(document.getElementById('bombTimerCount')?.textContent || '0');
+    if (remaining > 0) {
+      bombTimerSec = remaining;
+      _bombStartTimer();
     }
   }
 }
