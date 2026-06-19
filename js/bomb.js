@@ -167,12 +167,11 @@ function _bombStartGame() {
   _bombShowSection('session');
   document.body.classList.add('game-fullscreen', 'game-in-session');
 
-  // Pre-fetch câu đầu tiên ngay lập tức, rồi load card
-  if (bombCards[0]) {
-    _bombPrefetch(bombCards[0]).then(() => _bombLoadCard());
-  } else {
-    _bombLoadCard();
-  }
+  // Pre-warm model list cache, rồi prefetch câu đầu, rồi load
+  const apiKey = localStorage.getItem('vocalearn_gemini_key');
+  (apiKey ? GeminiModels.getModels(apiKey).catch(()=>{}) : Promise.resolve())
+    .then(() => bombCards[0] ? _bombPrefetch(bombCards[0]) : Promise.resolve())
+    .then(() => _bombLoadCard());
 }
 
 // ---- LOAD CARD ----
@@ -303,7 +302,7 @@ function _bombUpdateTimerUI(sec) {
   if (circle) {
     const total    = bombTimerSec || BOMB_BASE_TIME;
     const pct      = sec / total;
-    const circumf  = 2 * Math.PI * 32; // r=32
+    const circumf  = 2 * Math.PI * 38; // r=38
     circle.style.strokeDasharray  = circumf;
     circle.style.strokeDashoffset = circumf * (1 - pct);
     circle.style.stroke = sec <= 3 ? '#ef4444' : sec <= 5 ? '#f97316' : 'var(--accent2)';

@@ -5451,9 +5451,9 @@ body.game-fullscreen #hangSession .study-header {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 64px);
-  max-width: 620px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 0 1rem 2rem;
+  padding: 0 1.25rem 2rem;
   box-sizing: border-box;
   justify-content: center;
 }
@@ -5544,7 +5544,7 @@ body.game-fullscreen #hangSession .study-header {
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 24px;
-  padding: 2rem 2rem 1.75rem;
+  padding: 2rem 2.25rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -5558,8 +5558,8 @@ body.game-fullscreen #hangSession .study-header {
 }
 .bomb-timer-wrap {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 96px;
+  height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5573,12 +5573,14 @@ body.game-fullscreen #hangSession .study-header {
   justify-content: center;
 }
 
-/* Câu hỏi box */
+/* Câu hỏi box — chiều cao CỐ ĐỊNH để không nhảy layout */
 .bomb-sentence-box {
   font-size: 1.2rem;
   line-height: 1.8;
   text-align: center;
-  min-height: 80px;
+  height: 120px;          /* cố định, không thay đổi */
+  min-height: 120px;
+  max-height: 120px;
   padding: 1.25rem 1.5rem;
   background: var(--surface2);
   border-radius: 14px;
@@ -5587,6 +5589,20 @@ body.game-fullscreen #hangSession .study-header {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Loading state bên trong sentence box */
+.bomb-loading {
+  font-size: 0.95rem;
+  color: var(--text3);
+  font-style: italic;
+  animation: bombPulse 1.4s ease-in-out infinite;
+}
+@keyframes bombPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
 }
 
 /* Input + submit */
@@ -5653,5 +5669,6 @@ body.game-fullscreen #hangSession .study-header {
 @media (max-width: 480px) {
   .bomb-session-wrap { padding: 0 0.75rem 1.5rem; }
   .bomb-main-card { padding: 1.5rem 1.25rem 1.25rem; border-radius: 18px; }
-  .bomb-sentence-box { font-size: 1.05rem; padding: 1rem 1rem; }
+  .bomb-sentence-box { font-size: 1rem; height: 100px; min-height: 100px; max-height: 100px; }
+  .bomb-timer-wrap { width: 80px; height: 80px; }
 }
