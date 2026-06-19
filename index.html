@@ -1017,65 +1017,70 @@
     </div>
 
     <!-- WORD BOMB: SESSION -->
-    <div id="bombSession" style="display:none;max-width:560px;margin:0 auto;padding:0 1rem">
-      <!-- Header: progress + score + streak -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
-        <div style="flex:1;min-width:120px">
-          <div class="det-progress-bar">
-            <div class="det-progress-fill" id="bombProgressFill" style="width:0%"></div>
-          </div>
-          <div class="det-progress-text" id="bombProgressText">Từ 1 / 10</div>
-        </div>
-        <div id="bombScoreBadge" style="font-weight:700;font-size:1rem;color:var(--accent2)">💣 0đ</div>
-        <div id="bombStreakBadge" style="font-weight:700;font-size:0.95rem;color:#f97316;min-width:48px;text-align:right"></div>
-      </div>
+    <div id="bombSession" class="bomb-session-wrap" style="display:none">
 
-      <!-- Timer -->
-      <div style="display:flex;justify-content:center;margin-bottom:1rem">
-        <div class="bomb-timer-wrap">
-          <svg width="72" height="72" viewBox="0 0 72 72">
-            <circle cx="36" cy="36" r="28" fill="none" stroke="var(--border)" stroke-width="5"/>
-            <circle id="bombTimerCircle" cx="36" cy="36" r="28" fill="none"
-              stroke="var(--accent2)" stroke-width="5"
-              stroke-linecap="round"
-              style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 0.9s linear,stroke 0.3s"/>
-          </svg>
-          <div class="bomb-timer-inner">
-            <span id="bombTimerRing" style="font-size:1.5rem;font-weight:800;color:var(--accent2)">
-              <span id="bombTimerCount">12</span>
-            </span>
+      <!-- TOP BAR: Exit + Progress + Score/Streak -->
+      <div class="bomb-topbar">
+        <button class="bomb-exit-btn" onclick="_bombConfirmExit()" title="Thoát game">✕</button>
+        <div class="bomb-progress-block">
+          <div class="bomb-progress-track">
+            <div class="bomb-progress-fill" id="bombProgressFill" style="width:0%"></div>
           </div>
+          <div class="bomb-progress-label" id="bombProgressText">Từ 1 / 10</div>
+        </div>
+        <div class="bomb-badges">
+          <div id="bombScoreBadge" class="bomb-score-badge">💣 <span id="bombScore">0</span>đ</div>
+          <div id="bombStreakBadge" class="bomb-streak-badge"></div>
         </div>
       </div>
 
-      <!-- Câu hỏi -->
-      <div id="bombSentenceWrap" style="font-size:1.1rem;line-height:1.7;text-align:center;margin-bottom:1.25rem;min-height:60px;padding:1rem;background:var(--surface2);border-radius:12px;border:1.5px solid var(--border)">
+      <!-- MAIN CARD -->
+      <div class="bomb-main-card">
+        <!-- Timer centered -->
+        <div class="bomb-timer-center">
+          <div class="bomb-timer-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border)" stroke-width="5"/>
+              <circle id="bombTimerCircle" cx="40" cy="40" r="32" fill="none"
+                stroke="var(--accent2)" stroke-width="5"
+                stroke-linecap="round"
+                style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 0.9s linear,stroke 0.3s"/>
+            </svg>
+            <div class="bomb-timer-inner">
+              <span id="bombTimerRing" style="font-size:1.6rem;font-weight:800;color:var(--accent2)">
+                <span id="bombTimerCount">12</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Câu hỏi -->
+        <div id="bombSentenceWrap" class="bomb-sentence-box"></div>
+
+        <!-- Input + Submit -->
+        <div class="bomb-input-row">
+          <input id="bombAnswerInput" type="text" autocomplete="off" spellcheck="false"
+            placeholder="Nhập từ còn thiếu..."
+            class="bomb-answer-input"
+            disabled/>
+          <button id="bombBtnSubmit" class="bomb-submit-btn"
+            onclick="_bombSubmitAnswer()" disabled>Nổ 💥</button>
+        </div>
+
+        <!-- Nghĩa từ -->
+        <div id="bombMeaning" class="bomb-meaning" style="display:none"></div>
+
+        <!-- Feedback -->
+        <div id="bombFeedback" class="bomb-feedback" style="display:none"></div>
+
+        <!-- Nút tiếp theo -->
+        <div class="bomb-next-wrap">
+          <button id="bombBtnNext" class="bomb-next-btn"
+            style="display:none"
+            onclick="_bombNextCard()">Tiếp theo →</button>
+        </div>
       </div>
 
-      <!-- Input trả lời -->
-      <div style="display:flex;gap:0.6rem;margin-bottom:0.75rem">
-        <input id="bombAnswerInput" type="text" autocomplete="off" spellcheck="false"
-          placeholder="Nhập từ còn thiếu..."
-          class="det-answer-input"
-          style="flex:1;font-size:1rem;padding:0.65rem 1rem;border-radius:10px;border:2px solid var(--border);background:var(--surface);outline:none;transition:border 0.2s"
-          disabled/>
-        <button id="bombBtnSubmit" class="det-start-btn"
-          style="width:auto;padding:0.65rem 1.25rem;font-size:0.95rem"
-          onclick="_bombSubmitAnswer()" disabled>Nổ 💥</button>
-      </div>
-
-      <!-- Nghĩa từ (hiện sau khi sai/hết giờ) -->
-      <div id="bombMeaning" style="display:none;font-size:0.82rem;color:var(--text3);text-align:center;margin-bottom:0.5rem;font-style:italic"></div>
-
-      <!-- Feedback -->
-      <div id="bombFeedback" class="det-feedback" style="display:none"></div>
-
-      <!-- Nút tiếp theo -->
-      <div style="text-align:center;margin-top:0.75rem">
-        <button id="bombBtnNext" class="det-start-btn"
-          style="display:none;width:auto;padding:0.65rem 1.5rem"
-          onclick="_bombNextCard()">Tiếp theo →</button>
-      </div>
     </div>
 
     <!-- WORD BOMB: DONE -->

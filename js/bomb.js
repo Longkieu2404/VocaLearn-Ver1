@@ -166,7 +166,8 @@ async function _bombLoadCard() {
   const pct = (bombIndex / bombCards.length) * 100;
   document.getElementById('bombProgressFill').style.width = pct + '%';
   document.getElementById('bombProgressText').textContent = `Từ ${bombIndex + 1} / ${bombCards.length}`;
-  document.getElementById('bombScoreBadge').innerHTML     = `💣 <span id="bombScore">${bombTotalScore}</span>đ`;
+  const scoreEl = document.getElementById('bombScore');
+  if (scoreEl) scoreEl.textContent = bombTotalScore;
   document.getElementById('bombStreakBadge').textContent  = bombStreak >= 2 ? `🔥 ×${bombStreak}` : '';
 
   document.getElementById('bombSentenceWrap').innerHTML =
@@ -249,7 +250,7 @@ function _bombUpdateTimerUI(sec) {
   if (circle) {
     const total    = bombTimerSec || BOMB_BASE_TIME;
     const pct      = sec / total;
-    const circumf  = 2 * Math.PI * 28; // r=28
+    const circumf  = 2 * Math.PI * 32; // r=32
     circle.style.strokeDasharray  = circumf;
     circle.style.strokeDashoffset = circumf * (1 - pct);
     circle.style.stroke = sec <= 3 ? '#ef4444' : sec <= 5 ? '#f97316' : 'var(--accent2)';
@@ -487,6 +488,24 @@ function _bombFuzzyMatch(answer, correct) {
     if (diff > 1) return false;
   }
   return true;
+}
+
+// ---- CONFIRM EXIT ----
+function _bombConfirmExit() {
+  _bombStopTimer();
+  const confirmed = confirm('Bạn có chắc muốn thoát? Tiến trình hiện tại sẽ không được lưu.');
+  if (confirmed) {
+    _bombBackToHub();
+  } else {
+    // Tiếp tục đếm giờ nếu chưa trả lời
+    if (!bombAnswered && !bombGenerating) {
+      const remaining = parseInt(document.getElementById('bombTimerCount')?.textContent || '0');
+      if (remaining > 0) {
+        bombTimerSec = remaining; // giữ lại giây còn lại
+        _bombStartTimer();
+      }
+    }
+  }
 }
 
 // ---- BACK ----
