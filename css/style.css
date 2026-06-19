@@ -5450,11 +5450,12 @@ body.game-fullscreen #hangSession .study-header {
 .bomb-session-wrap {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 120px);
-  max-width: 560px;
+  min-height: calc(100vh - 64px);
+  max-width: 620px;
   margin: 0 auto;
   padding: 0 1rem 2rem;
   box-sizing: border-box;
+  justify-content: center;
 }
 
 /* ── TOP BAR ── */
@@ -5542,12 +5543,12 @@ body.game-fullscreen #hangSession .study-header {
 .bomb-main-card {
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 20px;
-  padding: 1.5rem 1.5rem 1.25rem;
+  border-radius: 24px;
+  padding: 2rem 2rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  gap: 1.25rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.10);
 }
 
 /* Timer centered */
@@ -5574,15 +5575,18 @@ body.game-fullscreen #hangSession .study-header {
 
 /* Câu hỏi box */
 .bomb-sentence-box {
-  font-size: 1.1rem;
-  line-height: 1.75;
+  font-size: 1.2rem;
+  line-height: 1.8;
   text-align: center;
-  min-height: 64px;
-  padding: 1rem 1.25rem;
+  min-height: 80px;
+  padding: 1.25rem 1.5rem;
   background: var(--surface2);
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1.5px solid var(--border);
   color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Input + submit */
@@ -5592,9 +5596,9 @@ body.game-fullscreen #hangSession .study-header {
 }
 .bomb-answer-input {
   flex: 1;
-  font-size: 1rem;
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
+  font-size: 1.05rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
   border: 2px solid var(--border);
   background: var(--surface2);
   color: var(--text);
@@ -5607,13 +5611,13 @@ body.game-fullscreen #hangSession .study-header {
 
 .bomb-submit-btn {
   flex-shrink: 0;
-  padding: 0.7rem 1.25rem;
-  border-radius: 10px;
+  padding: 0.85rem 1.5rem;
+  border-radius: 12px;
   border: none;
   background: var(--accent2);
   color: #fff;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
   white-space: nowrap;
@@ -5633,13 +5637,13 @@ body.game-fullscreen #hangSession .study-header {
 /* Next button */
 .bomb-next-wrap { text-align: center; }
 .bomb-next-btn {
-  padding: 0.7rem 2rem;
-  border-radius: 10px;
+  padding: 0.85rem 2.5rem;
+  border-radius: 12px;
   border: none;
   background: var(--accent2);
   color: #fff;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
 }
@@ -5647,7 +5651,7 @@ body.game-fullscreen #hangSession .study-header {
 
 /* ── MOBILE ── */
 @media (max-width: 480px) {
-  .bomb-session-wrap { padding: 0 0.5rem 1.5rem; }
-  .bomb-main-card { padding: 1.25rem 1rem 1rem; border-radius: 16px; }
-  .bomb-sentence-box { font-size: 1rem; padding: 0.85rem 1rem; }
+  .bomb-session-wrap { padding: 0 0.75rem 1.5rem; }
+  .bomb-main-card { padding: 1.5rem 1.25rem 1.25rem; border-radius: 18px; }
+  .bomb-sentence-box { font-size: 1.05rem; padding: 1rem 1rem; }
 }

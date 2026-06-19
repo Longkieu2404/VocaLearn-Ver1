@@ -161,18 +161,45 @@ function _bombStartGame() {
   bombStreak      = 0;
   bombMaxStreak   = 0;
   bombResults     = [];
+  _bombNextCache  = null;
+  _bombNextPromise = null;
 
   _bombShowSection('session');
   document.body.classList.add('game-fullscreen', 'game-in-session');
-  _bombLoadCard();
+
+  // Pre-fetch câu đầu tiên ngay lập tức, rồi load card
+  if (bombCards[0]) {
+    _bombPrefetch(bombCards[0]).then(() => _bombLoadCard());
+  } else {
+    _bombLoadCard();
+  }
 }
 
 // ---- LOAD CARD ----
-async function _bombLoadCard() {
-  if (bombIndex >= bombCards.length) { _bombFinish(); return; }
+// ---- PRE-GENERATION CACHE ----
+// Cache câu AI cho từ tiếp theo để không phải chờ
+let _bombNextCache = null;   // { word, result } — kết quả pre-generate
+let _bombNextPromise = null; // Promise đang chạy
 
-  const card = bombCards[bombIndex];
-  bombAnswered   = false;
+async function _bombPrefetch(card) {
+  if (!card) return;
+  const word = (card.term || card.word || '').trim();
+  // Tránh fetch lại nếu đã có cache cho từ này
+  if (_bombNextCache?.word === word) return;
+  _bombNextCache = null;
+  try {
+    _bombNextPromise = _bombGenerateSentence(card);
+    const result = await _bombNextPromise;
+    _bombNextCache = { word, result };
+  } catch(e) {
+    _bombNextCache = null;
+  }
+  _bombNextPromise = null;
+}
+
+async function _bombLoadCard() {
+  if (bombIndex >= bombCards.length) { _bombFinish(); return; }\n
+  const card = bombCards[bombIndex];\n  bombAnswered   = false;
   bombGenerating = true;
 
   // UI reset
@@ -192,21 +219,28 @@ async function _bombLoadCard() {
   document.getElementById('bombBtnNext').style.display   = 'none';
   document.getElementById('bombMeaning').style.display   = 'none';
 
-  // Tính thời gian dựa trên streak (càng nhiều streak → ít thời gian hơn)
+  // Tính thời gian
   bombTimerSec = Math.max(BOMB_MIN_TIME, BOMB_BASE_TIME - Math.floor(bombStreak / 3));
   _bombStopTimer();
   _bombUpdateTimerUI(bombTimerSec);
 
-  // Generate câu từ AI
+  // Lấy câu: dùng cache nếu có, không thì gọi AI
   try {
-    const { sentence, blanked } = await _bombGenerateSentence(card);
-    bombCurrentSentence = sentence;
-    bombCurrentWord     = (card.term || card.word || '').trim();
+    const word = (card.term || card.word || '').trim();
+    let sentenceData;
+    if (_bombNextCache?.word === word) {
+      sentenceData = _bombNextCache.result;
+      _bombNextCache = null;
+    } else {
+      sentenceData = await _bombGenerateSentence(card);
+    }
+
+    bombCurrentSentence = sentenceData.sentence;
+    bombCurrentWord     = word;
     bombCurrentMeaning  = card.meaning || card.definition || '';
 
-    // Render câu có ô trống
     document.getElementById('bombSentenceWrap').innerHTML =
-      `<div class="bomb-sentence">${blanked}</div>`;
+      `<div class="bomb-sentence">${sentenceData.blanked}</div>`;
 
     document.getElementById('bombAnswerInput').disabled = false;
     document.getElementById('bombAnswerInput').focus();
@@ -215,6 +249,10 @@ async function _bombLoadCard() {
 
     // Bắt đầu đếm giờ
     _bombStartTimer();
+
+    // Pre-fetch câu tiếp theo ngầm
+    const nextCard = bombCards[bombIndex + 1];
+    if (nextCard) setTimeout(() => _bombPrefetch(nextCard), 300);
 
   } catch (e) {
     bombGenerating = false;
