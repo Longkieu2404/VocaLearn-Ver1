@@ -453,9 +453,9 @@ body {
   transform: scale(1.04);
 }
 
-/* Desktop: đảm bảo gamesGrid luôn 4 cột đều */
+/* Desktop: tự động co giãn số cột theo số game, tối thiểu 260px mỗi cột */
 #gamesGrid {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 .game-card-body {
   padding: 1.1rem 1.25rem 1.25rem;

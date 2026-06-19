@@ -2,7 +2,7 @@
 // AI tạo câu ngữ cảnh có 1 từ bị ẩn → người chơi điền đúng trước khi bom nổ
 
 // ---- CONFIG ----
-const BOMB_MODELS = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b'];
+const BOMB_MODELS = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash'];
 const BOMB_BASE_TIME = 12;       // giây mỗi câu (sẽ giảm dần theo streak)
 const BOMB_MIN_TIME  = 6;        // tối thiểu 6 giây
 const BOMB_STREAK_BONUS = 50;    // điểm thưởng streak
@@ -204,8 +204,8 @@ async function _bombLoadCard() {
 
   } catch (e) {
     bombGenerating = false;
-    showNotif('Lỗi AI: ' + (e.message || 'Không tạo được câu hỏi'), '🤖');
-    _bombShowSection('hub-placeholder');
+    await showNotif('Lỗi AI: ' + (e.message || 'Không tạo được câu hỏi'), '🤖');
+    _bombBackToHub();
   }
 }
 
@@ -480,9 +480,22 @@ function _bombFuzzyMatch(answer, correct) {
 // ---- BACK ----
 function _bombBackToHub() {
   _bombStopTimer();
+  // Ẩn tất cả section bomb
+  ['bombConfig','bombSession','bombDone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Xóa class fullscreen/in-session
   document.body.classList.remove('game-fullscreen', 'game-in-session');
+  // Dọn fireworks nếu có
   if (_bfwCanvas) { cancelAnimationFrame(_bfwRaf); _bfwCanvas.remove(); _bfwCanvas = null; }
-  if (typeof navigateTo === 'function') navigateTo('scramble');
+  // Hiện lại gamesHub và navigate đúng trang
+  if (typeof navigateTo === 'function') {
+    navigateTo('scramble'); // renderScramblePage() → _scrShowSection('hub') → hiện gamesHub
+  } else {
+    const hub = document.getElementById('gamesHub');
+    if (hub) hub.style.display = '';
+  }
 }
 
 // ---- SECTION HELPER ----
