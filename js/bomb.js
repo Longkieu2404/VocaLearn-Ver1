@@ -437,9 +437,12 @@ async function _bombGenerateSentence(card) {
       if (!res.ok) {
         const e = await res.json();
         lastError = e.error?.message || `HTTP ${res.status}`;
-        // Model không tồn tại hoặc hết quota → thử model tiếp theo, xóa cache nếu 404
-        if ([429, 404, 400].includes(res.status) || lastError.includes('quota') || lastError.includes('RESOURCE_EXHAUSTED')) {
-          if (res.status === 404) GeminiModels.clearCache?.();
+        const shouldRetry = [400, 404, 429, 500, 503, 529].includes(res.status) ||
+          lastError.includes('quota') || lastError.includes('RESOURCE_EXHAUSTED') ||
+          lastError.includes('not found') || lastError.includes('high demand') ||
+          lastError.includes('overloaded') || lastError.includes('unavailable');
+        if (shouldRetry) {
+          if (res.status === 404) GeminiModels.clearCache();
           continue;
         }
         throw new Error(lastError);
@@ -462,7 +465,10 @@ async function _bombGenerateSentence(card) {
       return { sentence: parsed.sentence, blanked: blankedHTML };
     } catch (e) {
       lastError = e.message;
-      if (e.message?.includes('quota') || e.message?.includes('429')) continue;
+      // Thử model tiếp theo với mọi lỗi tạm thời
+      if (e.message?.includes('quota') || e.message?.includes('429') ||
+          e.message?.includes('503') || e.message?.includes('high demand') ||
+          e.message?.includes('overloaded') || e.message?.includes('fetch')) continue;
       throw e;
     }
   }

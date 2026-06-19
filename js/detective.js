@@ -293,8 +293,14 @@ async function _detGenerateHints(card) {
       if (!res.ok) {
         const e = await res.json();
         lastError = e.error?.message || `HTTP ${res.status}`;
-        if (res.status === 429 || res.status === 404 || res.status === 400 ||
-            lastError.includes('quota') || lastError.includes('not found') || lastError.includes('RESOURCE_EXHAUSTED')) continue;
+        const shouldRetry = [400, 404, 429, 500, 503, 529].includes(res.status) ||
+          lastError.includes('quota') || lastError.includes('RESOURCE_EXHAUSTED') ||
+          lastError.includes('not found') || lastError.includes('high demand') ||
+          lastError.includes('overloaded') || lastError.includes('unavailable');
+        if (shouldRetry) {
+          if (res.status === 404) GeminiModels.clearCache();
+          continue;
+        }
         throw new Error(lastError);
       }
       const data  = await res.json();
@@ -305,7 +311,9 @@ async function _detGenerateHints(card) {
       return parsed.hints;
     } catch (e) {
       lastError = e.message;
-      if (e.message.includes('quota') || e.message.includes('429')) continue;
+      if (e.message?.includes('quota') || e.message?.includes('429') ||
+          e.message?.includes('503') || e.message?.includes('high demand') ||
+          e.message?.includes('overloaded') || e.message?.includes('fetch')) continue;
       throw e;
     }
   }
