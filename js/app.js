@@ -4677,13 +4677,24 @@ function _settingsTab(btn, tab) {
 }
 
 function _settingsSaveName() {
-  const val = document.getElementById('settingsDisplayName')?.value.trim();
-  if (!val) return;
-  // Lưu đúng key để getDisplayName() đọc được
-  localStorage.setItem('vocalearn_username', val);
+  const input = document.getElementById('settingsDisplayName');
+  const val = (input?.value || '').trim();
+
+  if (val) {
+    // Lưu đúng key để getDisplayName() đọc được
+    localStorage.setItem('vocalearn_username', val);
+  } else {
+    // Xóa hết tên → quay về tên mặc định của tài khoản Google (qua getDisplayName())
+    localStorage.removeItem('vocalearn_username');
+  }
+
+  const displayName = getDisplayName();
+
   // Cập nhật hiển thị trên sidebar
   const nameEl = document.getElementById('authUserName');
-  if (nameEl) nameEl.textContent = val;
+  if (nameEl) nameEl.textContent = displayName;
+  // Cập nhật lại input để hiển thị đúng giá trị hiện tại (vd: tên mặc định Google)
+  if (input) input.value = displayName;
   // Cập nhật greeting trang chủ
   if (typeof renderHome === 'function') renderHome();
   // Sync lên Firebase nếu có
@@ -4692,7 +4703,9 @@ function _settingsSaveName() {
   } else if (window.AutoSave && typeof AutoSave.triggerSave === 'function') {
     AutoSave.triggerSave();
   }
-  showNotif('Đã lưu tên hiển thị!', '✅');
+
+  // Tự tắt giao diện cài đặt sau khi lưu, không cần hiện thông báo riêng
+  document.getElementById('settingsOverlay')?.classList.remove('open');
 }
 
 function _settingsSetTheme(theme) {
