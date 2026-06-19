@@ -5349,3 +5349,96 @@ body.game-fullscreen #hangSession .study-header {
   .hang-key { width: 28px; height: 38px; font-size: 0.78rem; }
   .hang-kb-row { gap: 4px; }
 }
+
+/* ============================================================
+   WORD BOMB
+   ============================================================ */
+
+/* Timer */
+.bomb-timer-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bomb-timer-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Câu hỏi */
+.bomb-sentence {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+.bomb-blank {
+  display: inline-block;
+  min-width: 90px;
+  border-bottom: 3px solid var(--accent2);
+  text-align: center;
+  margin: 0 4px;
+  font-weight: 700;
+  color: var(--accent2);
+  vertical-align: bottom;
+}
+
+/* Loading skeleton */
+.bomb-loading {
+  font-size: 0.9rem;
+  color: var(--text3);
+  font-style: italic;
+  animation: bombPulse 1.2s ease-in-out infinite;
+}
+@keyframes bombPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+/* Feedback — tái dùng kiểu det-feedback */
+.bomb-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+.bomb-feedback-correct {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1.5px solid rgba(52, 211, 153, 0.4);
+  color: var(--text);
+}
+.bomb-feedback-wrong {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1.5px solid rgba(248, 113, 113, 0.35);
+  color: var(--text);
+}
+.bomb-fb-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
+.bomb-fb-word { font-weight: 700; color: var(--accent2); }
+
+/* Shake khi bom nổ */
+@keyframes bombShake {
+  0%,100% { transform: translateX(0); }
+  15%     { transform: translateX(-8px) rotate(-1deg); }
+  30%     { transform: translateX(8px)  rotate(1deg); }
+  45%     { transform: translateX(-6px); }
+  60%     { transform: translateX(6px); }
+  75%     { transform: translateX(-3px); }
+  90%     { transform: translateX(3px); }
+}
+.bomb-shake { animation: bombShake 0.6s ease; }
+
+/* Mobile */
+@media (max-width: 480px) {
+  .bomb-sentence { font-size: 1rem; }
+  #bombSession { padding: 0 0.5rem; }
+}
