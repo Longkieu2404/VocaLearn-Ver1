@@ -4380,7 +4380,7 @@ function setupFirebaseUI() {
       if (loginState) loginState.style.display = 'none';
       if (userCard)   userCard.style.display   = '';
 
-      const name = user.displayName || user.email || '';
+      const name = getDisplayName() || user.email || '';
       if (nameEl) nameEl.textContent = name;
 
       if (user.photoURL && avatarImg) {
@@ -4635,9 +4635,8 @@ function _settingsOpen() {
   }
 
   // Sync name
-  const nameEl = document.getElementById('authUserName');
   const nameInput = document.getElementById('settingsDisplayName');
-  if (nameEl && nameInput) nameInput.value = nameEl.textContent || '';
+  if (nameInput) nameInput.value = getDisplayName() || '';
 
   // Sync email
   const emailEl = document.getElementById('settingsEmail');
@@ -4680,11 +4679,19 @@ function _settingsTab(btn, tab) {
 function _settingsSaveName() {
   const val = document.getElementById('settingsDisplayName')?.value.trim();
   if (!val) return;
+  // Lưu đúng key để getDisplayName() đọc được
+  localStorage.setItem('vocalearn_username', val);
   // Cập nhật hiển thị trên sidebar
   const nameEl = document.getElementById('authUserName');
   if (nameEl) nameEl.textContent = val;
-  // Lưu local (Firebase displayName update cần SDK)
-  localStorage.setItem('vocalearn_display_name', val);
+  // Cập nhật greeting trang chủ
+  if (typeof renderHome === 'function') renderHome();
+  // Sync lên Firebase nếu có
+  if (window.FirebaseSync && typeof FirebaseSync.push === 'function') {
+    FirebaseSync.push();
+  } else if (window.AutoSave && typeof AutoSave.triggerSave === 'function') {
+    AutoSave.triggerSave();
+  }
   showNotif('Đã lưu tên hiển thị!', '✅');
 }
 
@@ -4716,7 +4723,7 @@ document.addEventListener('keydown', e => {
 
 // Áp dụng tên đã lưu khi load trang
 (function _applyStoredName() {
-  const stored = localStorage.getItem('vocalearn_display_name');
+  const stored = localStorage.getItem('vocalearn_username');
   if (!stored) return;
   const nameEl = document.getElementById('authUserName');
   // Chỉ override nếu Firebase chưa set
