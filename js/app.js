@@ -603,7 +603,7 @@ function setupNav() {
   document.getElementById('btnExitReview').addEventListener('click', exitReview);
   document.getElementById('btnNextReview').addEventListener('click', nextReviewQuestion);
   document.getElementById('btnReviewAgain').addEventListener('click', restartReviewWrong);
-  document.getElementById('btnSetName').addEventListener('click', promptSetName);
+  // btnSetName removed — name editing is now in Settings
   document.getElementById('btnExport').addEventListener('click', exportData);
   document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFileInput').click());
   document.getElementById('importFileInput').addEventListener('change', importData);
