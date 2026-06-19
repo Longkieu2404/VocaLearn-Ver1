@@ -3,10 +3,21 @@
 
 // ---- CONFIG ----
 const BOMB_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-const BOMB_BASE_TIME = 12;       // giây mỗi câu (sẽ giảm dần theo streak)
-const BOMB_MIN_TIME  = 6;        // tối thiểu 6 giây
+let   BOMB_BASE_TIME = 60;       // giây mỗi câu — do người dùng chọn (30/60/90/120)
+const BOMB_MIN_TIME  = 6;        // tối thiểu 6 giây (khi streak cao)
 const BOMB_STREAK_BONUS = 50;    // điểm thưởng streak
 const BOMB_BASE_SCORE   = 100;   // điểm cơ bản mỗi câu đúng
+
+// Lựa chọn thời gian đang active
+let _bombSelectedTime = 60;
+
+function _bombSelectTime(sec) {
+  _bombSelectedTime = sec;
+  BOMB_BASE_TIME    = sec;
+  document.querySelectorAll('.bomb-time-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.time) === sec);
+  });
+}
 
 // ---- STATE ----
 let bombCards       = [];
@@ -133,6 +144,7 @@ function startBombFromHub() {
   if (infoEl) infoEl.textContent = `Word Bomb — ${pool.length} từ trong pool`;
 
   window._bombPool = pool;
+  _bombSelectTime(_bombSelectedTime); // đảm bảo UI đúng với lựa chọn hiện tại
   _bombShowSection('config');
   document.body.classList.add('game-fullscreen');
 }
@@ -140,6 +152,7 @@ function startBombFromHub() {
 // ---- START GAME ----
 function _bombStartGame() {
   bombWordCount = parseInt(document.getElementById('bombWordCount')?.value) || 10;
+  BOMB_BASE_TIME = _bombSelectedTime; // áp dụng thời gian người dùng chọn
 
   const pool = shuffle([...(window._bombPool || [])]);
   bombCards       = pool.slice(0, bombWordCount);

@@ -995,25 +995,66 @@
     </div>
 
     <!-- WORD BOMB: CONFIG -->
-    <div class="study-done" id="bombConfig" style="display:none">
-      <div style="font-size:3rem;margin-bottom:0.5rem">💣</div>
-      <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem">Word Bomb</h2>
-      <p id="bombConfigInfo" style="font-size:0.85rem;color:var(--text3);margin-bottom:1.5rem"></p>
-      <div style="background:var(--surface2);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;text-align:left;max-width:380px;margin-inline:auto">
-        <div style="font-size:0.82rem;font-weight:600;color:var(--text2);margin-bottom:0.5rem">📋 Cách chơi</div>
-        <ul style="font-size:0.82rem;color:var(--text3);line-height:1.8;padding-left:1.2rem;margin:0">
-          <li>AI tạo câu tiếng Anh có 1 từ bị ẩn</li>
-          <li>Điền đúng từ trước khi đồng hồ về 0</li>
-          <li>Đúng liên tiếp → Streak 🔥 → thưởng điểm</li>
-          <li>Streak cao → thời gian ngắn hơn → điểm cao hơn!</li>
-        </ul>
+    <div id="bombConfig" style="display:none">
+      <div class="det-config-card">
+
+        <!-- Header -->
+        <div class="det-config-header">
+          <div class="det-config-emoji">💣</div>
+          <div>
+            <div class="det-config-title" id="bombConfigInfo">Word Bomb</div>
+            <div class="det-config-sub">Điền từ bị ẩn trước khi bom phát nổ!</div>
+          </div>
+        </div>
+
+        <!-- Score legend: điểm thưởng theo tốc độ -->
+        <div class="det-score-legend">
+          <div class="det-legend-item" style="--c:#34d399">
+            <span class="det-legend-num">⚡ Nhanh</span><span class="det-legend-pts">+150đ</span>
+          </div>
+          <div class="det-legend-arrow">→</div>
+          <div class="det-legend-item" style="--c:#60a5fa">
+            <span class="det-legend-num">🔥 Streak</span><span class="det-legend-pts">+50đ</span>
+          </div>
+          <div class="det-legend-arrow">→</div>
+          <div class="det-legend-item" style="--c:#a78bfa">
+            <span class="det-legend-num">✅ Đúng</span><span class="det-legend-pts">+100đ</span>
+          </div>
+          <div class="det-legend-arrow">→</div>
+          <div class="det-legend-item" style="--c:#f87171">
+            <span class="det-legend-num">💥 Sai</span><span class="det-legend-pts">0đ</span>
+          </div>
+        </div>
+
+        <!-- Settings grid -->
+        <div class="det-settings-grid">
+
+          <!-- Số từ -->
+          <div class="det-setting-block">
+            <div class="det-setting-label">📚 Số từ</div>
+            <select id="bombWordCount" class="det-select"></select>
+          </div>
+
+          <!-- Thời gian đếm ngược -->
+          <div class="det-setting-block">
+            <div class="det-setting-label">⏱ Thời gian / câu</div>
+            <div class="det-btn-group">
+              <button class="det-option-btn bomb-time-btn" data-time="30" onclick="_bombSelectTime(30)">⚡<span>30s</span></button>
+              <button class="det-option-btn bomb-time-btn active" data-time="60" onclick="_bombSelectTime(60)">🕐<span>60s</span></button>
+              <button class="det-option-btn bomb-time-btn" data-time="90" onclick="_bombSelectTime(90)">🐢<span>90s</span></button>
+              <button class="det-option-btn bomb-time-btn" data-time="120" onclick="_bombSelectTime(120)">😴<span>120s</span></button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- CTA -->
+        <button class="det-start-btn" onclick="_bombStartGame()">
+          <span>💣</span> Bắt đầu!
+        </button>
+        <button class="btn-ghost det-back-btn" onclick="_bombBackToHub()">← Trở về</button>
+
       </div>
-      <div style="display:flex;align-items:center;gap:1rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap">
-        <label style="font-size:0.85rem;color:var(--text2);font-weight:600">Số từ:</label>
-        <select id="bombWordCount" class="det-select" style="padding:0.4rem 1rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:0.9rem"></select>
-      </div>
-      <button class="det-start-btn" onclick="_bombStartGame()">💣 Bắt đầu!</button>
-      <button class="btn-ghost" style="margin-top:0.75rem" onclick="_bombBackToHub()">← Trở về</button>
     </div>
 
     <!-- WORD BOMB: SESSION -->
