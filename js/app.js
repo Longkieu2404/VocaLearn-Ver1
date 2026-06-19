@@ -4453,6 +4453,10 @@ function setupFirebaseUI() {
 
       const ok = await FirebaseSync.pull();
       if (ok) {
+        // Cập nhật lại tên/avatar ở sidebar — vì lúc updateUI(user) chạy ở trên,
+        // tên tùy chỉnh (vocalearn_username) từ Firestore chưa được pull về kịp,
+        // nên có thể đang hiển thị tên mặc định Google thay vì tên đã đặt.
+        updateUI(user);
         renderHome();
         updateStreak();
         updateTrashBadge();
