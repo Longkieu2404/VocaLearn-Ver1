@@ -5467,30 +5467,6 @@ body.game-fullscreen #hangSession .study-header {
   margin-bottom: 1rem;
 }
 
-/* Nút thoát (X) */
-.bomb-exit-btn {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border);
-  background: var(--surface2);
-  color: var(--text3);
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-  line-height: 1;
-}
-.bomb-exit-btn:hover {
-  background: rgba(248,113,113,0.15);
-  color: #ef4444;
-  border-color: #ef4444;
-}
-
 /* Khu progress bar */
 .bomb-progress-block {
   flex: 1;
