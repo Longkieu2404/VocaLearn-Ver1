@@ -83,7 +83,7 @@
           Đăng nhập Google
         </button>
       </div>
-      <div class="auth-user-card" id="authUserCard" style="display:none">
+      <div class="auth-user-card" id="authUserCard" style="display:none" onclick="_settingsOpen()" role="button" title="Cài đặt tài khoản">
         <div class="auth-user-left">
           <div class="auth-avatar-wrap" id="authAvatarWrap">
             <img id="authAvatarImg" src="" alt="" class="auth-avatar-img" style="display:none"/>
@@ -93,9 +93,9 @@
             <span class="auth-user-name" id="authUserName"></span>
           </div>
         </div>
-        <button class="auth-logout-btn" id="btnFirebaseLogout" title="Đăng xuất">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
+        <span class="auth-settings-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
       </div>
     </div>
     <div id="autosaveNote" style="display:none"></div>
@@ -1469,7 +1469,129 @@
 <!-- Firebase – phải để type="module" và đặt SAU app.js -->
 <script type="module" src="js/firebase.js?v=2"></script>
 
-<!-- WORD BOMB: Exit confirmation modal -->
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div class="settings-overlay" id="settingsOverlay" onclick="_settingsClose(event)">
+  <div class="settings-modal" id="settingsModal">
+
+    <!-- Header -->
+    <div class="settings-header">
+      <span class="settings-title">⚙️ Cài đặt</span>
+      <button class="settings-close-btn" onclick="_settingsClose(null)">✕</button>
+    </div>
+
+    <div class="settings-body">
+      <!-- Sidebar nav -->
+      <nav class="settings-nav">
+        <button class="settings-nav-item active" data-tab="profile" onclick="_settingsTab(this,'profile')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Hồ sơ
+        </button>
+        <button class="settings-nav-item" data-tab="appearance" onclick="_settingsTab(this,'appearance')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          Giao diện
+        </button>
+        <button class="settings-nav-item" data-tab="language" onclick="_settingsTab(this,'language')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Ngôn ngữ
+        </button>
+        <div class="settings-nav-divider"></div>
+        <button class="settings-nav-item settings-nav-danger" onclick="_settingsLogout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Đăng xuất
+        </button>
+      </nav>
+
+      <!-- Content panels -->
+      <div class="settings-content">
+
+        <!-- PROFILE TAB -->
+        <div class="settings-tab-panel active" id="stab-profile">
+          <div class="settings-section-title">Hồ sơ</div>
+
+          <!-- Avatar -->
+          <div class="settings-avatar-row">
+            <div class="settings-avatar-wrap" id="settingsAvatarWrap">
+              <img id="settingsAvatarImg" src="" alt="" style="display:none;width:64px;height:64px;border-radius:50%;object-fit:cover"/>
+              <span id="settingsAvatarInitials" class="settings-avatar-initials"></span>
+            </div>
+            <div>
+              <div class="settings-field-label">Ảnh đại diện</div>
+              <div style="font-size:0.78rem;color:var(--text3);margin-top:2px">Lấy từ tài khoản Google</div>
+            </div>
+          </div>
+
+          <!-- Display name -->
+          <div class="settings-field">
+            <label class="settings-field-label" for="settingsDisplayName">Tên hiển thị</label>
+            <div class="settings-field-row">
+              <input id="settingsDisplayName" class="settings-input" type="text" placeholder="Nhập tên của bạn..." maxlength="40"/>
+              <button class="settings-save-btn" onclick="_settingsSaveName()">Lưu</button>
+            </div>
+          </div>
+
+          <!-- Email (readonly) -->
+          <div class="settings-field">
+            <label class="settings-field-label">Email</label>
+            <div id="settingsEmail" class="settings-input settings-input-readonly"></div>
+          </div>
+        </div>
+
+        <!-- APPEARANCE TAB -->
+        <div class="settings-tab-panel" id="stab-appearance">
+          <div class="settings-section-title">Giao diện</div>
+
+          <div class="settings-field-label" style="margin-bottom:0.75rem">Chế độ màu</div>
+          <div class="settings-theme-grid">
+            <button class="settings-theme-opt" id="stheme-system" onclick="_settingsSetTheme('system')">
+              <div class="settings-theme-preview settings-theme-system">
+                <div class="stp-left"></div><div class="stp-right"></div>
+              </div>
+              <span>Hệ thống</span>
+            </button>
+            <button class="settings-theme-opt" id="stheme-light" onclick="_settingsSetTheme('light')">
+              <div class="settings-theme-preview settings-theme-light">
+                <div class="stp-circle"></div>
+                <div class="stp-lines"><div></div><div></div></div>
+              </div>
+              <span>Sáng</span>
+            </button>
+            <button class="settings-theme-opt" id="stheme-dark" onclick="_settingsSetTheme('dark')">
+              <div class="settings-theme-preview settings-theme-dark">
+                <div class="stp-circle"></div>
+                <div class="stp-lines"><div></div><div></div></div>
+              </div>
+              <span>Tối</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- LANGUAGE TAB -->
+        <div class="settings-tab-panel" id="stab-language">
+          <div class="settings-section-title">Ngôn ngữ giao diện</div>
+          <div class="settings-field-label" style="margin-bottom:0.75rem">Chọn ngôn ngữ hiển thị</div>
+          <div class="settings-lang-grid">
+            <button class="settings-lang-opt" id="slang-vi" onclick="_settingsSetLang('vi')">
+              <span class="settings-lang-flag">🇻🇳</span>
+              <span class="settings-lang-name">Tiếng Việt</span>
+              <span class="settings-lang-check">✓</span>
+            </button>
+            <button class="settings-lang-opt" id="slang-en" onclick="_settingsSetLang('en')">
+              <span class="settings-lang-flag">🇬🇧</span>
+              <span class="settings-lang-name">English</span>
+              <span class="settings-lang-check">✓</span>
+            </button>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text3);margin-top:1rem;line-height:1.6">
+            ⚠️ Tính năng đa ngôn ngữ đang phát triển. Hiện tại giao diện hiển thị tiếng Việt.
+          </div>
+        </div>
+
+      </div><!-- end settings-content -->
+    </div><!-- end settings-body -->
+  </div>
+</div>
+<!-- ===================== END SETTINGS MODAL ===================== -->
+
 <div class="modal-overlay" id="bombExitModal" style="z-index:9999">
   <div class="modal" style="max-width:360px;text-align:center;padding:2rem 1.75rem">
     <div style="font-size:2.5rem;margin-bottom:0.5rem">💣</div>

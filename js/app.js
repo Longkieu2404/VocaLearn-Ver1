@@ -4609,3 +4609,116 @@ async function emptyTrash() {
   showNotif('Đã làm trống thùng rác.', '🗑️');
   renderTrashPage();
 }
+
+/* ============================================================
+   SETTINGS MODAL
+   ============================================================ */
+
+const SETTINGS_LANG_KEY = 'vocalearn_lang';
+
+function _settingsOpen() {
+  const overlay = document.getElementById('settingsOverlay');
+  if (!overlay) return;
+
+  // Sync avatar
+  const srcImg  = document.getElementById('authAvatarImg');
+  const srcInit = document.getElementById('authAvatarInitials');
+  const dstImg  = document.getElementById('settingsAvatarImg');
+  const dstInit = document.getElementById('settingsAvatarInitials');
+  if (srcImg && dstImg) {
+    dstImg.src = srcImg.src;
+    dstImg.style.display = srcImg.style.display;
+  }
+  if (srcInit && dstInit) {
+    dstInit.textContent = srcInit.textContent;
+    dstInit.style.display = srcInit.style.display || 'flex';
+  }
+
+  // Sync name
+  const nameEl = document.getElementById('authUserName');
+  const nameInput = document.getElementById('settingsDisplayName');
+  if (nameEl && nameInput) nameInput.value = nameEl.textContent || '';
+
+  // Sync email
+  const emailEl = document.getElementById('settingsEmail');
+  if (emailEl) {
+    const user = window._firebaseUser || (window.firebase?.auth?.()?.currentUser);
+    emailEl.textContent = user?.email || '—';
+  }
+
+  // Sync theme active state
+  const curTheme = localStorage.getItem(THEME_KEY) || 'system';
+  document.querySelectorAll('.settings-theme-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.id === 'stheme-' + curTheme);
+  });
+
+  // Sync lang active state
+  const curLang = localStorage.getItem(SETTINGS_LANG_KEY) || 'vi';
+  document.querySelectorAll('.settings-lang-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.id === 'slang-' + curLang);
+  });
+
+  // Reset to profile tab
+  _settingsTab(document.querySelector('.settings-nav-item[data-tab="profile"]'), 'profile');
+
+  overlay.classList.add('open');
+}
+
+function _settingsClose(e) {
+  if (e && e.target !== document.getElementById('settingsOverlay')) return;
+  document.getElementById('settingsOverlay')?.classList.remove('open');
+}
+
+function _settingsTab(btn, tab) {
+  document.querySelectorAll('.settings-nav-item[data-tab]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.settings-tab-panel').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const panel = document.getElementById('stab-' + tab);
+  if (panel) panel.classList.add('active');
+}
+
+function _settingsSaveName() {
+  const val = document.getElementById('settingsDisplayName')?.value.trim();
+  if (!val) return;
+  // Cập nhật hiển thị trên sidebar
+  const nameEl = document.getElementById('authUserName');
+  if (nameEl) nameEl.textContent = val;
+  // Lưu local (Firebase displayName update cần SDK)
+  localStorage.setItem('vocalearn_display_name', val);
+  showNotif('Đã lưu tên hiển thị!', '✅');
+}
+
+function _settingsSetTheme(theme) {
+  applyTheme(theme);
+  document.querySelectorAll('.settings-theme-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.id === 'stheme-' + theme);
+  });
+}
+
+function _settingsSetLang(lang) {
+  localStorage.setItem(SETTINGS_LANG_KEY, lang);
+  document.querySelectorAll('.settings-lang-opt').forEach(btn => {
+    btn.classList.toggle('active', btn.id === 'slang-' + lang);
+  });
+  showNotif(lang === 'vi' ? 'Đã chuyển sang Tiếng Việt' : 'Switched to English', '🌐');
+}
+
+function _settingsLogout() {
+  document.getElementById('settingsOverlay')?.classList.remove('open');
+  // Gọi nút logout Firebase hiện có
+  document.getElementById('btnFirebaseLogout')?.click();
+}
+
+// Đóng modal bằng Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('settingsOverlay')?.classList.remove('open');
+});
+
+// Áp dụng tên đã lưu khi load trang
+(function _applyStoredName() {
+  const stored = localStorage.getItem('vocalearn_display_name');
+  if (!stored) return;
+  const nameEl = document.getElementById('authUserName');
+  // Chỉ override nếu Firebase chưa set
+  if (nameEl && !nameEl.textContent) nameEl.textContent = stored;
+})();
