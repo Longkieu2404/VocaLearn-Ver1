@@ -298,6 +298,11 @@ initTheme();
 
 // ---- INIT ----
 document.addEventListener('DOMContentLoaded', () => {
+  // Xóa cache model cũ nếu có (các model 2.0/1.5 đã bị retire)
+  const cachedInfo = GeminiModels.getCacheInfo();
+  if (cachedInfo?.models?.some(m => m.includes('gemini-2.0') || m.includes('gemini-1.5'))) {
+    GeminiModels.clearCache();
+  }
   checkStreakExpiry();
   setupNav();
   setupColorPicker();
@@ -3867,22 +3872,22 @@ const GeminiModels = {
   CACHE_KEY: 'vocalearn_gemini_models',
   CACHE_TTL: 24 * 60 * 60 * 1000, // 24 giờ
 
-  // Fallback cứng khi không fetch được
+  // Fallback cứng khi không fetch được (cập nhật 2026)
   FALLBACK: [
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b'
+    'gemini-3.5-flash',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
   ],
 
   // Ưu tiên model nào trước (prefix match, loại trừ model đã khai tử)
-  DEPRECATED: ['gemini-1.0', 'gemini-pro'],
+  DEPRECATED: ['gemini-1.0', 'gemini-pro', 'gemini-1.5', 'gemini-2.0'],
 
   PRIORITY_PREFIXES: [
+    'gemini-3.5-flash',
+    'gemini-3.5',
+    'gemini-3',
     'gemini-2.5-flash',
     'gemini-2.5',
-    'gemini-2.0-flash-lite',
-    'gemini-2.0',
   ],
 
   _sortModels(names) {

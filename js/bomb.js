@@ -2,7 +2,7 @@
 // AI tạo câu ngữ cảnh có 1 từ bị ẩn → người chơi điền đúng trước khi bom nổ
 
 // ---- CONFIG ----
-const BOMB_MODELS = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash'];
+const BOMB_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const BOMB_BASE_TIME = 12;       // giây mỗi câu (sẽ giảm dần theo streak)
 const BOMB_MIN_TIME  = 6;        // tối thiểu 6 giây
 const BOMB_STREAK_BONUS = 50;    // điểm thưởng streak
@@ -424,8 +424,10 @@ async function _bombGenerateSentence(card) {
     `Trả về JSON thuần (không markdown, không backtick):\n` +
     `{"sentence":"câu đầy đủ","blanked":"câu có ___ thay chỗ từ"}`;
 
+  let dynamicModels = BOMB_MODELS;
+  try { dynamicModels = await GeminiModels.getModels(apiKey); } catch(e) {}
   let lastError = null;
-  for (const model of BOMB_MODELS) {
+  for (const model of dynamicModels) {
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -435,7 +437,11 @@ async function _bombGenerateSentence(card) {
       if (!res.ok) {
         const e = await res.json();
         lastError = e.error?.message || `HTTP ${res.status}`;
-        if ([429, 404, 400].includes(res.status) || lastError.includes('quota') || lastError.includes('RESOURCE_EXHAUSTED')) continue;
+        // Model không tồn tại hoặc hết quota → thử model tiếp theo, xóa cache nếu 404
+        if ([429, 404, 400].includes(res.status) || lastError.includes('quota') || lastError.includes('RESOURCE_EXHAUSTED')) {
+          if (res.status === 404) GeminiModels.clearCache?.();
+          continue;
+        }
         throw new Error(lastError);
       }
       const data  = await res.json();

@@ -3,7 +3,7 @@
 // ---- CONFIG ----
 const DET_SCORES  = [500, 350, 200, 100, 50];
 const DET_COLORS  = ['#34d399','#60a5fa','#a78bfa','#fb923c','#f87171'];
-const DET_MODELS  = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b']; // fallback static list
+const DET_MODELS  = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']; // fallback static list
 
 // ---- STATE ----
 let detCards       = [];
