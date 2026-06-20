@@ -867,10 +867,11 @@ function createSetCard(set) {
   const pctLearning = total > 0 ? Math.round(learning / total * 100) : 0;
   const isMobile = window.innerWidth <= 768;
 
+  const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
+
   if (isMobile) {
     const wrap = document.createElement('div');
     wrap.className = 'set-card-mobile-wrap set-color-' + (set.colorIndex || 0);
-    const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
     const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : '';
     wrap.innerHTML = `
       <div class="set-card-mobile">
