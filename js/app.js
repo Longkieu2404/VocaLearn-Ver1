@@ -958,7 +958,7 @@ function openDetailModal(setId) {
   if (!set) return;
   document.getElementById('detailSetName').textContent = set.name;
   const prog = getProgress();
-  const labelMap = { new: 'Chưa học', learning: 'Đang học', mastered: 'Đã thuộc' };
+  const labelMap = getLang()==='en' ? { new: 'New', learning: 'Learning', mastered: 'Mastered' } : { new: t('status.new'), learning: t('status.learning'), mastered: t('status.mastered') };
   const clsMap = { new: 'status-new', learning: 'status-learning', mastered: 'status-mastered' };
   const wrap = document.querySelector('.cards-table-wrap');
 

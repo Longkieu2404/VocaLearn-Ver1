@@ -122,7 +122,7 @@ function _hangLoadWord() {
   // Progress text + width: hiện ngay vị trí từ hiện tại
   const pct = ((hangIndex + 1) / hangCards.length) * 100;
   document.getElementById('hangProgressFill').style.width = pct + '%';
-  document.getElementById('hangProgressText').textContent = `Từ ${hangIndex + 1} / ${hangCards.length}`;
+  document.getElementById('hangProgressText').textContent = getLang()==='en' ? `Word ${hangIndex + 1} / ${hangCards.length}` : `Từ ${hangIndex + 1} / ${hangCards.length}`;
   document.getElementById('hangScore').textContent = hangTotalScore;
   document.getElementById('hangScore').textContent = hangTotalScore;
 

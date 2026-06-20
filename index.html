@@ -921,7 +921,7 @@
         <button class="btn-ghost" id="btnExitHangman" data-i18n="hangman.exitBtn">← Thoát</button>
         <div class="det-progress-wrap" style="flex:1;margin:0 1rem;">
           <div class="det-progress-track" style="flex:1"><div class="det-progress-bar" id="hangProgressFill" style="width:0%"></div></div>
-          <span id="hangProgressText" class="det-progress-text">Từ 1 / 0</span>
+          <span id="hangProgressText" class="det-progress-text">Word 1 / 0</span>
         </div>
         <div class="scramble-score-badge" id="hangScoreBadge">🏅 <span id="hangScore">0</span></div>
       </div>
@@ -1057,7 +1057,7 @@
           <div class="bomb-progress-track">
             <div class="bomb-progress-fill" id="bombProgressFill" style="width:0%"></div>
           </div>
-          <div class="bomb-progress-label" id="bombProgressText">Từ 1 / 10</div>
+          <div class="bomb-progress-label" id="bombProgressText">Word 1 / 10</div>
         </div>
         <div class="bomb-badges">
           <div id="bombScoreBadge" class="bomb-score-badge">💣 <span id="bombScore">0</span>đ</div>
@@ -1274,8 +1274,8 @@
     </div>
     <div class="modal-body">
       <div class="detail-actions">
-        <button class="btn-primary" id="btnStudySet">🎴 Học ngay</button>
-        <button class="btn-secondary" id="btnQuizSet">🧠 Kiểm tra</button>
+        <button class="btn-primary" id="btnStudySet" data-i18n="set.studyNow">🎴 Học ngay</button>
+        <button class="btn-secondary" id="btnQuizSet" data-i18n="set.quizNow">🧠 Kiểm tra</button>
         <button class="btn-ghost btn-edit" id="btnEditSet">✏️ Sửa</button>
         <button class="btn-danger" id="btnDeleteSet">🗑 Xóa</button>
       </div>
@@ -1371,7 +1371,7 @@
       <!-- AI Result -->
       <div class="ai-result" id="aiResult" style="display:none">
         <div class="ai-result-header">
-          <span>✅ AI đã tạo xong! Kiểm tra và chỉnh sửa nếu cần:</span>
+          <span data-i18n="ai.doneMsg">✅ AI đã tạo xong! Kiểm tra và chỉnh sửa nếu cần:</span>
           <button class="btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.7rem" onclick="clearAIResult()">↩ Làm lại</button>
         </div>
         <label class="form-label" data-i18n="label.setNameResult">Tên bộ thẻ</label>

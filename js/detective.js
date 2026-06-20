@@ -207,10 +207,10 @@ async function _detLoadCard() {
   document.getElementById('detHintsWrap').innerHTML = '';
   document.getElementById('detAnswerInput').value = '';
   document.getElementById('detAnswerInput').disabled = false;
-  document.getElementById('detAnswerInput').placeholder = getLang()==='en' ? 'AI is preparing hints...' : 'AI đang chuẩn bị gợi ý...';
+  document.getElementById('detAnswerInput').placeholder = t('det.answerPlaceholder');
   document.getElementById('detBtnSubmit').disabled = true;
   document.getElementById('detBtnNextHint').disabled = true;
-  document.getElementById('detBtnNextHint').textContent = 'Gợi ý tiếp (−150đ)';
+  document.getElementById('detBtnNextHint').textContent = getLang()==='en' ? 'Next hint (−150pts)' : 'Gợi ý tiếp (−150đ)';
   document.getElementById('detBtnNextHint').style.display = '';
   document.getElementById('detFeedback').style.display = 'none';
   document.getElementById('detCurrentScore').textContent = '';
@@ -243,7 +243,7 @@ async function _detLoadCard() {
   detGenerating = false;
   document.getElementById('detLoadingHint').style.display = 'none';
   document.getElementById('detHintsWrap').style.display = '';
-  document.getElementById('detAnswerInput').placeholder = 'Nhập từ tiếng Anh bạn đoán...';
+  document.getElementById('detAnswerInput').placeholder = t('det.answerPlaceholder');
   document.getElementById('detBtnNextHint').disabled = false;
   document.getElementById('detBtnSubmit').disabled = false;
 
@@ -345,7 +345,7 @@ function _detRevealHint() {
     document.getElementById('detBtnNextHint').textContent = getLang()==='en' ? 'No more hints' : 'Hết gợi ý';
   } else {
     const nextPts = DET_SCORES[detHintsUsed - 1] - DET_SCORES[detHintsUsed];
-    document.getElementById('detBtnNextHint').textContent = `Gợi ý tiếp (−${nextPts}đ)`;
+    document.getElementById('detBtnNextHint').textContent = getLang()==='en' ? `Next hint (−${nextPts}pts)` : `Gợi ý tiếp (−${nextPts}đ)`;
   }
 
   document.getElementById('detCurrentScore').textContent =

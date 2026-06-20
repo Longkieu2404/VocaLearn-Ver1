@@ -358,6 +358,18 @@ const I18N = {
     /* ── Mixed quiz ── */
     'mixed.confirmBtn': 'Xác nhận ✓',
 
+/* ── Status badges ── */
+    'status.new': 'Chưa học',
+    'status.learning': 'Đang học',
+    'status.mastered': 'Đã thuộc',
+
+    /* ── Set detail modal buttons ── */
+    'set.studyNow': '🎴 Học ngay',
+    'set.quizNow': '🧠 Kiểm tra',
+
+    /* ── AI done message ── */
+    'ai.doneMsg': '✅ AI đã tạo xong! Kiểm tra và chỉnh sửa nếu cần:',
+
     'notif.langSwitched': 'Đã chuyển sang Tiếng Việt',
 
     /* ── Set card buttons ── */
@@ -809,6 +821,18 @@ const I18N = {
 
     /* ── Mixed quiz ── */
     'mixed.confirmBtn': 'Confirm ✓',
+
+/* ── Status badges ── */
+    'status.new': 'New',
+    'status.learning': 'Learning',
+    'status.mastered': 'Mastered',
+
+    /* ── Set detail modal buttons ── */
+    'set.studyNow': '🎴 Study now',
+    'set.quizNow': '🧠 Quiz',
+
+    /* ── AI done message ── */
+    'ai.doneMsg': '✅ AI finished! Review and edit if needed:',
 
     'notif.langSwitched': 'Switched to English',
 
