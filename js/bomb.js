@@ -122,7 +122,7 @@ function startBombFromHub() {
   });
 
   if (pool.length < 5) {
-    showNotif('Bạn cần học ít nhất 5 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
+    showNotif(t('bomb.needWords'), '⚠️');
     return;
   }
 
@@ -133,7 +133,7 @@ function startBombFromHub() {
     [5, 8, 10, 15].forEach(n => {
       if (n <= pool.length) {
         const o = document.createElement('option');
-        o.value = n; o.textContent = `${n} từ`;
+        o.value = n; o.textContent = tf('bomb.wordUnit', { n });
         if (n === 10) o.selected = true;
         countSel.appendChild(o);
       }
@@ -141,7 +141,7 @@ function startBombFromHub() {
   }
 
   const infoEl = document.getElementById('bombConfigInfo');
-  if (infoEl) infoEl.textContent = `Word Bomb — ${pool.length} từ trong pool`;
+  if (infoEl) infoEl.textContent = tf('bomb.poolInfo', { n: pool.length });
 
   window._bombPool = pool;
   _bombSelectTime(_bombSelectedTime); // đảm bảo UI đúng với lựa chọn hiện tại
@@ -206,13 +206,13 @@ async function _bombLoadCard() {
   // UI reset
   const pct = ((bombIndex + 1) / bombCards.length) * 100;
   document.getElementById('bombProgressFill').style.width = pct + '%';
-  document.getElementById('bombProgressText').textContent = `Từ ${bombIndex + 1} / ${bombCards.length}`;
+  document.getElementById('bombProgressText').textContent = tf('bomb.progress', { cur: bombIndex + 1, total: bombCards.length });
   const scoreEl = document.getElementById('bombScore');
   if (scoreEl) scoreEl.textContent = bombTotalScore;
   document.getElementById('bombStreakBadge').textContent  = bombStreak >= 2 ? `🔥 ×${bombStreak}` : '';
 
   document.getElementById('bombSentenceWrap').innerHTML =
-    `<div class="bomb-loading">⚡ AI đang tạo câu hỏi...</div>`;
+    `<div class="bomb-loading">⚡ ${getLang() === 'en' ? 'AI is generating a question...' : 'AI đang tạo câu hỏi...'}</div>`;
   document.getElementById('bombAnswerInput').value       = '';
   document.getElementById('bombAnswerInput').disabled    = true;
   document.getElementById('bombBtnSubmit').disabled      = true;
@@ -257,7 +257,7 @@ async function _bombLoadCard() {
 
   } catch (e) {
     bombGenerating = false;
-    await showNotif('Lỗi AI: ' + (e.message || 'Không tạo được câu hỏi'), '🤖');
+    await showNotif(tf('bomb.aiError', { msg: e.message || t('bomb.aiError').replace('{msg}','') }), '🤖');
     _bombBackToHub();
   }
 }
@@ -322,7 +322,7 @@ function _bombTimeUp() {
   const fb = document.getElementById('bombFeedback');
   fb.style.display  = '';
   fb.className      = 'bomb-feedback bomb-feedback-wrong';
-  fb.innerHTML      = `<span class="bomb-fb-icon">💥</span><div><strong>Hết giờ! Bom nổ!</strong><br>Đáp án: <span class="bomb-fb-word">${bombCurrentWord}</span></div>`;
+  fb.innerHTML      = `<span class="bomb-fb-icon">💥</span><div><strong>${t('bomb.timeOut')}</strong><br>${t('bomb.answer')} <span class="bomb-fb-word">${bombCurrentWord}</span></div>`;
 
   document.getElementById('bombMeaning').style.display   = '';
   document.getElementById('bombMeaning').textContent     = bombCurrentMeaning;
@@ -373,12 +373,12 @@ function _bombSubmitAnswer() {
   fb.style.display = '';
   if (correct) {
     fb.className  = 'bomb-feedback bomb-feedback-correct';
-    fb.innerHTML  = `<span class="bomb-fb-icon">✅</span><div><strong>Chính xác!</strong> +${pts}đ` +
+    fb.innerHTML  = `<span class="bomb-fb-icon">✅</span><div><strong>${t('bomb.correct')}</strong> +${pts}đ` +
                     (bombStreak >= 2 ? ` <span style="color:#f97316">🔥 Streak ×${bombStreak}</span>` : '') +
                     `<br><span class="bomb-fb-word">${bombCurrentWord}</span></div>`;
   } else {
     fb.className  = 'bomb-feedback bomb-feedback-wrong';
-    fb.innerHTML  = `<span class="bomb-fb-icon">❌</span><div><strong>Sai rồi!</strong> Đáp án: <span class="bomb-fb-word">${bombCurrentWord}</span></div>`;
+    fb.innerHTML  = `<span class="bomb-fb-icon">❌</span><div><strong>${t('bomb.wrong')}</strong> ${t('bomb.answer')} <span class="bomb-fb-word">${bombCurrentWord}</span></div>`;
     document.getElementById('bombMeaning').style.display = '';
     document.getElementById('bombMeaning').textContent   = bombCurrentMeaning;
   }
@@ -409,31 +409,31 @@ function _bombFinish() {
   const hi = Math.max(bombTotalScore, prev);
 
   let resultMsg, resultIcon;
-  if (rate >= 0.8)      { resultMsg = '🎉 Xuất sắc! Không bom nào nổ được!'; resultIcon = '🏆'; }
-  else if (rate >= 0.5) { resultMsg = '👍 Tốt lắm! Luyện thêm để phá kỷ lục!'; resultIcon = '🥈'; }
-  else                  { resultMsg = '💪 Cố lên! Học ngữ cảnh nhiều hơn nhé!'; resultIcon = '💣'; }
+  if (rate >= 0.8)      { resultMsg = t('bomb.excellent'); resultIcon = '🏆'; }
+  else if (rate >= 0.5) { resultMsg = t('bomb.good');     resultIcon = '🥈'; }
+  else                  { resultMsg = t('bomb.tryHarder'); resultIcon = '💣'; }
 
   document.getElementById('bombDone').innerHTML = `
     <div class="det-done-wrap">
       <div style="font-size:3.5rem;margin-bottom:0.25rem">${resultIcon}</div>
-      <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem">Kết quả Word Bomb</div>
+      <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem">${t('bomb.resultTitle')}</div>
       <div style="font-size:0.9rem;color:var(--text3);margin-bottom:1.25rem">${resultMsg}</div>
       <div class="det-done-stats">
         <div class="det-done-stat">
           <div class="det-done-stat-val" style="color:var(--accent2)">${bombTotalScore}</div>
-          <div class="det-done-stat-label">Tổng điểm</div>
+          <div class="det-done-stat-label">${t('bomb.totalScore')}</div>
         </div>
         <div class="det-done-stat">
           <div class="det-done-stat-val" style="color:#60a5fa">${hi}</div>
-          <div class="det-done-stat-label">Kỷ lục</div>
+          <div class="det-done-stat-label">${t('bomb.highScore')}</div>
         </div>
         <div class="det-done-stat">
           <div class="det-done-stat-val">${correctCount}/${bombResults.length}</div>
-          <div class="det-done-stat-label">Đúng</div>
+          <div class="det-done-stat-label">${t('bomb.correct2')}</div>
         </div>
         <div class="det-done-stat">
           <div class="det-done-stat-val" style="color:#f97316">${bombMaxStreak}</div>
-          <div class="det-done-stat-label">Streak cao nhất</div>
+          <div class="det-done-stat-label">${t('bomb.maxStreak')}</div>
         </div>
       </div>
       <div class="det-done-results">
@@ -441,13 +441,13 @@ function _bombFinish() {
           <div class="det-done-row ${r.correct ? 'det-done-correct' : 'det-done-wrong'}">
             <span class="det-done-row-icon">${r.correct ? '✅' : r.timedOut ? '💥' : '❌'}</span>
             <span class="det-done-row-word">${r.word}</span>
-            <span class="det-done-row-hints">${r.timedOut ? 'Hết giờ' : r.correct ? 'Đúng' : 'Sai'}</span>
+            <span class="det-done-row-hints">${r.timedOut ? t('bomb.statusTimeout') : r.correct ? t('bomb.statusCorrect') : t('bomb.statusWrong')}</span>
             <span class="det-done-row-score">+${r.score}đ</span>
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem">
-        <button class="det-start-btn" style="width:auto;padding:0.75rem 1.75rem" onclick="startBombFromHub()">🔄 Chơi lại</button>
-        <button class="btn-ghost" style="padding:0.75rem 1.25rem" onclick="_bombBackToHub()">← Trở về</button>
+        <button class="det-start-btn" style="width:auto;padding:0.75rem 1.75rem" onclick="startBombFromHub()">${t('bomb.playAgain')}</button>
+        <button class="btn-ghost" style="padding:0.75rem 1.25rem" onclick="_bombBackToHub()">${t('bomb.back')}</button>
       </div>
     </div>`;
 

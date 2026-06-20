@@ -362,7 +362,7 @@ function setupLoginScreen() {
       if (!user && !window.FirebaseAuth._isSafariIOS()) {
         btnGoogle.disabled = false;
         btnGoogle.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> Đăng nhập bằng Google';
-        showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
+        showNotif(t('notif.loginFail'), '❌');
       }
       // Nếu thành công, onAuthStateChanged trong firebase.js sẽ gọi hideLoginScreen()
     });
@@ -387,7 +387,7 @@ function showLoginScreen() {
         <span class="login-logo-icon">⚡</span>
         <span class="login-logo-text">VocaLearn</span>
       </div>
-      <p class="login-tagline">Học từ vựng thông minh — mọi lúc, mọi nơi</p>
+      <p class="login-tagline" data-i18n="login.tagline">Học từ vựng thông minh — mọi lúc, mọi nơi</p>
       <div class="login-divider"><span>Chào mừng bạn</span></div>
       <button class="btn-login-google" id="btnLoginGoogle2">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
@@ -418,7 +418,7 @@ function showLoginScreen() {
     if (!user && !window.FirebaseAuth._isSafariIOS()) {
       btnGoogle2.disabled = false;
       btnGoogle2.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;vertical-align:middle;margin-right:8px" /> Đăng nhập bằng Google';
-      showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
+      showNotif(t('notif.loginFail'), '❌');
     }
   });
 }
@@ -439,7 +439,7 @@ function showResultModal({ correct, wrong, wrongCards = [], onAgain, onHome, tit
   const wrongList = document.getElementById('resultWrongList');
   if (wrongCards.length > 0) {
     wrongList.classList.add('show');
-    wrongList.innerHTML = `<div class="mixed-wrong-title">❌ Từ trả lời sai (${wrongCards.length})</div>` +
+    wrongList.innerHTML = `<div class="mixed-wrong-title">❌ ${getLang() === 'en' ? 'Wrong answers' : 'Từ trả lời sai'} (${wrongCards.length})</div>` +
       wrongCards.map(c => `<div class="mixed-wrong-item"><span class="mwi-word">${c.word}</span><span class="mwi-meaning">${c.meaning}</span></div>`).join('');
   } else {
     wrongList.classList.remove('show');
@@ -536,29 +536,28 @@ function friendlyAIError(rawMsg) {
   if (m.includes('quota') || m.includes('Quota') || m.includes('429') || m.includes('rate') ||
       m.includes('RESOURCE_EXHAUSTED') || m.includes('exceeded') || m.includes('limit: 0') ||
       m.includes('hết quota') || m.includes('hết lượt')) {
-    return '⏳ <strong>API Key đã hết lượt dùng miễn phí hôm nay.</strong><br>' +
-           'Quota tự reset lúc 14:00 giờ Việt Nam.<br><br>' +
-           '<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent5)">🔑 Lấy key mới miễn phí tại đây →</a>';
+    return '⏳ <strong>' + (getLang() === 'en' ? 'Free quota exhausted for today.' : 'API Key đã hết lượt dùng miễn phí hôm nay.') + '</strong><br>' +
+           (getLang() === 'en' ? 'Quota resets at 07:00 UTC.' : 'Quota tự reset lúc 14:00 giờ Việt Nam.') + '<br><br>' +
+           '<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent5)">🔑 ' + (getLang() === 'en' ? 'Get a free key here →' : 'Lấy key mới miễn phí tại đây →') + '</a>';
   }
   if (m.includes('API_KEY') || m.includes('api key') || m.includes('API key') ||
       m.includes('INVALID_ARGUMENT') || m.includes('invalid') && m.includes('key')) {
-    return '🔑 <strong>API Key không hợp lệ.</strong><br>Vui lòng kiểm tra và nhập lại key đúng.<br>' +
-           '<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent5)">Lấy key tại đây →</a>';
+    return t('ai.badKey') +
+           '<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent5)">' + (getLang() === 'en' ? 'Get key here →' : 'Lấy key tại đây →') + '</a>';
   }
   if (m.includes('Failed to fetch') || m.includes('NetworkError') || m.includes('network')) {
-    return '📡 <strong>Không có kết nối mạng.</strong><br>Vui lòng kiểm tra internet và thử lại.';
+    return t('ai.noNet');
   }
   if (m.includes('timeout') || m.includes('Timeout')) {
-    return '⌛ <strong>Yêu cầu quá thời gian chờ.</strong><br>Vui lòng thử lại.';
+    return t('ai.timeout');
   }
   if (m.includes('503') || m.includes('UNAVAILABLE') || m.includes('overloaded') || m.includes('Internal error')) {
-    return '🔄 <strong>Server AI của Google đang quá tải.</strong><br>Tất cả model đều tạm thời bận. Vui lòng thử lại sau ít phút.';
+    return t('ai.overload');
   }
   if (m.includes('not found') || m.includes('404')) {
-    return '🔄 <strong>Model AI không khả dụng.</strong><br>Đang thử model khác... Vui lòng thử lại.';
+    return t('ai.unavail');
   }
-  // Fallback ngắn gọn
-  return '❌ <strong>Không thể kết nối AI.</strong><br>Vui lòng kiểm tra API Key và thử lại.';
+  return t('ai.generic');
 }
 
 // Kiểm tra xem một lỗi từ Gemini API có nên thử model tiếp theo hay không.
@@ -780,7 +779,7 @@ function renderHome() {
     const showAllBtn = document.createElement('button');
     showAllBtn.id = 'btnShowAllSamples';
     showAllBtn.style.cssText = 'margin-top:0.75rem;padding:8px 20px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:0.9rem;cursor:pointer;font-weight:600;transition:background 0.2s,color 0.2s';
-    showAllBtn.textContent = `Hiện tất cả (${allSamples.length} bộ thẻ)`;
+    showAllBtn.textContent = tf('set.showAll', { n: allSamples.length });
     showAllBtn.onclick = () => {
       hiddenWrap.querySelectorAll('.set-card').forEach(card => {
         sg.insertBefore(card, hiddenWrap);
@@ -797,7 +796,7 @@ function renderHome() {
   mg.innerHTML = '';
   const userSets = getUserSets();
   if (userSets.length === 0) {
-    mg.innerHTML = '<p style="color:var(--text3);font-size:0.9rem">Chưa có bộ thẻ nào. Nhấn + để tạo!</p>';
+    mg.innerHTML = `<p style="color:var(--text3);font-size:0.9rem">${t('set.noUserSets')}</p>`;
   } else {
     const previewUserSets = userSets.slice(0, MY_SETS_PREVIEW_COUNT);
     previewUserSets.forEach(s => mg.appendChild(createSetCard(s)));
@@ -806,9 +805,9 @@ function renderHome() {
     const seeAllBtn = document.createElement('button');
     seeAllBtn.style.cssText = 'display:block;margin-top:0.75rem;padding:8px 20px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:0.9rem;cursor:pointer;font-weight:600;transition:background 0.2s,color 0.2s';
     if (userSets.length > MY_SETS_PREVIEW_COUNT) {
-      seeAllBtn.textContent = `Xem tất cả (${userSets.length} bộ thẻ) →`;
+      seeAllBtn.textContent = tf('set.seeAll', { n: userSets.length });
     } else {
-      seeAllBtn.textContent = 'Xem bộ thẻ của tôi →';
+      seeAllBtn.textContent = t('set.seeAllEmpty');
     }
     seeAllBtn.onclick = () => { navigateTo('sets'); renderSetsPage(); };
     mg.appendChild(seeAllBtn);
@@ -872,13 +871,13 @@ function createSetCard(set) {
     const wrap = document.createElement('div');
     wrap.className = 'set-card-mobile-wrap set-color-' + (set.colorIndex || 0);
     const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
-    const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' đang học</span>' : '';
+    const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' ' + t('study.ok') + '</span>' : '';
     wrap.innerHTML = `
       <div class="set-card-mobile">
         <div class="sc-mobile-thumb" style="position:relative">${getSetTopicSVG(set)}${renderThumbChangeBtn(set.id)}</div>
         <div class="sc-mobile-body">
           <div class="sc-mobile-name">${set.name}</div>
-          <div class="sc-mobile-count">${total} từ vựng</div>
+          <div class="sc-mobile-count">${total} ${t('set.words')}</div>
           <div class="sc-mobile-progress">
             <div class="sc-mobile-progress-track">
               <div class="sc-mobile-progress-learning" style="width:${pctMastered+pctLearning}%"></div>
@@ -886,14 +885,14 @@ function createSetCard(set) {
             </div>
           </div>
           <div class="sc-mobile-meta">
-            <span class="sc-mobile-meta-left">${mastered}/${total} đã thuộc${learningBadge}</span>
+            <span class="sc-mobile-meta-left">${mastered}/${total} ${t("study.easy")}${learningBadge}</span>
             <span class="sc-mobile-pct" style="color:${pctColor}">${pctMastered}%</span>
           </div>
         </div>
       </div>
       <div class="sc-mobile-actions">
-        <button class="sc-mobile-btn sc-btn-study">📖 Học</button>
-        <button class="sc-mobile-btn sc-btn-quiz">✏️ Kiểm tra</button>
+        <button class="sc-mobile-btn sc-btn-study">${t('set.study')}</button>
+        <button class="sc-mobile-btn sc-btn-quiz">${t('set.quiz')}</button>
       </div>`;
     wrap.querySelector('.set-card-mobile').addEventListener('click', () => openDetailModal(set.id));
     wrap.querySelector('.sc-btn-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
@@ -911,18 +910,18 @@ function createSetCard(set) {
     </div>
     <div class="set-card-body">
       <div class="set-card-name">${set.name}</div>
-      <div class="set-card-count">${total} từ vựng</div>
+      <div class="set-card-count">${total} ${t('set.words')}</div>
       <div class="set-card-progress">
         <div class="set-card-progress-fill" style="width:${pctMastered+pctLearning}%;opacity:0.5;background:var(--yellow);position:absolute"></div>
         <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
       </div>
       <div class="set-card-meta">
-        <span>${mastered}/${total} đã thuộc${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' đang học</span>' : ''}</span>
+        <span>${mastered}/${total} ${t('study.easy')}${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' ' + t('study.ok') + '</span>' : ''}</span>
         <span style="color:var(--green)">${pctMastered}%</span>
       </div>
       <div class="set-card-actions">
-        <button class="sca-btn sca-study" title="Học thẻ">📖 Học</button>
-        <button class="sca-btn sca-quiz" title="Kiểm tra">✏️ Kiểm tra</button>
+        <button class="sca-btn sca-study" title="${t('set.studyTitle')}">${t('set.study')}</button>
+        <button class="sca-btn sca-quiz" title="${t('set.quizTitle')}">${t('set.quiz')}</button>
       </div>
     </div>`;
   div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
@@ -943,7 +942,7 @@ function createUserSetCardMobile(set) {
     <div class="sc-mini-thumb">${getSetThumbContent(set)}</div>
     <div class="sc-mini-body">
       <div class="sc-mini-name">${set.name}</div>
-      <div class="sc-mini-count">${total} từ vựng</div>
+      <div class="sc-mini-count">${total} ${t('set.words')}</div>
       <div class="sc-mini-progress"><div class="sc-mini-fill" style="width:${pctMastered}%;background:${pctMastered===100?'var(--green)':pctMastered>=50?'var(--yellow)':'var(--accent)'}"></div></div>
       <div class="sc-mini-meta"><span>${mastered}/${total}</span><span style="color:${pctColor};font-weight:600">${pctMastered}%</span></div>
     </div>`;
@@ -988,7 +987,7 @@ function openDetailModal(setId) {
   } else {
     // Desktop: table layout
     wrap.innerHTML = `<table class="cards-table" id="cardsTable">
-      <thead><tr><th>#</th><th>Từ</th><th>Phiên âm</th><th>Nghĩa</th><th>Trạng thái</th><th>Phát âm</th></tr></thead>
+      <thead><tr><th>#</th><th>${getLang()==='en'?'Word':'Từ'}</th><th>${getLang()==='en'?'Phonetic':'Phiên âm'}</th><th>${getLang()==='en'?'Meaning':'Nghĩa'}</th><th>${getLang()==='en'?'Status':'Trạng thái'}</th><th>${getLang()==='en'?'Audio':'Phát âm'}</th></tr></thead>
       <tbody id="cardsTableBody"></tbody>
     </table>`;
     const tbody = document.getElementById('cardsTableBody');
@@ -1027,7 +1026,7 @@ function openCreateModal() {
   editingSetId = null;
   selectedColorIndex = 0;
   _pendingThumbDataUrl = null;
-  document.getElementById('modalTitle').textContent = 'Tạo bộ thẻ mới';
+  document.getElementById('modalTitle').textContent = t('set.modalCreate');
   document.getElementById('setNameInput').value = '';
   document.getElementById('wordsInput').value = '';
   document.querySelectorAll('.color-dot').forEach((d, i) => d.classList.toggle('selected', i === 0));
@@ -1046,7 +1045,7 @@ function openEditModal(setId) {
   editingSetId = setId;
   selectedColorIndex = set.colorIndex || 0;
   _pendingThumbDataUrl = null;
-  document.getElementById('modalTitle').textContent = 'Sửa bộ thẻ';
+  document.getElementById('modalTitle').textContent = t('set.modalEdit');
   document.getElementById('setNameInput').value = set.name;
   document.getElementById('wordsInput').value = set.cards.map(c =>
     `${c.word} | ${c.phonetic || ''} | ${c.meaning} | ${c.example || ''}`
@@ -1075,8 +1074,8 @@ function closeCreateModal() {
 function saveSet() {
   const name = document.getElementById('setNameInput').value.trim();
   const rawWords = document.getElementById('wordsInput').value.trim();
-  if (!name) { showNotif('Vui lòng nhập <strong>tên bộ thẻ</strong>!', '✏️'); ; return; }
-  if (!rawWords) { showNotif('Vui lòng nhập ít nhất <strong>một từ</strong>!', '📝'); ; return; }
+  if (!name) { showNotif(t('notif.needName'), '✏️'); ; return; }
+  if (!rawWords) { showNotif(t('notif.needWords'), '📝'); ; return; }
 
   const setId = editingSetId || ('user_' + Date.now());
   const cards = rawWords.split('\n').filter(l => l.trim()).map((line, i) => {
@@ -1090,7 +1089,7 @@ function saveSet() {
     };
   }).filter(c => c.word && c.meaning);
 
-  if (cards.length === 0) { showNotif('Định dạng: <code>từ | phiên âm | nghĩa | ví dụ</code>', '📋'); ; return; }
+  if (cards.length === 0) { showNotif(t('notif.badFormat'), '📋'); ; return; }
 
   const sets = Storage.getSets();
 
@@ -1116,7 +1115,7 @@ function saveSet() {
       Storage.saveSets(sets);
     } catch (e) {
       if (e.message === 'STORAGE_QUOTA_EXCEEDED') {
-        showNotif('⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ rồi thử lại.', '💾');
+        showNotif(t('notif.storageFull'), '💾');
         return;
       }
       throw e;
@@ -1149,7 +1148,7 @@ async function deleteSet(setId) {
   Trash.moveToTrash(set);
   const sets = Storage.getSets().filter(s => s.id !== setId);
   Storage.saveSets(sets);
-  showNotif('Đã chuyển "<strong>' + set.name + '</strong>" vào thùng rác.', '🗑️');
+  showNotif(tf('notif.deleted', { name: set.name }), '🗑️');
   if (currentPage === 'sets') renderSetsPage();
   else renderHome();
   updateTrashBadge();
@@ -1180,11 +1179,11 @@ function renderStudyPage() {
     grid.parentNode.insertBefore(notice, grid);
   }
   notice.textContent = hiddenCount > 0
-    ? `✅ Đã ẩn ${hiddenCount} bộ thẻ đã thuộc hết. Chỉ hiển thị bộ thẻ chưa học hoặc đang học.`
+    ? (getLang()==='en' ? `✅ Hidden ${hiddenCount} fully mastered sets. Showing sets in progress or not started.` : `✅ Đã ẩn ${hiddenCount} bộ thẻ đã thuộc hết. Chỉ hiển thị bộ thẻ chưa học hoặc đang học.`)
     : '';
 
   if (visibleSets.length === 0) {
-    grid.innerHTML = '<p style="color:var(--text3);font-size:0.95rem;text-align:center;padding:2rem">🎉 Bạn đã thuộc tất cả bộ thẻ! Tiếp tục ôn tập để duy trì.</p>';
+    grid.innerHTML = '<p style="color:var(--text3);font-size:0.95rem;text-align:center;padding:2rem">🎉 ' + (getLang()==='en' ? 'You have mastered all sets! Keep reviewing to maintain your memory.' : 'Bạn đã thuộc tất cả bộ thẻ! Tiếp tục ôn tập để duy trì.') + '</p>';
     // Show all sets as fallback
     allSets.forEach(s => {
       const card = createSetCard(s);
@@ -1347,7 +1346,7 @@ function renderQuizPage() {
         border: 1.5px dashed var(--border);
       ">
         <div style="font-size:2.5rem;margin-bottom:0.75rem">📖</div>
-        <div style="font-size:1.05rem;font-weight:600;color:var(--text2);margin-bottom:0.4rem">Chưa có bộ thẻ nào để kiểm tra</div>
+        <div style="font-size:1.05rem;font-weight:600;color:var(--text2);margin-bottom:0.4rem">${getLang()==='en' ? 'No sets to quiz yet' : 'Chưa có bộ thẻ nào để kiểm tra'}</div>
         <div style="font-size:0.88rem;line-height:1.6">
           Hãy <strong style="color:var(--green)">học thẻ</strong> trước — chỉ những bộ thẻ đã học mới xuất hiện tại đây.
         </div>
@@ -1520,12 +1519,12 @@ function checkEssayAnswer() {
     quizCorrect++;
     AudioFX.correct();
     fb.className = 'quiz-feedback correct-fb';
-    fb.textContent = '✅ Chính xác! Giỏi lắm!';
+    fb.textContent = getLang() === 'en' ? '✅ Correct! Great job!' : '✅ Chính xác! Giỏi lắm!';
   } else {
     quizWrong++;
     AudioFX.wrong();
     fb.className = 'quiz-feedback wrong-fb';
-    fb.innerHTML = `❌ Sai rồi! Đáp án đúng: <strong>"${correctAnswer}"</strong>`;
+    fb.innerHTML = `❌ ${getLang() === 'en' ? 'Wrong! Correct answer: ' : 'Sai rồi! Đáp án đúng: '}<strong>"${correctAnswer}"</strong>`;
   }
   document.getElementById('quizScore').textContent = quizCorrect;
 
@@ -1568,12 +1567,12 @@ function checkAnswer(selected, correct, container) {
     quizCorrect++;
     AudioFX.correct();
     fb.className = 'quiz-feedback correct-fb';
-    fb.textContent = '✅ Chính xác! Giỏi lắm!';
+    fb.textContent = getLang() === 'en' ? '✅ Correct! Great job!' : '✅ Chính xác! Giỏi lắm!';
   } else {
     quizWrong++;
     AudioFX.wrong();
     fb.className = 'quiz-feedback wrong-fb';
-    fb.textContent = `❌ Sai rồi! Đáp án đúng: "${correct}"`;
+    fb.textContent = `❌ ${getLang() === 'en' ? 'Wrong! Correct answer: ' : 'Sai rồi! Đáp án đúng: '}"${correct}"`;
   }
   document.getElementById('quizScore').textContent = quizCorrect;
 
@@ -1959,7 +1958,7 @@ function renderStatsPage() {
       </div>`;
   });
   if (dueWords.length === 0) {
-    dueEl.innerHTML = '<p style="color:var(--text3);padding:1rem 0">Chưa có từ nào cần ôn tập.</p>';
+    dueEl.innerHTML = '<p style="color:var(--text3);padding:1rem 0">' + (getLang()==='en' ? 'No words to review yet.' : 'Chưa có từ nào cần ôn tập.') + '</p>';
   }
 }
 
@@ -2019,7 +2018,7 @@ function renderMixedQuizPage() {
         border: 1.5px dashed var(--border);
       ">
         <div style="font-size:2rem;margin-bottom:0.6rem">📖</div>
-        <div style="font-size:0.95rem;font-weight:600;color:var(--text2);margin-bottom:0.35rem">Chưa có bộ thẻ nào</div>
+        <div style="font-size:0.95rem;font-weight:600;color:var(--text2);margin-bottom:0.35rem">${getLang()==='en' ? 'No sets yet' : 'Chưa có bộ thẻ nào'}</div>
         <div style="font-size:0.85rem;line-height:1.6">Hãy <strong style="color:var(--green)">học thẻ</strong> trước để mở khoá kiểm tra tổng hợp.</div>
       </div>`;
     updateMixedPreview();
@@ -2035,7 +2034,7 @@ function renderMixedQuizPage() {
       <div class="mixed-set-dot" style="background:${dotColor}"></div>
       <div class="mixed-set-info">
         <div class="mixed-set-name">${set.name}</div>
-        <div class="mixed-set-count">${set.cards.length} từ vựng</div>
+        <div class="mixed-set-count">${set.cards.length} ${t('set.words')}</div>
       </div>`;
     row.addEventListener('click', () => toggleMixedSet(set.id, row));
     list.appendChild(row);
@@ -2083,7 +2082,7 @@ document.getElementById('mixedQuizCount').addEventListener('change', updateMixed
 
 function startMixedQuiz() {
   if (mixedSelectedSets.size < 2) {
-    showNotif('Vui lòng chọn <strong>ít nhất 2 bộ thẻ</strong>!', '⚠️'); ; return;
+    showNotif(t('notif.need2sets'), '⚠️'); ; return;
   }
   mixedQuizCountTarget = parseInt(document.getElementById('mixedQuizCount').value);
   mixedQuizModeSelected = document.getElementById('mixedQuizMode').value;
@@ -2244,7 +2243,7 @@ function checkMixedEssayAnswer() {
   const fb = document.getElementById('mixedFeedback');
   fb.style.display = '';
   fb.className = isCorrect ? 'quiz-feedback correct-fb' : 'quiz-feedback wrong-fb';
-  fb.innerHTML = isCorrect ? '✅ Chính xác!' : `❌ Sai! Đáp án đúng: <strong>"${correctAnswer}"</strong>`;
+  fb.innerHTML = isCorrect ? (getLang() === 'en' ? '✅ Correct!' : '✅ Chính xác!') : `❌ ${getLang() === 'en' ? 'Wrong! Correct answer: ' : 'Sai! Đáp án đúng: '}<strong>"${correctAnswer}"</strong>`;
   document.getElementById('mixedScore').textContent = mixedCorrect;
 
   const isLastMixed = mixedIndex === mixedQuizCards.length - 1;
@@ -2282,7 +2281,7 @@ function checkMixedAnswer(selected, card, container) {
   const fb = document.getElementById('mixedFeedback');
   fb.style.display = '';
   fb.className = isCorrect ? 'quiz-feedback correct-fb' : 'quiz-feedback wrong-fb';
-  fb.textContent = isCorrect ? '✅ Chính xác!' : `❌ Sai! Đáp án: "${card.meaning}"`;
+  fb.textContent = isCorrect ? (getLang() === 'en' ? '✅ Correct!' : '✅ Chính xác!') : `❌ ${getLang() === 'en' ? 'Wrong! Answer: ' : 'Sai! Đáp án: '}"${card.meaning}"`;
   document.getElementById('mixedScore').textContent = mixedCorrect;
   const isLastMixed = mixedIndex === mixedQuizCards.length - 1;
   const nextMixedBtn = document.getElementById('btnNextMixed');
@@ -2386,7 +2385,7 @@ function setupFileUploads() {
 }
 
 function handleImageFile(file) {
-  if (file.size > 5 * 1024 * 1024) { showNotif('Ảnh quá lớn! Vui lòng chọn ảnh <strong>nhỏ hơn 5MB</strong>.', '⚠️'); ; return; }
+  if (file.size > 5 * 1024 * 1024) { showNotif(t('notif.imgTooBig'), '⚠️'); ; return; }
   aiImageMime = file.type || 'image/jpeg';
   const reader = new FileReader();
   reader.onload = e => {
@@ -2399,7 +2398,7 @@ function handleImageFile(file) {
 }
 
 function handleTextFile(file) {
-  if (file.size > 2 * 1024 * 1024) { showNotif('File quá lớn! Vui lòng chọn file <strong>nhỏ hơn 2MB</strong>.', '⚠️'); ; return; }
+  if (file.size > 2 * 1024 * 1024) { showNotif(t('notif.fileTooBig'), '⚠️'); ; return; }
   const reader = new FileReader();
   reader.onload = e => {
     aiFileText = e.target.result;
@@ -2470,13 +2469,13 @@ async function generateWithAI() {
 
   // Validate input
   if (tab === 'text' && !document.getElementById('aiTopicInput').value.trim()) {
-    showNotif('Vui lòng nhập <strong>chủ đề</strong> hoặc danh sách từ!', '💡'); ; return;
+    showNotif(t('notif.needTopic'), '💡'); ; return;
   }
   if (tab === 'image' && !aiImageBase64) {
-    showNotif('Vui lòng <strong>tải lên ảnh</strong>!', '🖼️'); ; return;
+    showNotif(t('notif.needImage'), '🖼️'); ; return;
   }
   if (tab === 'file' && !aiFileText) {
-    showNotif('Vui lòng <strong>tải lên file</strong> văn bản!', '📄'); ; return;
+    showNotif(t('notif.needFile'), '📄'); ; return;
   }
 
   // Kiểm tra API key
@@ -2592,7 +2591,7 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
 function saveAISet() {
   const name = document.getElementById('aiSetName').value.trim();
   const rawWords = document.getElementById('aiWordsOutput').value.trim();
-  if (!name || !rawWords) { showNotif('Thiếu <strong>tên</strong> hoặc danh sách từ!', '✏️'); ; return; }
+  if (!name || !rawWords) { showNotif(t('notif.needMissingName'), '✏️'); ; return; }
 
   const setId = 'user_' + Date.now();
   const cards = rawWords.split('\n').filter(l => l.trim()).map((line, i) => {
@@ -2600,7 +2599,7 @@ function saveAISet() {
     return { id: `${setId}_card_${i}`, word: parts[0] || '', phonetic: parts[1] || '', meaning: parts[2] || '', example: parts[3] || '' };
   }).filter(c => c.word && c.meaning);
 
-  if (cards.length === 0) { showNotif('Không có từ hợp lệ!', '❌'); ; return; }
+  if (cards.length === 0) { showNotif(t('notif.noWords'), '❌'); ; return; }
 
   const sets = Storage.getSets();
   sets.push({ id: setId, name, colorIndex: aiSelectedColor, cards });
@@ -2608,7 +2607,7 @@ function saveAISet() {
     Storage.saveSets(sets);
   } catch (e) {
     if (e.message === 'STORAGE_QUOTA_EXCEEDED') {
-      showNotif('⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ rồi thử lại.', '💾');
+      showNotif(t('notif.storageFull'), '💾');
       return;
     }
     throw e;
@@ -3077,7 +3076,7 @@ function getDueReviewCards() {
 function startReviewSession() {
   reviewCards = getDueReviewCards();
   if (reviewCards.length === 0) {
-    showNotif('Không còn thẻ nào cần ôn tập hôm nay! 🎉', '✅'); ;
+    showNotif(t('notif.noReviewToday'), '✅'); ;
     return;
   }
   reviewIndex = 0; reviewCorrect = 0; reviewWrong = 0;
@@ -3156,7 +3155,7 @@ function checkReviewAnswer(selected, card, container) {
   const fb = document.getElementById('reviewFeedback');
   fb.style.display = '';
   fb.className = isCorrect ? 'quiz-feedback correct-fb' : 'quiz-feedback wrong-fb';
-  fb.textContent = isCorrect ? '✅ Chính xác!' : `❌ Đáp án đúng: "${card.meaning}"`;
+  fb.textContent = isCorrect ? (getLang() === 'en' ? '✅ Correct!' : '✅ Chính xác!') : `❌ ${getLang() === 'en' ? 'Correct answer: ' : 'Đáp án đúng: '}"${card.meaning}"`;
   document.getElementById('reviewScore').textContent = reviewCorrect;
   const isLastReview = reviewIndex === reviewCards.length - 1;
   const nextReviewBtn = document.getElementById('btnNextReview');
@@ -3238,7 +3237,7 @@ function getDisplayName() {
 
 async function promptSetName() {
   const current = localStorage.getItem('vocalearn_username') || '';
-  const name = await showPromptModal('Nhập tên của bạn:', current, '✏️', 'VD: Lê Quốc Thái');
+  const name = await showPromptModal(t('profile.enterName'), current, '✏️', getLang() === 'en' ? 'E.g. John Smith' : 'VD: Lê Quốc Thái');
   if (name === null) return;
   const trimmed = name.trim().slice(0, 30);
   localStorage.setItem('vocalearn_username', trimmed);
@@ -3302,9 +3301,9 @@ function importData(e) {
       renderSetsPage();
       renderHome();
       updateTrashBadge();
-      showNotif(`Đã nhập thành công <strong>${data.sets.length} bộ thẻ</strong>!`, '✅');
+      showNotif(tf('notif.imported', { n: data.sets.length }), '✅');
     } catch (err) {
-      showNotif('Lỗi khi đọc file: <br><small>' + err.message + '</small>', '❌');
+      showNotif(tf('notif.importError', { msg: err.message }), '❌');
     }
     e.target.value = '';
   };
@@ -3417,8 +3416,10 @@ function _showWelcome() {
   if (!box) return;
   box.innerHTML = '';
   const username = getDisplayName();
-  const greeting = username ? 'Xin chào <strong>' + username + '</strong>!' : 'Xin chào!';
-  box.innerHTML = '<div class="chat-bubble chat-bubble-ai"><div class="chat-avatar">🤖</div><div class="chat-text">' + greeting + ' Tôi là trợ lý AI của VocaLearn. Tôi có thể giúp bạn:<br><br>• Giải thích nghĩa và cách dùng từ vựng<br>• Giải thích ngữ pháp tiếng Anh<br>• Gợi ý cách học từ vựng hiệu quả<br>• Đặt câu ví dụ với từ bạn muốn<br><br>Bạn muốn hỏi gì nào? 😊</div></div>';
+  const greeting = username
+    ? (getLang() === 'en' ? 'Hello <strong>' + username + '</strong>!' : 'Xin chào <strong>' + username + '</strong>!')
+    : (getLang() === 'en' ? 'Hello!' : 'Xin chào!');
+  box.innerHTML = '<div class="chat-bubble chat-bubble-ai"><div class="chat-avatar">🤖</div><div class="chat-text">' + greeting + ' ' + t('chat.greeting') + '</div></div>';
 }
 
 function _renderHistSidebar() {
@@ -3426,7 +3427,7 @@ function _renderHistSidebar() {
   if (!list) return;
   const all = ChatSessions.getAll().filter(s => s.messages && s.messages.length > 0);
   if (all.length === 0) {
-    list.innerHTML = '<div class="chat-hist-empty">Chưa có lịch sử.<br>Bắt đầu trò chuyện<br>để lưu lại.</div>';
+    list.innerHTML = '<div class="chat-hist-empty">' + (getLang() === 'en' ? 'No history yet.<br>Start a conversation<br>to save it.' : 'Chưa có lịch sử.<br>Bắt đầu trò chuyện<br>để lưu lại.') + '</div>';
     return;
   }
   list.innerHTML = all.map(s =>
@@ -3467,7 +3468,7 @@ function renderChatPage() {
       bar.innerHTML = `
         <span class="chat-apikey-icon">🔑</span>
         <div>
-          <div style="font-weight:600;font-size:0.9rem">Nhập Gemini API Key để sử dụng trợ lý AI</div>
+          <div style="font-weight:600;font-size:0.9rem" data-i18n="settings.aiKeyPrompt">Nhập Gemini API Key để sử dụng trợ lý AI</div>
           <div style="font-size:0.8rem;color:var(--text3)">Lấy key miễn phí tại <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent5)">aistudio.google.com</a></div>
         </div>
         <input id="chatApiKeyInput" type="password" class="form-input" placeholder="AIza..." style="flex:1;min-width:0;max-width:320px;font-family:monospace"/>
@@ -3475,11 +3476,11 @@ function renderChatPage() {
       `;
       document.getElementById('chatApiKeySaveBtn').onclick = () => {
         const key = document.getElementById('chatApiKeyInput').value.trim();
-        if (key.length < 10) { showNotif('Vui lòng nhập <strong>Gemini API Key</strong> hợp lệ!', '⚠️'); return; }
+        if (key.length < 10) { showNotif(t('notif.geminiInvalid'), '⚠️'); return; }
         localStorage.setItem('vocalearn_gemini_key', key);
         if (window.FirebaseSync) FirebaseSync.triggerSave();
         renderChatPage();
-        showNotif('Đã lưu Gemini API Key thành công!', '✅');
+        showNotif(t('notif.geminiSaved'), '✅');
       };
       document.getElementById('chatApiKeyInput').onkeydown = e => {
         if (e.key === 'Enter') document.getElementById('chatApiKeySaveBtn').click();
@@ -3489,14 +3490,14 @@ function renderChatPage() {
     document.getElementById('chatApiKeySaveBtn').onclick = () => {
       const key = document.getElementById('chatApiKeyInput').value.trim();
       if (key.length < 10) {
-        showNotif('Vui lòng nhập <strong>Gemini API Key</strong> hợp lệ!', '⚠️');
+        showNotif(t('notif.geminiInvalid'), '⚠️');
         return;
       }
       localStorage.setItem('vocalearn_gemini_key', key);
       // Đồng bộ key lên Firestore để dùng trên mọi thiết bị
       if (window.FirebaseSync) FirebaseSync.triggerSave();
       renderChatPage();
-      showNotif('Đã lưu Gemini API Key thành công! Đang đồng bộ...', '✅');
+      showNotif(t('notif.geminiSavedSync'), '✅');
     };
     document.getElementById('chatApiKeyInput').onkeydown = e => {
       if (e.key === 'Enter') document.getElementById('chatApiKeySaveBtn').click();
@@ -3528,7 +3529,7 @@ async function loadModelStatus(forceRefresh = false) {
 
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) {
-    label.textContent = '🔑 Chưa có API key';
+    label.textContent = getLang() === 'en' ? '🔑 No API key set' : '🔑 Chưa có API key';
     return;
   }
 
@@ -3624,7 +3625,7 @@ function setupChatInput() {
 async function processAttachFile(file) {
   const maxMB = 10;
   if (file.size > maxMB * 1024 * 1024) {
-    showNotif('File "' + file.name + '" quá lớn (tối đa ' + maxMB + 'MB)', '⚠️');
+    showNotif((getLang()==='en' ? 'File "' + file.name + '" is too large (max ' + maxMB + 'MB)' : 'File "' + file.name + '" quá lớn (tối đa ' + maxMB + 'MB)'), '⚠️');
     return;
   }
 
@@ -3635,7 +3636,7 @@ async function processAttachFile(file) {
   const isTxt   = ext === 'txt' || file.type === 'text/plain';
 
   if (!isImage && !isPDF && !isDocx && !isTxt) {
-    showNotif('Định dạng "' + ext + '" chưa được hỗ trợ. Dùng: ảnh, PDF, DOCX, TXT', '⚠️');
+    showNotif((getLang()==='en' ? 'Format "' + ext + '" is not supported. Use: image, PDF, DOCX, TXT' : 'Định dạng "' + ext + '" chưa được hỗ trợ. Dùng: ảnh, PDF, DOCX, TXT'), '⚠️');
     return;
   }
 
@@ -3678,7 +3679,7 @@ async function processAttachFile(file) {
     // show inline error in chip
     const errChip = document.getElementById(loadingId);
     if (errChip) errChip.innerHTML = '<span>❌</span><span style="color:var(--accent)">' + file.name + ': ' + err.message + '</span><button class="attach-remove" onclick="this.parentElement.remove()">✕</button>';
-    else showNotif('Không đọc được "' + file.name + '"', '❌');
+    else showNotif((getLang() === 'en' ? 'Cannot read "' : 'Không đọc được "') + file.name + '"', '❌');
     return;
   }
   // Remove loading chip (renderAttachPreview will re-render)
@@ -3987,7 +3988,7 @@ async function callChatAPI() {
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) {
     removeTypingIndicator();
-    appendErrorBubble('Vui lòng nhập Gemini API Key để sử dụng trợ lý AI.<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">Lấy miễn phí tại đây →</a>');
+    appendErrorBubble((getLang()==='en'?'Please enter a Gemini API Key to use the AI assistant.':'Vui lòng nhập Gemini API Key để sử dụng trợ lý AI.') + '<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">' + (getLang()==='en'?'Get one free here →':'Lấy miễn phí tại đây →') + '</a>');
     return;
   }
 
@@ -4013,14 +4014,23 @@ async function callChatAPI() {
     }
   });
 
-  var systemPrompt = 'Bạn là trợ lý AI của VocaLearn – ứng dụng học từ vựng tiếng Anh. Hãy trả lời bằng tiếng Việt, thân thiện và dễ hiểu.\n\n'
-    + 'Nhiệm vụ: giải thích từ vựng, ngữ pháp tiếng Anh, gợi ý mẹo học, đặt câu ví dụ.\n\n'
-    + 'QUAN TRỌNG: Khi người dùng hỏi về một từ hoặc bộ thẻ cụ thể, hãy ưu tiên dùng đúng dữ liệu từ vựng bên dưới của họ (nghĩa, phiên âm, ví dụ) thay vì tự nghĩ ra.\n\n'
-    + '=== DỮ LIỆU TỪ VỰNG CỦA NGƯỜI DÙNG ===\n'
-    + '- Tổng: ' + totalCount + ' từ | Đã thuộc: ' + masteredCount + ' từ\n'
-    + '- Trạng thái: new = chưa học, learning = đang học, mastered = đã thuộc\n\n'
-    + setsContext.join('\n\n')
-    + '\n\nTrả lời ngắn gọn, súc tích. Dùng emoji vừa phải để tạo cảm giác thân thiện.';
+  var systemPrompt = getLang() === 'en'
+    ? 'You are the AI assistant of VocaLearn – an English vocabulary learning app. Reply in English, in a friendly and clear style.\n\n'
+      + 'Tasks: explain vocabulary, English grammar, suggest learning tips, make example sentences.\n\n'
+      + 'IMPORTANT: When the user asks about a specific word or set, prioritize using their exact vocabulary data below (meaning, phonetic, example) rather than guessing.\n\n'
+      + '=== USER VOCABULARY DATA ===\n'
+      + '- Total: ' + totalCount + ' words | Mastered: ' + masteredCount + ' words\n'
+      + '- Status: new = not studied, learning = in progress, mastered = known\n\n'
+      + setsContext.join('\n\n')
+      + '\n\nKeep answers concise. Use emojis sparingly to stay friendly.'
+    : 'Bạn là trợ lý AI của VocaLearn – ứng dụng học từ vựng tiếng Anh. Hãy trả lời bằng tiếng Việt, thân thiện và dễ hiểu.\n\n'
+      + 'Nhiệm vụ: giải thích từ vựng, ngữ pháp tiếng Anh, gợi ý mẹo học, đặt câu ví dụ.\n\n'
+      + 'QUAN TRỌNG: Khi người dùng hỏi về một từ hoặc bộ thẻ cụ thể, hãy ưu tiên dùng đúng dữ liệu từ vựng bên dưới của họ (nghĩa, phiên âm, ví dụ) thay vì tự nghĩ ra.\n\n'
+      + '=== DỮ LIỆU TỪ VỰNG CỦA NGƯỜI DÙNG ===\n'
+      + '- Tổng: ' + totalCount + ' từ | Đã thuộc: ' + masteredCount + ' từ\n'
+      + '- Trạng thái: new = chưa học, learning = đang học, mastered = đã thuộc\n\n'
+      + setsContext.join('\n\n')
+      + '\n\nTrả lời ngắn gọn, súc tích. Dùng emoji vừa phải để tạo cảm giác thân thiện.';
 
   // Build Gemini contents — support multipart (text + images) when _parts present
   const contents = chatHistory.map(function(m) {
@@ -4072,7 +4082,7 @@ async function callChatAPI() {
           // Key bị khoá hoặc không có quyền
           if (code === 403 || msg.includes('API_KEY_INVALID') || msg.includes('API key not valid')) {
             removeTypingIndicator();
-            appendErrorBubble('🔑 Gemini API Key không hợp lệ hoặc đã bị thu hồi.<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">Kiểm tra lại tại đây →</a>');
+            appendErrorBubble('🔑 ' + (getLang()==='en'?'Gemini API Key is invalid or revoked.':'Gemini API Key không hợp lệ hoặc đã bị thu hồi.') + '<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">' + (getLang()==='en'?'Check it here →':'Kiểm tra lại tại đây →') + '</a>');
             return;
           }
           console.warn('[VocaLearn] API error', code, msg, 'model:', model, 'ver:', apiVer);
@@ -4127,7 +4137,7 @@ async function callChatAPI() {
   // Tất cả đều thất bại
   removeTypingIndicator();
   GeminiModels.clearCache(); // Xóa cache để lần sau fetch lại
-  appendErrorBubble('Không gửi được tin nhắn 😓 Vui lòng nhấn 🔄 để thử lại. <button onclick="sendChatMessage()" style="margin-left:8px;padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;font-size:0.85rem">🔄 Thử lại</button>');
+  appendErrorBubble(t('notif.aiError') + ' <button onclick="sendChatMessage()" style="margin-left:8px;padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;font-size:0.85rem">' + t('chat.retryBtn') + '</button>');
 }
 
 // ===== AUTO FLASHCARD OFFER FROM CHAT =====
@@ -4178,10 +4188,10 @@ function offerFlashcardConfirm(topic) {
   offerEl.innerHTML = `
     <div class="chat-avatar">🤖</div>
     <div class="chat-offer-box">
-      <div class="chat-offer-text">📚 Bạn muốn tạo bộ thẻ từ vựng về chủ đề gì? Hãy xác nhận hoặc chỉnh sửa bên dưới:</div>
-      <input id="${inputId}" class="chat-offer-input" type="text" placeholder="Nhập chủ đề (vd: Animals, Weather, School...)" value="${placeholder.replace(/"/g, '&quot;')}" />
+      <div class="chat-offer-text">${t('chat.offerText')}</div>
+      <input id="${inputId}" class="chat-offer-input" type="text" placeholder="${getLang() === 'en' ? 'Enter topic (e.g. Animals, Weather, School...)' : 'Nhập chủ đề (vd: Animals, Weather, School...)'}" value="${placeholder.replace(/"/g, '&quot;')}" />
       <div class="chat-offer-actions">
-        <button class="btn-offer-yes" id="${offerId}_btnYes">📚 Tạo bộ thẻ</button>
+        <button class="btn-offer-yes" id="${offerId}_btnYes">${getLang() === 'en' ? '📚 Create set' : '📚 Tạo bộ thẻ'}</button>
         <button class="btn-offer-no" id="${offerId}_btnNo">Huỷ</button>
       </div>
     </div>
@@ -4198,7 +4208,7 @@ function offerFlashcardConfirm(topic) {
     const finalTopic = inputEl ? inputEl.value.trim() : '';
     if (!finalTopic) {
       inputEl.style.borderColor = 'var(--pink)';
-      inputEl.placeholder = 'Vui lòng nhập chủ đề!';
+      inputEl.placeholder = t('chat.enterTopic');
       inputEl.focus();
       return;
     }
@@ -4220,7 +4230,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
 
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) {
-    appendErrorBubble('Vui lòng nhập Gemini API Key để tạo bộ thẻ.<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">Lấy miễn phí tại đây →</a>');
+    appendErrorBubble((getLang()==='en'?'Please enter a Gemini API Key to create flashcards.':'Vui lòng nhập Gemini API Key để tạo bộ thẻ.') + '<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">' + (getLang()==='en'?'Get one free here →':'Lấy miễn phí tại đây →') + '</a>');
     return;
   }
 
@@ -4231,7 +4241,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   loadingEl.id = 'chatFlashcardLoading';
   loadingEl.innerHTML = `
     <div class="chat-avatar">🤖</div>
-    <div class="chat-text">📚 Đang tạo bộ thẻ từ vựng... <span class="chat-typing"><span></span><span></span><span></span></span></div>
+    <div class="chat-text">${t('chat.creating')} <span class="chat-typing"><span></span><span></span><span></span></span></div>
   `;
   messages.appendChild(loadingEl);
   messages.scrollTop = messages.scrollHeight;
@@ -4325,7 +4335,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
       example: c.example || ''
     })).filter(c => c.word && c.meaning);
 
-    if (cards.length === 0) { appendErrorBubble('❌ Không có từ hợp lệ nào được tạo.'); return; }
+    if (cards.length === 0) { appendErrorBubble('❌ ' + (getLang()==='en'?'No valid words were created.':'Không có từ hợp lệ nào được tạo.')); return; }
 
     const sets = Storage.getSets();
     sets.push({ id: setId, name: parsed.setName || 'Bộ thẻ từ Chat', colorIndex, cards });
@@ -4482,7 +4492,7 @@ function setupFirebaseUI() {
       // Chỉ reset button nếu là desktop và thất bại
       btnLogin.disabled = false;
       btnLogin.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">Đăng nhập Google';
-      showNotif('Đăng nhập thất bại hoặc bị huỷ.', '❌');
+      showNotif(t('notif.loginFail'), '❌');
     }
   });
 
@@ -4585,7 +4595,7 @@ async function restoreSet(setId) {
   const sets = Storage.getSets();
   sets.push(set);
   Storage.saveSets(sets);
-  showNotif('Đã khôi phục bộ thẻ <strong>"' + set.name + '"</strong>!', '✅');
+  showNotif(tf('notif.restored', { name: set.name }), '✅');
   renderTrashPage();
 }
 
@@ -4600,7 +4610,7 @@ async function deletePermanently(setId) {
   Trash.deletePermanently(setId);
   // Xóa ảnh trên Firebase Storage nếu có
   if (typeof FirebaseThumb !== 'undefined') FirebaseThumb.delete(setId).catch(() => {});
-  showNotif('Đã xóa vĩnh viễn bộ thẻ.', '🗑️');
+  showNotif(t('notif.deletedPerm'), '🗑️');
   renderTrashPage();
 }
 
@@ -4617,7 +4627,7 @@ async function emptyTrash() {
     Trash.getAll().forEach(s => FirebaseThumb.delete(s.id).catch(() => {}));
   }
   Trash.emptyAll();
-  showNotif('Đã làm trống thùng rác.', '🗑️');
+  showNotif(t('notif.trashCleared'), '🗑️');
   renderTrashPage();
 }
 

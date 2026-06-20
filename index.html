@@ -184,8 +184,8 @@
       <h2 id="reviewDoneTitle">Ôn tập hoàn thành!</h2>
       <div class="quiz-result-score" id="reviewResultScore"></div>
       <div class="done-stats">
-        <div class="done-stat correct-stat"><span id="reviewCorrect">0</span><small>Đúng</small></div>
-        <div class="done-stat wrong-stat"><span id="reviewWrong">0</span><small>Sai</small></div>
+        <div class="done-stat correct-stat"><span id="reviewCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
+        <div class="done-stat wrong-stat"><span id="reviewWrong">0</span><small data-i18n="game.wrong">Sai</small></div>
       </div>
       <div class="mixed-wrong-list" id="reviewWrongList"></div>
       <button class="btn-primary" id="btnReviewAgain">Ôn lại các từ sai</button>
@@ -388,8 +388,8 @@
         <h2>Kết quả kiểm tra tổng hợp</h2>
         <div class="quiz-result-score" id="mixedResultScore"></div>
         <div class="done-stats">
-          <div class="done-stat correct-stat"><span id="mixedCorrect">0</span><small>Đúng</small></div>
-          <div class="done-stat wrong-stat"><span id="mixedWrong">0</span><small>Sai</small></div>
+          <div class="done-stat correct-stat"><span id="mixedCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
+          <div class="done-stat wrong-stat"><span id="mixedWrong">0</span><small data-i18n="game.wrong">Sai</small></div>
         </div>
         <div class="mixed-wrong-list" id="mixedWrongList"></div>
         <button class="btn-primary" id="btnMixedAgain">Làm lại</button>
@@ -536,8 +536,8 @@
               </button>
               <button class="scramble-mode-btn" id="scrModeChallenge" onclick="selectScrambleMode('challenge')">
                 <span>⚡</span>
-                <span class="smode-label">Thử thách</span>
-                <span class="smode-desc">30 giây mỗi từ</span>
+                <span class="smode-label" data-i18n="scramble.dur90label">Thử thách</span>
+                <span class="smode-desc" data-i18n="scramble.dur90desc">30 giây mỗi từ</span>
               </button>
             </div>
           </div>
@@ -553,8 +553,8 @@
             </select>
           </div>
         </div>
-        <button class="btn-primary btn-large" id="btnStartScramble" style="width:100%;margin-bottom:0.75rem">🧩 Bắt đầu!</button>
-        <button class="btn-ghost" id="btnBackScrambleConfig" style="margin-top:0.5rem;width:100%">← Quay lại trò chơi</button>
+        <button class="btn-primary btn-large" id="btnStartScramble" style="width:100%;margin-bottom:0.75rem" data-i18n="game.startScramble">🧩 Bắt đầu!</button>
+        <button class="btn-ghost" id="btnBackScrambleConfig" style="margin-top:0.5rem;width:100%" data-i18n="game.backToGames">← Quay lại trò chơi</button>
       </div>
     </div>
 
@@ -585,7 +585,7 @@
           <div class="scramble-clue-phonetic" id="scramblePhonetic"></div>
           <button class="speak-btn scramble-speak" id="scrambleSpeakBtn" title="Nghe phát âm" onclick="scrambleSpeakHint()">🔊</button>
           <div class="scramble-hint-row">
-            <button class="scramble-hint-btn" id="btnScrambleHint" onclick="scrambleUseHint()">💡 Gợi ý <span class="hint-cost">(-5 điểm)</span></button>
+            <button class="scramble-hint-btn" id="btnScrambleHint" onclick="scrambleUseHint()"><span data-i18n="game.hint">💡 Gợi ý</span> <span class="hint-cost" data-i18n="game.hintCost">(-5 điểm)</span></button>
             <span class="scramble-hint-info" id="scrambleHintInfo"></span>
           </div>
         </div>
@@ -606,8 +606,8 @@
       <h2 id="scrambleDoneTitle">Hoàn thành!</h2>
       <div class="scramble-result-score" id="scrambleResultScore"></div>
       <div class="done-stats">
-        <div class="done-stat correct-stat"><span id="scrambleDoneCorrect">0</span><small>Đúng</small></div>
-        <div class="done-stat wrong-stat"><span id="scrambleDoneWrong">0</span><small>Sai/Bỏ</small></div>
+        <div class="done-stat correct-stat"><span id="scrambleDoneCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
+        <div class="done-stat wrong-stat"><span id="scrambleDoneWrong">0</span><small data-i18n="game.wrongSkip">Sai/Bỏ</small></div>
         <div class="done-stat"><span id="scrambleDoneHints">0</span><small>Gợi ý dùng</small></div>
       </div>
       <div class="scramble-wrong-review" id="scrambleWrongReview"></div>
@@ -627,27 +627,27 @@
             <div class="scramble-mode-btns">
               <button class="scramble-mode-btn race-dur-btn" data-dur="30" onclick="_raceSelectDuration(30)">
                 <span>⚡</span>
-                <span class="smode-label">30 giây</span>
-                <span class="smode-desc">Thử nhanh</span>
+                <span class="smode-label" data-i18n="race.dur30label">30 giây</span>
+                <span class="smode-desc" data-i18n="race.dur30desc">Thử nhanh</span>
               </button>
               <button class="scramble-mode-btn race-dur-btn active" data-dur="60" onclick="_raceSelectDuration(60)">
                 <span>🏎️</span>
-                <span class="smode-label">60 giây</span>
-                <span class="smode-desc">Tiêu chuẩn</span>
+                <span class="smode-label" data-i18n="race.dur60label">60 giây</span>
+                <span class="smode-desc" data-i18n="race.dur60desc">Tiêu chuẩn</span>
               </button>
               <button class="scramble-mode-btn race-dur-btn" data-dur="90" onclick="_raceSelectDuration(90)">
                 <span>🏁</span>
-                <span class="smode-label">90 giây</span>
-                <span class="smode-desc">Thử thách</span>
+                <span class="smode-label" data-i18n="race.dur90label">90 giây</span>
+                <span class="smode-desc" data-i18n="race.dur90desc">Thử thách</span>
               </button>
             </div>
           </div>
         </div>
         <div class="scramble-config-row" style="align-items:center;">
-          <div style="font-size:0.85rem;color:var(--text2)">✅ Đúng: <b>+10 điểm</b> &nbsp; ❌ Sai: <b>−5 giây</b></div>
+          <div style="font-size:0.85rem;color:var(--text2)" data-i18n-html="race.scoring">✅ Đúng: <b>+10 điểm</b> &nbsp; ❌ Sai: <b>−5 giây</b></div>
         </div>
-        <button class="btn-primary btn-large" id="btnStartRace" style="width:100%;margin-bottom:0.75rem">🏎️ Bắt đầu!</button>
-        <button class="btn-ghost" id="btnBackRaceConfig" style="margin-top:0.5rem;width:100%">← Quay lại trò chơi</button>
+        <button class="btn-primary btn-large" id="btnStartRace" style="width:100%;margin-bottom:0.75rem" data-i18n="game.startRace">🏎️ Bắt đầu!</button>
+        <button class="btn-ghost" id="btnBackRaceConfig" style="margin-top:0.5rem;width:100%" data-i18n="game.backToGames">← Quay lại trò chơi</button>
       </div>
     </div>
 
@@ -746,8 +746,8 @@
       <div class="scramble-result-score" id="raceDoneScore" style="font-size:2.5rem;font-weight:800;color:var(--accent2);margin:0.5rem 0"></div>
       <div id="raceDoneHighScore" style="font-size:0.9rem;margin-bottom:1.5rem"></div>
       <div class="done-stats">
-        <div class="done-stat correct-stat"><span id="raceDoneCorrect">0</span><small>Đúng</small></div>
-        <div class="done-stat wrong-stat"><span id="raceDoneWrong">0</span><small>Sai</small></div>
+        <div class="done-stat correct-stat"><span id="raceDoneCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
+        <div class="done-stat wrong-stat"><span id="raceDoneWrong">0</span><small data-i18n="game.wrong">Sai</small></div>
       </div>
       <button class="btn-primary" id="btnRaceAgain" style="margin-top:1.5rem">🔄 Chơi lại</button>
       <button class="btn-ghost" onclick="_raceClearTimer();AudioFX.raceBgStop();document.body.classList.remove('game-fullscreen');_raceShowSection('hub-placeholder');document.getElementById('gamesHub').style.display='';">Về trò chơi</button>
@@ -825,10 +825,10 @@
         </div>
 
         <!-- CTA -->
-        <button class="det-start-btn" onclick="_detStartGame()">
+        <button class="det-start-btn" onclick="_detStartGame()" data-i18n="game.startInvestigate">
           <span>🕵️</span> Bắt đầu điều tra!
         </button>
-        <button class="btn-ghost det-back-btn" onclick="_detBackToHub()">← Quay lại trò chơi</button>
+        <button class="btn-ghost det-back-btn" onclick="_detBackToHub()" data-i18n="game.backToGames">← Quay lại trò chơi</button>
       </div>
     </div>
 
@@ -876,7 +876,7 @@
 
           <!-- Action buttons -->
           <div id="detActionRow" class="det-action-row">
-            <button class="det-hint-btn" id="detBtnNextHint" onclick="_detRevealHint()">Gợi ý tiếp (−150đ)</button>
+            <button class="det-hint-btn" id="detBtnNextHint" onclick="_detRevealHint()" data-i18n="game.nextHint">Gợi ý tiếp (−150đ)</button>
             <button class="det-skip-btn" id="detBtnSkip" onclick="_detSkip()">⏭ Bỏ qua</button>
           </div>
 
@@ -908,10 +908,10 @@
           </div>
         </div>
         <div class="scramble-config-row" style="align-items:center;">
-          <div style="font-size:0.85rem;color:var(--text2)">💀 Sai <b>6 lần</b> là thua &nbsp;|&nbsp; 💡 Quỹ gợi ý: <b>60đ/từ</b> (Mở ô −25đ • AI −30đ)</div>
+          <div style="font-size:0.85rem;color:var(--text2)" data-i18n-html="hangman.scoring">💀 Sai <b>6 lần</b> là thua &nbsp;|&nbsp; 💡 Quỹ gợi ý: <b>60đ/từ</b> (Mở ô −25đ • AI −30đ)</div>
         </div>
-        <button class="btn-primary btn-large" id="btnStartHangman" style="width:100%;margin-bottom:0.75rem">🎯 Bắt đầu!</button>
-        <button class="btn-ghost" id="btnBackHangConfig" style="margin-top:0.5rem;width:100%">← Quay lại trò chơi</button>
+        <button class="btn-primary btn-large" id="btnStartHangman" style="width:100%;margin-bottom:0.75rem" data-i18n="game.startHangman">🎯 Bắt đầu!</button>
+        <button class="btn-ghost" id="btnBackHangConfig" style="margin-top:0.5rem;width:100%" data-i18n="game.backToGames">← Quay lại trò chơi</button>
       </div>
     </div>
 
@@ -977,7 +977,7 @@
       <div class="done-stats">
         <div class="done-stat correct-stat"><span id="hangDoneCorrect">0</span><small>Đoán đúng</small></div>
         <div class="done-stat wrong-stat"><span id="hangDoneWrong">0</span><small>Thua/Bỏ qua</small></div>
-        <div class="done-stat"><span id="hangDoneAvgWrong">0</span><small>Sai TB/từ</small></div>
+        <div class="done-stat"><span id="hangDoneAvgWrong">0</span><small data-i18n="game.wrongAvg">Sai TB/từ</small></div>
       </div>
       <div class="hang-results-list" id="hangResultsList"></div>
       <button class="btn-primary" id="btnHangAgain" style="margin-top:1.5rem">🔄 Chơi lại</button>
@@ -1000,19 +1000,19 @@
         <!-- Score legend: điểm thưởng theo tốc độ -->
         <div class="det-score-legend">
           <div class="det-legend-item" style="--c:#34d399">
-            <span class="det-legend-num">⚡ Nhanh</span><span class="det-legend-pts">+150đ</span>
+            <span class="det-legend-num" data-i18n="bomb.legendFast">⚡ Nhanh</span><span class="det-legend-pts">+150đ</span>
           </div>
           <div class="det-legend-arrow">→</div>
           <div class="det-legend-item" style="--c:#60a5fa">
-            <span class="det-legend-num">🔥 Streak</span><span class="det-legend-pts">+50đ</span>
+            <span class="det-legend-num" data-i18n="bomb.legendStreak">🔥 Streak</span><span class="det-legend-pts">+50đ</span>
           </div>
           <div class="det-legend-arrow">→</div>
           <div class="det-legend-item" style="--c:#a78bfa">
-            <span class="det-legend-num">✅ Đúng</span><span class="det-legend-pts">+100đ</span>
+            <span class="det-legend-num" data-i18n="bomb.legendCorrect">✅ Đúng</span><span class="det-legend-pts">+100đ</span>
           </div>
           <div class="det-legend-arrow">→</div>
           <div class="det-legend-item" style="--c:#f87171">
-            <span class="det-legend-num">💥 Sai</span><span class="det-legend-pts">0đ</span>
+            <span class="det-legend-num" data-i18n="bomb.legendWrong">💥 Sai</span><span class="det-legend-pts">0đ</span>
           </div>
         </div>
 
@@ -1039,7 +1039,7 @@
         </div>
 
         <!-- CTA -->
-        <button class="det-start-btn" onclick="_bombStartGame()">
+        <button class="det-start-btn" onclick="_bombStartGame()" data-i18n="game.startBomb">
           <span>💣</span> Bắt đầu!
         </button>
         <button class="btn-ghost det-back-btn" onclick="_bombBackToHub()">← Trở về</button>
@@ -1404,8 +1404,8 @@
       <h2 style="font-size:1.3rem;margin-bottom:0.5rem" id="resultTitle">Kết quả</h2>
       <div class="quiz-result-score" id="resultScore" style="font-size:3rem;margin:0.5rem 0"></div>
       <div class="done-stats" style="justify-content:center;margin:1rem 0 1.5rem">
-        <div class="done-stat correct-stat"><span id="resultCorrect">0</span><small>Đúng</small></div>
-        <div class="done-stat wrong-stat" style="margin-left:2rem"><span id="resultWrong">0</span><small>Sai</small></div>
+        <div class="done-stat correct-stat"><span id="resultCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
+        <div class="done-stat wrong-stat" style="margin-left:2rem"><span id="resultWrong">0</span><small data-i18n="game.wrong">Sai</small></div>
       </div>
       <div class="mixed-wrong-list" id="resultWrongList"></div>
       <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap">

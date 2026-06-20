@@ -31,12 +31,12 @@ function startRaceFromHub() {
     });
   });
   if (pool.length < 4) {
-    showNotif('Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng 📚', '⚠️');
+    showNotif(t('race.needWords'), '⚠️');
     return;
   }
   raceCards = shuffle([...pool]);
   document.getElementById('raceConfigInfo').textContent =
-    `🏎️ Word Race — ${pool.length} từ trong pool`;
+    tf('race.poolInfo', { n: pool.length });
   _raceSelectDuration(60);
   _raceShowSection('config');
   document.body.classList.add('game-fullscreen');  // vào fullscreen
@@ -218,7 +218,7 @@ function _raceLoadQuestion() {
   phEl.style.display = ph ? '' : 'none';
 
   document.getElementById('raceScore').textContent = raceScore;
-  document.getElementById('raceProgress').textContent = `${raceCorrect} đúng · ${raceWrong} sai`;
+  document.getElementById('raceProgress').textContent = tf('race.progress', { correct: raceCorrect, wrong: raceWrong });
 
   const grid = document.getElementById('raceAnswerGrid');
   grid.innerHTML = '';
@@ -309,19 +309,19 @@ function _raceEnd() {
   if (isNewHigh) _raceSaveHighScore(raceScore);
 
   document.getElementById('raceDoneIcon').textContent  = raceScore >= 100 ? '🏆' : raceScore >= 50 ? '🥈' : '🎯';
-  document.getElementById('raceDoneTitle').textContent  = raceScore >= 100 ? 'Xuất sắc!' : raceScore >= 50 ? 'Tốt lắm!' : 'Cố lên!';
-  document.getElementById('raceDoneScore').textContent  = raceScore + ' điểm';
+  document.getElementById('raceDoneTitle').textContent  = raceScore >= 100 ? t('race.excellent') : raceScore >= 50 ? t('race.good') : t('race.tryHarder');
+  document.getElementById('raceDoneScore').textContent  = tf('race.points', { n: raceScore });
   document.getElementById('raceDoneCorrect').textContent = raceCorrect;
   document.getElementById('raceDoneWrong').textContent   = raceWrong;
 
   const hsEl = document.getElementById('raceDoneHighScore');
   if (isNewHigh && raceScore > 0) {
-    hsEl.textContent = '🎉 Kỷ lục mới: ' + raceScore + ' điểm!';
+    hsEl.textContent = tf('race.newRecord', { n: raceScore });
     hsEl.style.color = 'var(--accent2)';
     setTimeout(() => AudioFX.raceNewRecord(), 200);   // jingle kỷ lục
     setTimeout(() => _raceFireworks('epic'), 400);    // pháo hoa hoành tráng
   } else {
-    hsEl.textContent  = 'Kỷ lục: ' + Math.max(raceScore, prev) + ' điểm';
+    hsEl.textContent  = tf('race.record', { n: Math.max(raceScore, prev) });
     hsEl.style.color  = 'var(--text2)';
     setTimeout(() => {
       if (raceScore >= 50) {

@@ -202,7 +202,133 @@ const I18N = {
     'settings.langNote': '⚠️ Tính năng đa ngôn ngữ đang phát triển. Hiện tại giao diện hiển thị tiếng Việt.',
 
     /* ── Notifications ── */
+/* ── Game UI HTML strings ── */
+    'game.correct': 'Đúng',
+    'game.wrong': 'Sai',
+    'game.wrongSkip': 'Sai/Bỏ',
+    'game.wrongAvg': 'Sai TB/từ',
+    'game.backToGames': '← Quay lại trò chơi',
+    'game.start': 'Bắt đầu!',
+    'game.startInvestigate': '🕵️ Bắt đầu điều tra!',
+    'game.startBomb': '💣 Bắt đầu!',
+    'game.startScramble': '🧩 Bắt đầu!',
+    'game.startRace': '🏎️ Bắt đầu!',
+    'game.startHangman': '🎯 Bắt đầu!',
+    'game.hint': '💡 Gợi ý',
+    'game.hintCost': '(-5 điểm)',
+    'game.nextHint': 'Gợi ý tiếp (−150đ)',
+    'race.dur30label': '30 giây',
+    'race.dur30desc': 'Thử nhanh',
+    'race.dur60label': '60 giây',
+    'race.dur60desc': 'Tiêu chuẩn',
+    'race.dur90label': '90 giây',
+    'race.dur90desc': 'Thử thách',
+    'race.scoring': '✅ Đúng: <b>+10 điểm</b> &nbsp; ❌ Sai: <b>−5 giây</b>',
+    'scramble.dur90desc': '30 giây mỗi từ',
+    'scramble.dur90label': 'Thử thách',
+    'bomb.legendFast': '⚡ Nhanh',
+    'bomb.legendStreak': '🔥 Streak',
+    'bomb.legendCorrect': '✅ Đúng',
+    'bomb.legendWrong': '💥 Sai',
+    'hangman.scoring': '💀 Sai <b>6 lần</b> là thua &nbsp;|&nbsp; 💡 Quỹ gợi ý: <b>60đ/từ</b> (Mở ô −25đ • AI −30đ)',
+
+    'settings.aiKeyPrompt': 'Nhập Gemini API Key để sử dụng trợ lý AI',
     'notif.langSwitched': 'Đã chuyển sang Tiếng Việt',
+
+    /* ── Set card buttons ── */
+    'set.words': 'từ vựng',
+    'set.study': '📖 Học',
+    'set.quiz': '✏️ Kiểm tra',
+    'set.studyTitle': 'Học thẻ',
+    'set.quizTitle': 'Kiểm tra',
+    'set.showAll': 'Hiện tất cả ({n} bộ thẻ)',
+    'set.seeAll': 'Xem tất cả ({n} bộ thẻ) →',
+    'set.seeAllEmpty': 'Xem bộ thẻ của tôi →',
+    'set.noUserSets': 'Chưa có bộ thẻ nào. Nhấn + để tạo!',
+    'set.modalCreate': 'Tạo bộ thẻ mới',
+    'set.modalEdit': 'Sửa bộ thẻ',
+
+    /* ── Validation / Notifications ── */
+    'notif.loginFail': 'Đăng nhập thất bại hoặc bị huỷ.',
+    'notif.needName': 'Vui lòng nhập <strong>tên bộ thẻ</strong>!',
+    'notif.needWords': 'Vui lòng nhập ít nhất <strong>một từ</strong>!',
+    'notif.badFormat': 'Định dạng: <code>từ | phiên âm | nghĩa | ví dụ</code>',
+    'notif.storageFull': '⚠️ Hết dung lượng lưu trữ! Hãy xóa bớt bộ thẻ cũ rồi thử lại.',
+    'notif.deleted': 'Đã chuyển "<strong>{name}</strong>" vào thùng rác.',
+    'notif.need2sets': 'Vui lòng chọn <strong>ít nhất 2 bộ thẻ</strong>!',
+    'notif.imgTooBig': 'Ảnh quá lớn! Vui lòng chọn ảnh <strong>nhỏ hơn 5MB</strong>.',
+    'notif.fileTooBig': 'File quá lớn! Vui lòng chọn file <strong>nhỏ hơn 2MB</strong>.',
+    'notif.needTopic': 'Vui lòng nhập <strong>chủ đề</strong> hoặc danh sách từ!',
+    'notif.needImage': 'Vui lòng <strong>tải lên ảnh</strong>!',
+    'notif.needFile': 'Vui lòng <strong>tải lên file</strong> văn bản!',
+    'notif.noWords': 'Không có từ hợp lệ!',
+    'notif.needMissingName': 'Thiếu <strong>tên</strong> hoặc danh sách từ!',
+    'notif.noReviewToday': 'Không còn thẻ nào cần ôn tập hôm nay! 🎉',
+    'notif.imported': 'Đã nhập thành công <strong>{n} bộ thẻ</strong>!',
+    'notif.importError': 'Lỗi khi đọc file: <br><small>{msg}</small>',
+    'notif.restored': 'Đã khôi phục bộ thẻ <strong>"{name}"</strong>!',
+    'notif.deletedPerm': 'Đã xóa vĩnh viễn bộ thẻ.',
+    'notif.trashCleared': 'Đã làm trống thùng rác.',
+    'notif.geminiSaved': 'Đã lưu Gemini API Key thành công!',
+    'notif.geminiSavedSync': 'Đã lưu Gemini API Key thành công! Đang đồng bộ...',
+    'notif.geminiInvalid': 'Vui lòng nhập <strong>Gemini API Key</strong> hợp lệ!',
+    'notif.aiError': 'Không gửi được tin nhắn 😓 Vui lòng nhấn 🔄 để thử lại.',
+
+    /* ── AI errors ── */
+    'ai.badKey': '🔑 <strong>API Key không hợp lệ.</strong><br>Vui lòng kiểm tra và nhập lại key đúng.<br>',
+    'ai.noNet': '📡 <strong>Không có kết nối mạng.</strong><br>Vui lòng kiểm tra internet và thử lại.',
+    'ai.timeout': '⌛ <strong>Yêu cầu quá thời gian chờ.</strong><br>Vui lòng thử lại.',
+    'ai.overload': '🔄 <strong>Server AI của Google đang quá tải.</strong><br>Tất cả model đều tạm thời bận. Vui lòng thử lại sau ít phút.',
+    'ai.unavail': '🔄 <strong>Model AI không khả dụng.</strong><br>Đang thử model khác... Vui lòng thử lại.',
+    'ai.generic': '❌ <strong>Không thể kết nối AI.</strong><br>Vui lòng kiểm tra API Key và thử lại.',
+
+    /* ── Login page (hardcoded in renderLogin) ── */
+    'login.taglineHard': 'Học từ vựng thông minh — mọi lúc, mọi nơi',
+
+    /* ── Race game ── */
+    'race.poolInfo': '🏎️ Word Race — {n} từ trong pool',
+    'race.needWords': 'Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng 📚',
+    'race.progress': '{correct} đúng · {wrong} sai',
+    'race.excellent': 'Xuất sắc!',
+    'race.good': 'Tốt lắm!',
+    'race.tryHarder': 'Cố lên!',
+    'race.points': '{n} điểm',
+    'race.newRecord': '🎉 Kỷ lục mới: {n} điểm!',
+    'race.record': 'Kỷ lục: {n} điểm',
+
+    /* ── Bomb game ── */
+    'bomb.poolInfo': 'Word Bomb — {n} từ trong pool',
+    'bomb.needWords': 'Bạn cần học ít nhất 5 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚',
+    'bomb.wordUnit': '{n} từ',
+    'bomb.progress': 'Từ {cur} / {total}',
+    'bomb.timeOut': 'Hết giờ! Bom nổ!',
+    'bomb.answer': 'Đáp án:',
+    'bomb.correct': 'Chính xác!',
+    'bomb.wrong': 'Sai rồi!',
+    'bomb.excellent': '🎉 Xuất sắc! Không bom nào nổ được!',
+    'bomb.good': '👍 Tốt lắm! Luyện thêm để phá kỷ lục!',
+    'bomb.tryHarder': '💪 Cố lên! Học ngữ cảnh nhiều hơn nhé!',
+    'bomb.resultTitle': 'Kết quả Word Bomb',
+    'bomb.totalScore': 'Tổng điểm',
+    'bomb.highScore': 'Kỷ lục',
+    'bomb.correct2': 'Đúng',
+    'bomb.maxStreak': 'Streak cao nhất',
+    'bomb.statusTimeout': 'Hết giờ',
+    'bomb.statusCorrect': 'Đúng',
+    'bomb.statusWrong': 'Sai',
+    'bomb.playAgain': '🔄 Chơi lại',
+    'bomb.back': '← Trở về',
+    'bomb.aiError': 'Lỗi AI: {msg}',
+
+    /* ── Chat ── */
+    'chat.greeting': 'Tôi là trợ lý AI của VocaLearn. Tôi có thể giúp bạn:<br><br>• Giải thích nghĩa và cách dùng từ vựng<br>• Giải thích ngữ pháp tiếng Anh<br>• Gợi ý cách học từ vựng hiệu quả<br>• Đặt câu ví dụ với từ bạn muốn<br><br>Bạn muốn hỏi gì nào? 😊',
+    'chat.offerText': '📚 Bạn muốn tạo bộ thẻ từ vựng về chủ đề gì? Hãy xác nhận hoặc chỉnh sửa bên dưới:',
+    'chat.creating': '📚 Đang tạo bộ thẻ từ vựng...',
+    'chat.enterTopic': 'Vui lòng nhập chủ đề!',
+    'chat.retryBtn': '🔄 Thử lại',
+
+    /* ── Profile modal ── */
+    'profile.enterName': 'Nhập tên của bạn:',
   },
 
   en: {
@@ -403,7 +529,133 @@ const I18N = {
     'settings.langNote': '✅ Language switching is active. Select your preferred language above.',
 
     /* ── Notifications ── */
+/* ── Game UI HTML strings ── */
+    'game.correct': 'Correct',
+    'game.wrong': 'Wrong',
+    'game.wrongSkip': 'Wrong/Skip',
+    'game.wrongAvg': 'Wrong avg',
+    'game.backToGames': '← Back to games',
+    'game.start': 'Start!',
+    'game.startInvestigate': '🕵️ Start investigating!',
+    'game.startBomb': '💣 Start!',
+    'game.startScramble': '🧩 Start!',
+    'game.startRace': '🏎️ Start!',
+    'game.startHangman': '🎯 Start!',
+    'game.hint': '💡 Hint',
+    'game.hintCost': '(-5 pts)',
+    'game.nextHint': 'Next hint (−150pts)',
+    'race.dur30label': '30 sec',
+    'race.dur30desc': 'Quick',
+    'race.dur60label': '60 sec',
+    'race.dur60desc': 'Standard',
+    'race.dur90label': '90 sec',
+    'race.dur90desc': 'Challenge',
+    'race.scoring': '✅ Correct: <b>+10 pts</b> &nbsp; ❌ Wrong: <b>−5 sec</b>',
+    'scramble.dur90desc': '30 sec per word',
+    'scramble.dur90label': 'Challenge',
+    'bomb.legendFast': '⚡ Fast',
+    'bomb.legendStreak': '🔥 Streak',
+    'bomb.legendCorrect': '✅ Correct',
+    'bomb.legendWrong': '💥 Wrong',
+    'hangman.scoring': '💀 <b>6 wrong</b> and you lose &nbsp;|&nbsp; 💡 Hint budget: <b>60pts/word</b> (Reveal −25pts • AI −30pts)',
+
+    'settings.aiKeyPrompt': 'Enter Gemini API Key to use the AI assistant',
     'notif.langSwitched': 'Switched to English',
+
+    /* ── Set card buttons ── */
+    'set.words': 'words',
+    'set.study': '📖 Study',
+    'set.quiz': '✏️ Quiz',
+    'set.studyTitle': 'Study cards',
+    'set.quizTitle': 'Quiz',
+    'set.showAll': 'Show all ({n} sets)',
+    'set.seeAll': 'See all ({n} sets) →',
+    'set.seeAllEmpty': 'Go to my sets →',
+    'set.noUserSets': 'No sets yet. Tap + to create one!',
+    'set.modalCreate': 'Create new set',
+    'set.modalEdit': 'Edit set',
+
+    /* ── Validation / Notifications ── */
+    'notif.loginFail': 'Login failed or was cancelled.',
+    'notif.needName': 'Please enter a <strong>set name</strong>!',
+    'notif.needWords': 'Please enter at least <strong>one word</strong>!',
+    'notif.badFormat': 'Format: <code>word | phonetic | meaning | example</code>',
+    'notif.storageFull': '⚠️ Storage full! Please delete some old sets and try again.',
+    'notif.deleted': 'Moved "<strong>{name}</strong>" to trash.',
+    'notif.need2sets': 'Please select <strong>at least 2 sets</strong>!',
+    'notif.imgTooBig': 'Image too large! Please choose an image <strong>smaller than 5MB</strong>.',
+    'notif.fileTooBig': 'File too large! Please choose a file <strong>smaller than 2MB</strong>.',
+    'notif.needTopic': 'Please enter a <strong>topic</strong> or word list!',
+    'notif.needImage': 'Please <strong>upload an image</strong>!',
+    'notif.needFile': 'Please <strong>upload a text file</strong>!',
+    'notif.noWords': 'No valid words found!',
+    'notif.needMissingName': 'Missing <strong>name</strong> or word list!',
+    'notif.noReviewToday': 'No cards left for review today! 🎉',
+    'notif.imported': 'Successfully imported <strong>{n} sets</strong>!',
+    'notif.importError': 'Error reading file: <br><small>{msg}</small>',
+    'notif.restored': 'Restored set <strong>"{name}"</strong>!',
+    'notif.deletedPerm': 'Set permanently deleted.',
+    'notif.trashCleared': 'Trash emptied.',
+    'notif.geminiSaved': 'Gemini API Key saved successfully!',
+    'notif.geminiSavedSync': 'Gemini API Key saved! Syncing...',
+    'notif.geminiInvalid': 'Please enter a valid <strong>Gemini API Key</strong>!',
+    'notif.aiError': 'Could not send message 😓 Please tap 🔄 to retry.',
+
+    /* ── AI errors ── */
+    'ai.badKey': '🔑 <strong>Invalid API Key.</strong><br>Please check and re-enter the correct key.<br>',
+    'ai.noNet': '📡 <strong>No internet connection.</strong><br>Please check your connection and try again.',
+    'ai.timeout': '⌛ <strong>Request timed out.</strong><br>Please try again.',
+    'ai.overload': '🔄 <strong>Google AI servers are overloaded.</strong><br>All models are temporarily busy. Please try again in a moment.',
+    'ai.unavail': '🔄 <strong>AI model unavailable.</strong><br>Trying another model... Please try again.',
+    'ai.generic': '❌ <strong>Cannot connect to AI.</strong><br>Please check your API Key and try again.',
+
+    /* ── Login page (hardcoded in renderLogin) ── */
+    'login.taglineHard': 'Smart vocabulary learning — anytime, anywhere',
+
+    /* ── Race game ── */
+    'race.poolInfo': '🏎️ Word Race — {n} words in pool',
+    'race.needWords': 'You need to study at least 4 words before playing! Learn more vocabulary 📚',
+    'race.progress': '{correct} correct · {wrong} wrong',
+    'race.excellent': 'Excellent!',
+    'race.good': 'Well done!',
+    'race.tryHarder': 'Keep going!',
+    'race.points': '{n} points',
+    'race.newRecord': '🎉 New record: {n} points!',
+    'race.record': 'Record: {n} points',
+
+    /* ── Bomb game ── */
+    'bomb.poolInfo': 'Word Bomb — {n} words in pool',
+    'bomb.needWords': 'You need to study at least 5 words before playing! Learn more vocabulary 📚',
+    'bomb.wordUnit': '{n} words',
+    'bomb.progress': 'Word {cur} / {total}',
+    'bomb.timeOut': 'Time\'s up! Bomb exploded!',
+    'bomb.answer': 'Answer:',
+    'bomb.correct': 'Correct!',
+    'bomb.wrong': 'Wrong!',
+    'bomb.excellent': '🎉 Excellent! No bombs exploded!',
+    'bomb.good': '👍 Well done! Practice more to beat the record!',
+    'bomb.tryHarder': '💪 Keep going! Learn more context!',
+    'bomb.resultTitle': 'Word Bomb Results',
+    'bomb.totalScore': 'Total score',
+    'bomb.highScore': 'Record',
+    'bomb.correct2': 'Correct',
+    'bomb.maxStreak': 'Best streak',
+    'bomb.statusTimeout': 'Timed out',
+    'bomb.statusCorrect': 'Correct',
+    'bomb.statusWrong': 'Wrong',
+    'bomb.playAgain': '🔄 Play again',
+    'bomb.back': '← Back',
+    'bomb.aiError': 'AI error: {msg}',
+
+    /* ── Chat ── */
+    'chat.greeting': 'I\'m VocaLearn\'s AI Assistant. I can help you:<br><br>• Explain word meanings and usage<br>• Explain English grammar<br>• Suggest effective vocabulary learning tips<br>• Make example sentences with any word<br><br>What would you like to ask? 😊',
+    'chat.offerText': '📚 What topic would you like to create a vocabulary set about? Confirm or edit below:',
+    'chat.creating': '📚 Creating vocabulary set...',
+    'chat.enterTopic': 'Please enter a topic!',
+    'chat.retryBtn': '🔄 Retry',
+
+    /* ── Profile modal ── */
+    'profile.enterName': 'Enter your name:',
   }
 };
 
@@ -455,6 +707,13 @@ function applyLang(lang) {
     const key = el.getAttribute('data-i18n-placeholder');
     const val = t(key);
     if (val) el.placeholder = val;
+  });
+
+  // Apply data-i18n-html (innerHTML for strings containing HTML tags)
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    const val = t(key);
+    if (val) el.innerHTML = val;
   });
 
   // Apply data-i18n-title
