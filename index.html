@@ -331,28 +331,28 @@
       <h1 class="page-title" data-i18n="mixedquiz.title">Kiểm tra tổng hợp 🎯</h1>
     </div>
     <div id="mixedQuizConfig">
-      <p class="page-subtitle">Chọn các bộ thẻ muốn tổng hợp:</p>
+      <p class="page-subtitle" data-i18n="mixedquiz.subtitle">Chọn các bộ thẻ muốn tổng hợp:</p>
       <div class="mixed-sets-list" id="mixedSetsList"></div>
       <div class="mixed-config-row">
         <div class="mixed-config-item">
-          <label class="form-label">Hình thức kiểm tra</label>
+          <label class="form-label" data-i18n="mixedquiz.modeLabel">Hình thức kiểm tra</label>
           <select class="form-input" id="mixedQuizMode" style="width:160px">
-            <option value="multiple">Trắc nghiệm</option>
-            <option value="essay">Tự luận</option>
-            <option value="random">Ngẫu nhiên</option>
+            <option value="multiple" data-i18n="mixedquiz.modeMultiple">Trắc nghiệm</option>
+            <option value="essay" data-i18n="mixedquiz.modeEssay">Tự luận</option>
+            <option value="random" data-i18n="mixedquiz.modeRandom">Ngẫu nhiên</option>
           </select>
         </div>
         <div class="mixed-config-item">
-          <label class="form-label">Số câu hỏi</label>
+          <label class="form-label" data-i18n="mixedquiz.countLabel">Số câu hỏi</label>
           <select class="form-input" id="mixedQuizCount" style="width:120px">
-            <option value="10">10 câu</option>
-            <option value="15" selected>15 câu</option>
-            <option value="20">20 câu</option>
-            <option value="30">30 câu</option>
+            <option value="10" data-i18n="mixedquiz.count10">10 câu</option>
+            <option value="15" selected data-i18n="mixedquiz.count15">15 câu</option>
+            <option value="20" data-i18n="mixedquiz.count20">20 câu</option>
+            <option value="30" data-i18n="mixedquiz.count30">30 câu</option>
           </select>
         </div>
         <div class="mixed-config-item" style="align-self:flex-end">
-          <button class="btn-primary btn-large" id="btnStartMixedQuiz">🚀 Bắt đầu kiểm tra</button>
+          <button class="btn-primary btn-large" id="btnStartMixedQuiz" data-i18n="mixedquiz.start">🚀 Bắt đầu kiểm tra</button>
         </div>
       </div>
       <div class="mixed-preview" id="mixedPreview"></div>
@@ -401,12 +401,12 @@
   <!-- PAGE: GAMES HUB + WORD SCRAMBLE -->
   <div class="page" id="page-scramble">
     <div class="page-header">
-      <h1 class="page-title">Trò chơi 🎮</h1>
+      <h1 class="page-title" data-i18n="games.title">Trò chơi 🎮</h1>
     </div>
 
     <!-- GAMES HUB -->
     <div id="gamesHub">
-      <p class="page-subtitle">Chọn trò chơi để bắt đầu:</p>
+      <p class="page-subtitle" data-i18n="games.subtitle">Chọn trò chơi để bắt đầu:</p>
       <div class="sets-grid" id="gamesGrid">
         <div class="set-card game-card" style="cursor:pointer" onclick="startScrambleFromHub()">
           <div class="game-card-thumb">
@@ -417,14 +417,14 @@
               <span style="font-size:2rem">🧩</span>
               <div>
                 <div class="set-card-name">Word Scramble</div>
-                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Sắp xếp chữ cái thành từ đúng</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px" data-i18n="games.scramble.tagline">Sắp xếp chữ cái thành từ đúng</div>
               </div>
             </div>
             <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-              Từ vựng được chọn ngẫu nhiên từ tất cả các bộ thẻ bạn đang học hoặc đã thuộc.
+              <span data-i18n="games.scramble.desc">Từ vựng được chọn ngẫu nhiên từ tất cả các bộ thẻ bạn đang học hoặc đã thuộc.</span>
             </div>
             <div style="margin-top:0.75rem">
-              <span style="background:var(--accent-dim,rgba(139,92,246,0.15));color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🌿 Thư giãn</span>
+              <span style="background:var(--accent-dim,rgba(139,92,246,0.15));color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600" data-i18n="games.scramble.badge">🌿 Thư giãn</span>
             </div>
           </div>
         </div>
@@ -438,14 +438,14 @@
               <span style="font-size:2rem">🏎️</span>
               <div>
                 <div class="set-card-name">Word Race</div>
-                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Trả lời nhanh nhất có thể</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px" data-i18n="games.race.tagline">Trả lời nhanh nhất có thể</div>
               </div>
             </div>
             <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-              Chọn nghĩa đúng trong 4 đáp án. Đúng +10 điểm, sai −5 giây. Trả lời nhiều nhất trong thời gian cho phép!
+              <span data-i18n="games.race.desc">Chọn nghĩa đúng trong 4 đáp án. Đúng +10 điểm, sai −5 giây. Trả lời nhiều nhất trong thời gian cho phép!</span>
             </div>
             <div style="margin-top:0.75rem">
-              <span style="background:rgba(255,107,107,0.15);color:#ff6b6b;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🏆 High score</span>
+              <span style="background:rgba(255,107,107,0.15);color:#ff6b6b;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600" data-i18n="games.race.badge">🏆 High score</span>
             </div>
           </div>
         </div>
@@ -459,14 +459,14 @@
               <span style="font-size:2rem">🕵️</span>
               <div>
                 <div class="set-card-name">Word Detective</div>
-                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán từ qua gợi ý AI</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px" data-i18n="games.detective.tagline">Đoán từ qua gợi ý AI</div>
               </div>
             </div>
             <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-              AI mô tả một từ bằng 5 gợi ý dần dần — từ mơ hồ đến rõ ràng. Đoán sớm để ghi điểm cao!
+              <span data-i18n="games.detective.desc">AI mô tả một từ bằng 5 gợi ý dần dần — từ mơ hồ đến rõ ràng. Đoán sớm để ghi điểm cao!</span>
             </div>
             <div style="margin-top:0.75rem">
-              <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">🧠 AI gợi ý</span>
+              <span style="background:rgba(52,211,153,0.15);color:#34d399;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600" data-i18n="games.detective.badge">🧠 AI gợi ý</span>
             </div>
           </div>
         </div>
@@ -480,14 +480,14 @@
               <span style="font-size:2rem">🎯</span>
               <div>
                 <div class="set-card-name">Word Hangman</div>
-                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Đoán chữ cái trước khi hết lượt</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px" data-i18n="games.hangman.tagline">Đoán chữ cái trước khi hết lượt</div>
               </div>
             </div>
             <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-              Đoán từng chữ cái để tìm ra từ tiếng Anh. Sai 6 lần là thua! Bí quá thì xin AI gợi ý.
+              <span data-i18n="games.hangman.desc">Đoán từng chữ cái để tìm ra từ tiếng Anh. Sai 6 lần là thua! Bí quá thì xin AI gợi ý.</span>
             </div>
             <div style="margin-top:0.75rem">
-              <span style="background:rgba(248,113,113,0.15);color:#f87171;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">💀 6 lượt sai</span>
+              <span style="background:rgba(248,113,113,0.15);color:#f87171;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600" data-i18n="games.hangman.badge">💀 6 lượt sai</span>
             </div>
           </div>
         </div>
@@ -501,14 +501,14 @@
               <span style="font-size:2rem">💣</span>
               <div>
                 <div class="set-card-name">Word Bomb</div>
-                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px">Điền từ trước khi bom nổ</div>
+                <div class="set-card-count" style="font-size:0.82rem;color:var(--text3);margin-top:2px" data-i18n="games.bomb.tagline">Điền từ trước khi bom nổ</div>
               </div>
             </div>
             <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text3);line-height:1.5">
-              AI tạo câu có 1 từ bị ẩn — điền đúng trước khi hết giờ. Streak dài càng ít thời gian, điểm càng cao!
+              <span data-i18n="games.bomb.desc">AI tạo câu có 1 từ bị ẩn — điền đúng trước khi hết giờ. Streak dài càng ít thời gian, điểm càng cao!</span>
             </div>
             <div style="margin-top:0.75rem">
-              <span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600">💥 AI ngữ cảnh</span>
+              <span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 10px;border-radius:99px;font-size:0.78rem;font-weight:600" data-i18n="games.bomb.badge">💥 AI ngữ cảnh</span>
             </div>
           </div>
         </div>
@@ -1127,28 +1127,28 @@
     </div>
     <div class="stats-grid">
       <div class="stats-card stats-card-progress">
-        <h3>Tiến độ học tập</h3>
+        <h3 data-i18n="stats.progress">Tiến độ học tập</h3>
         <div class="progress-rings" id="progressRings"></div>
       </div>
       <div class="stats-card stats-card-history">
         <div class="chart-header">
-          <h3 id="chartTitle">Lịch sử ôn tập</h3>
+          <h3 id="chartTitle" data-i18n="stats.history">Lịch sử ôn tập</h3>
           <div class="chart-tabs">
-            <button class="chart-tab active" data-tab="7">7 ngày</button>
-            <button class="chart-tab" data-tab="30">30 ngày</button>
-            <button class="chart-tab" data-tab="month">Theo tháng</button>
+            <button class="chart-tab active" data-tab="7" data-i18n="stats.tab7">7 ngày</button>
+            <button class="chart-tab" data-tab="30" data-i18n="stats.tab30">30 ngày</button>
+            <button class="chart-tab" data-tab="month" data-i18n="stats.tabMonth">Theo tháng</button>
           </div>
         </div>
         <div class="chart-month-select" id="chartMonthSelect" style="display:none">
           <select id="monthPickerMonth"></select>
           <select id="monthPickerYear"></select>
-          <button id="monthPickerViewBtn">Xem</button>
+          <button id="monthPickerViewBtn" data-i18n="stats.view">Xem</button>
         </div>
         <div class="bar-chart" id="barChart"></div>
         <div class="chart-meta" id="chartMeta"></div>
       </div>
       <div class="stats-card full-width">
-        <h3>Từ cần ôn tập sớm nhất</h3>
+        <h3 data-i18n="stats.dueWords">Từ cần ôn tập sớm nhất</h3>
         <div id="dueWordsList"></div>
       </div>
     </div>
@@ -1214,14 +1214,14 @@
     <div class="page-header">
       <div>
         <h1 class="page-title" data-i18n="trash.title">Thùng rác 🗑️</h1>
-        <p class="page-subtitle">Các bộ thẻ đã xóa — khôi phục hoặc xóa vĩnh viễn</p>
+        <p class="page-subtitle" data-i18n="trash.subtitle">Các bộ thẻ đã xóa — khôi phục hoặc xóa vĩnh viễn</p>
       </div>
-      <button class="btn-ghost btn-sm" id="btnEmptyTrash" onclick="emptyTrash()" style="display:none;color:var(--accent)">🗑 Xóa tất cả</button>
+      <button class="btn-ghost btn-sm" id="btnEmptyTrash" onclick="emptyTrash()" style="display:none;color:var(--accent)" data-i18n="trash.clearAll">🗑 Xóa tất cả</button>
     </div>
     <div id="trashList" class="trash-list"></div>
     <div class="empty-state" id="trashEmpty">
       <div class="empty-icon">🗑️</div>
-      <p>Thùng rác trống.<br>Các bộ thẻ bị xóa sẽ xuất hiện ở đây.</p>
+      <p><span data-i18n="trash.emptyTitle">Thùng rác trống.</span><br><span data-i18n="trash.emptyDesc">Các bộ thẻ bị xóa sẽ xuất hiện ở đây.</span></p>
     </div>
   </div>
 

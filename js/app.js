@@ -647,6 +647,12 @@ function navigateTo(page) {
   else if (page === 'trash') renderTrashPage();
 }
 
+// Re-render whichever page is currently visible (called by i18n.js after a language switch)
+// so that JS-generated text — not just static data-i18n elements — updates too.
+window.refreshDynamicPageText = function () {
+  if (typeof currentPage !== 'undefined' && currentPage) navigateTo(currentPage);
+};
+
 // ---- MOBILE MENU ----
 function setupMobileMenu() {
   document.getElementById('menuBtn').addEventListener('click', () => {
@@ -721,8 +727,8 @@ function renderHome() {
   // Greeting với tên người dùng (tự đặt hoặc lấy từ tài khoản Google nếu chưa đặt)
   const name = getDisplayName();
   const hour = new Date().getHours();
-  const greet = hour < 12 ? 'Chào buổi sáng' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
-  document.getElementById('homeGreeting').textContent = name ? `${greet}, ${name}! 👋` : 'Xin chào! 👋';
+  const greet = hour < 12 ? t('home.greetMorning') : hour < 18 ? t('home.greetAfternoon') : t('home.greetEvening');
+  document.getElementById('homeGreeting').textContent = name ? `${greet}, ${name}! 👋` : t('home.greeting');
   document.getElementById('totalCards').textContent = getTotalCards();
   document.getElementById('masteredCards').textContent = getMasteredCount();
   document.getElementById('todayStudied').textContent = Storage.getTodayStudied();
@@ -731,15 +737,14 @@ function renderHome() {
   const hint = document.getElementById('dueHint');
   const banner = document.getElementById('reviewBanner');
   if (due > 0) {
-    hint.textContent = 'Học ngay để không quên!';
+    hint.textContent = t('home.dueHintActive');
     hint.style.color = 'var(--pink)';
     banner.style.display = 'flex';
-    document.getElementById('reviewBannerSub').textContent =
-      `Bạn có ${due} thẻ cần ôn lại hôm nay — hoàn thành để ghi nhớ lâu hơn!`;
+    document.getElementById('reviewBannerSub').textContent = tf('home.reviewBannerSub', { n: due });
   } else {
     const prog = getProgress();
     const hasLearning = getAllSets().some(s => s.cards.some(c => prog[c.id] && prog[c.id].status === 'learning'));
-    hint.textContent = hasLearning ? '↑ Sẽ có sau 1–3 ngày' : 'Hãy bắt đầu học!';
+    hint.textContent = hasLearning ? t('home.dueHintLearning') : t('home.dueHintStart');
     hint.style.color = 'var(--text3)';
     banner.style.display = 'none';
   }
@@ -754,7 +759,7 @@ function renderHome() {
   sg.innerHTML = '';
   const allSamples = SAMPLE_SETS;
   if (allSamples.length === 0) {
-    sg.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">Không có bộ thẻ mẫu.</p>';
+    sg.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">' + t('stats.noSampleSets') + '</p>';
   } else if (allSamples.length <= SAMPLE_PREVIEW_COUNT || wasShowingAll) {
     // Hiển thị tất cả nếu ít hơn giới hạn hoặc user đã bấm "Hiện tất cả" trước đó
     allSamples.forEach(s => sg.appendChild(createSetCard(s)));
@@ -1659,7 +1664,7 @@ function renderStatsPage() {
   });
 
   // ---- CHART ENGINE (3 chế độ) ----
-  const _DAY_NAMES = ['CN','T2','T3','T4','T5','T6','T7'];
+  const _DAY_NAMES = tList('stats.dayNamesShort');
   const _MONTH_NAMES = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
                         'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
   let _activeChartTab = '7';
@@ -1680,7 +1685,7 @@ function renderStatsPage() {
     const chartEl = document.getElementById('barChart');
     const titleEl = document.getElementById('chartTitle');
     const monthSel = document.getElementById('chartMonthSelect');
-    if (titleEl) titleEl.textContent = 'Lịch sử ôn tập';
+    if (titleEl) titleEl.textContent = t('stats.history');
     if (monthSel) monthSel.style.display = 'none';
 
     const data = Storage.getLastNDays(7).map(d => {
@@ -1707,7 +1712,7 @@ function renderStatsPage() {
 
     // Tổng nhỏ ở góc
     const meta = chartEl.parentElement.querySelector('.chart-meta');
-    if (meta) meta.textContent = total ? `Tổng: ${total} lượt trong 7 ngày` : 'Chưa có dữ liệu tuần này';
+    if (meta) meta.textContent = total ? `${t('stats.totalIn7')}: ${total} ${t('stats.reviewsIn7')}` : t('stats.no7Data');
   }
 
   // ── View 2: Heatmap 30 ngày (GitHub style) ──
@@ -1715,7 +1720,7 @@ function renderStatsPage() {
     const chartEl = document.getElementById('barChart');
     const titleEl = document.getElementById('chartTitle');
     const monthSel = document.getElementById('chartMonthSelect');
-    if (titleEl) titleEl.textContent = 'Lịch sử ôn tập';
+    if (titleEl) titleEl.textContent = t('stats.history');
     if (monthSel) monthSel.style.display = 'none';
 
     const data = Storage.getLastNDays(30);
@@ -1769,17 +1774,17 @@ function renderStatsPage() {
         ).join('')}
       </div>
       <div class="hm-legend">
-        <span>Ít</span>
+        <span>${t('stats.less')}</span>
         <div class="hm-cell hm-i0"></div>
         <div class="hm-cell hm-i1"></div>
         <div class="hm-cell hm-i2"></div>
         <div class="hm-cell hm-i3"></div>
         <div class="hm-cell hm-i4"></div>
-        <span>Nhiều</span>
+        <span>${t('stats.more')}</span>
       </div>`;
 
     const meta = chartEl.parentElement.querySelector('.chart-meta');
-    if (meta) meta.textContent = total ? `${activeDays} ngày học · ${total} lượt trong 30 ngày` : 'Chưa có dữ liệu 30 ngày này';
+    if (meta) meta.textContent = total ? `${activeDays} ${t('stats.activeDays')} · ${total} ${t('stats.reviewsIn30')}` : t('stats.no30Data');
   }
 
   // ── View 3: Lịch tháng ──
@@ -1825,7 +1830,7 @@ function renderStatsPage() {
     const total = data.reduce((s, d) => s + d.count, 0);
     const activeDays = data.filter(d => d.count > 0).length;
     const meta = chartEl.parentElement.querySelector('.chart-meta');
-    if (meta) meta.textContent = total ? `${activeDays} ngày học · ${total} lượt trong tháng` : 'Chưa có dữ liệu tháng này';
+    if (meta) meta.textContent = total ? `${activeDays} ${t('stats.activeDays')} · ${total} ${t('stats.reviewsInMonth')}` : t('stats.noMonthData');
   }
 
   // ── Dispatcher ──
@@ -1842,16 +1847,17 @@ function renderStatsPage() {
       _render30Days();
     } else if (tab === 'month') {
       if (monthSel) monthSel.style.display = 'flex';
-      if (titleEl) titleEl.textContent = 'Lịch sử ôn tập';
+      if (titleEl) titleEl.textContent = t('stats.history');
 
       const selMonth = document.getElementById('monthPickerMonth');
       const selYear  = document.getElementById('monthPickerYear');
       const viewBtn  = document.getElementById('monthPickerViewBtn');
 
-      // Populate selects only once
-      if (selMonth && selMonth.options.length === 0) {
-        const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
-                            'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+      // Populate selects only once per language (re-populate if language changed since last render)
+      if (selMonth && (selMonth.options.length === 0 || selMonth.dataset.lang !== getLang())) {
+        selMonth.innerHTML = '';
+        selMonth.dataset.lang = getLang();
+        const monthNames = tList('stats.monthNamesList');
         monthNames.forEach((name, i) => {
           const opt = document.createElement('option');
           opt.value = i; // 0-indexed
@@ -1893,8 +1899,8 @@ function renderStatsPage() {
           const total = data.reduce((s, d) => s + d.count, 0);
           const activeDays = data.filter(d => d.count > 0).length;
           if (meta) meta.textContent = total
-            ? `${activeDays} ngày học · ${total} lượt trong tháng`
-            : 'Chưa có dữ liệu tháng này';
+            ? `${activeDays} ${t('stats.activeDays')} · ${total} ${t('stats.reviewsInMonth')}`
+            : t('stats.noMonthData');
         });
       }
     }
@@ -2054,7 +2060,7 @@ function updateMixedPreview() {
   const count = parseInt(document.getElementById('mixedQuizCount').value);
   const preview = document.getElementById('mixedPreview');
   if (mixedSelectedSets.size === 0) {
-    preview.innerHTML = '<span style="color:var(--text3)">👆 Chọn ít nhất 2 bộ thẻ để bắt đầu kiểm tra tổng hợp</span>';
+    preview.innerHTML = '<span style="color:var(--text3)">' + t('mixedquiz.selectAtLeast2') + '</span>';
     return;
   }
   if (mixedSelectedSets.size === 1) {
@@ -4557,16 +4563,17 @@ function renderTrashPage() {
 
   container.innerHTML = items.map(set => {
     const deletedAt = set._deletedAt ? new Date(set._deletedAt) : null;
-    const timeStr = deletedAt ? deletedAt.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+    const locale = getLang() === 'en' ? 'en-US' : 'vi-VN';
+    const timeStr = deletedAt ? deletedAt.toLocaleDateString(locale, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
     return `
       <div class="trash-card" data-id="${set.id}">
         <div class="trash-card-info">
           <div class="trash-card-name">${set.name}</div>
-          <div class="trash-card-meta">${set.cards.length} từ · Đã xóa: ${timeStr}</div>
+          <div class="trash-card-meta">${set.cards.length} ${t('trash.words')} · ${t('trash.deletedAt')}: ${timeStr}</div>
         </div>
         <div class="trash-card-actions">
-          <button class="btn-restore" onclick="restoreSet('${set.id}')">↩ Khôi phục</button>
-          <button class="btn-delete-perm" onclick="deletePermanently('${set.id}')">🗑 Xóa vĩnh viễn</button>
+          <button class="btn-restore" onclick="restoreSet('${set.id}')">${t('trash.restore')}</button>
+          <button class="btn-delete-perm" onclick="deletePermanently('${set.id}')">${t('trash.deletePerm')}</button>
         </div>
       </div>`;
   }).join('');
