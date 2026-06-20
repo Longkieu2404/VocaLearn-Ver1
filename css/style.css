@@ -491,8 +491,27 @@ body {
 }
 .set-card-meta {
   display: flex; justify-content: space-between;
-  align-items: center; margin-top: 0.75rem;
+  align-items: flex-start; margin-top: 0.75rem;
   font-size: 0.75rem; color: var(--text3);
+  gap: 0.4rem; flex-wrap: nowrap; min-width: 0;
+}
+.sca-meta-left {
+  min-width: 0; flex: 1;
+  display: flex; align-items: flex-start;
+  gap: 0.3rem; flex-wrap: wrap;
+  line-height: 1.5;
+}
+.sca-meta-mastered {
+  white-space: nowrap;
+}
+.sca-meta-learning {
+  color: var(--yellow);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sca-meta-pct {
+  flex-shrink: 0; font-weight: 600;
+  line-height: 1.5;
 }
 
 /* ===== FAB ===== */
@@ -4534,8 +4553,11 @@ body.game-fullscreen #hangSession .study-header {
   .sc-mobile-meta {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-top: 5px;
+    gap: 4px;
+    flex-wrap: nowrap;
+    min-width: 0;
   }
   .sc-mobile-meta-left {
     font-size: 0.72rem;
@@ -4544,6 +4566,12 @@ body.game-fullscreen #hangSession .study-header {
     align-items: center;
     gap: 4px;
     flex-wrap: wrap;
+    min-width: 0;
+    flex: 1;
+    line-height: 1.4;
+  }
+  .sc-mobile-meta-left > span:first-child {
+    min-width: 0;
   }
   .sc-mobile-badge {
     background: rgba(255, 209, 102, 0.18);

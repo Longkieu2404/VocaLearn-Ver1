@@ -885,7 +885,7 @@ function createSetCard(set) {
             </div>
           </div>
           <div class="sc-mobile-meta">
-            <span class="sc-mobile-meta-left">${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}${learningBadge}</span>
+            <span class="sc-mobile-meta-left"><span>${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}</span>${learningBadge}</span>
             <span class="sc-mobile-pct" style="color:${pctColor}">${pctMastered}%</span>
           </div>
         </div>
@@ -916,8 +916,10 @@ function createSetCard(set) {
         <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
       </div>
       <div class="set-card-meta">
-        <span>${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : ''}</span>
-        <span style="color:var(--green)">${pctMastered}%</span>
+        <span class="sca-meta-left">
+          <span class="sca-meta-mastered">${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}</span>${learning > 0 ? '<span class="sca-meta-learning">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : ''}
+        </span>
+        <span class="sca-meta-pct" style="color:${pctColor}">${pctMastered}%</span>
       </div>
       <div class="set-card-actions">
         <button class="sca-btn sca-study" title="${t('set.studyTitle')}">${t('set.study')}</button>
