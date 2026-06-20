@@ -4727,7 +4727,6 @@ function _settingsSetLang(lang) {
   localStorage.setItem(SETTINGS_LANG_KEY, lang);
   // Apply translations across the whole UI
   if (typeof applyLang === 'function') applyLang(lang);
-  showNotif(lang === 'vi' ? 'Đã chuyển sang Tiếng Việt 🇻🇳' : 'Switched to English 🇬🇧', '🌐');
 }
 
 function _settingsLogout() {
