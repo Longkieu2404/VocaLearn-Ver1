@@ -177,7 +177,7 @@ function _hangRenderHintBudget() {
   bar.style.width = pct + '%';
   bar.className = 'hang-hint-budget-fill' +
     (pct > 50 ? ' budget-high' : pct > 20 ? ' budget-mid' : ' budget-low');
-  label.textContent = getLang()==='en' ? `Hint budget: ${hangHintBudget}pts` : `Quỹ gợi ý: ${hangHintBudget}đ`;
+  label.textContent = tf('hangman.hintBudget', { n: hangHintBudget });
 
   // Cập nhật trạng thái nút gợi ý
   const btnMeaning = document.getElementById('hangBtnHintMeaning');

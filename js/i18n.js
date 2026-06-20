@@ -305,6 +305,59 @@ const I18N = {
     /* ── Prompt/Confirm modal ── */
     'promptModal.cancel': 'Hủy',
 
+/* ── Form labels / section headers ── */
+    'label.gameMode': 'Chế độ chơi',
+    'label.wordCount': 'Số lượng từ',
+    'label.timeMode': 'Thời gian chơi',
+    'label.wordCountPlay': 'Số từ chơi',
+    'label.numWords': '📚 Số từ',
+    'label.difficulty': '⚡ Độ khó gợi ý',
+    'label.hintLang': '🌐 Ngôn ngữ gợi ý',
+    'label.timePerQ': '⏱ Thời gian / câu',
+    'label.setName': 'Tên bộ thẻ',
+    'label.color': 'Màu sắc',
+    'label.wordList': 'Danh sách từ',
+    'label.wordListHint': '(mỗi dòng: từ tiếng Anh | phiên âm | nghĩa | ví dụ)',
+    'label.topic': 'Chủ đề hoặc danh sách từ muốn học',
+    'label.wordCountCreate': 'Số lượng từ muốn tạo',
+    'label.uploadImage': 'Tải lên ảnh (ảnh bài học, trang sách, ghi chú...)',
+    'label.uploadFile': 'Tải lên file văn bản',
+    'label.wordCountExtract': 'Số lượng từ muốn trích xuất',
+    'label.wordListEdit': 'Danh sách từ (có thể chỉnh sửa)',
+    'label.setNameResult': 'Tên bộ thẻ',
+    'label.colorResult': 'Màu sắc',
+
+    /* ── Scramble game session ── */
+    'scramble.clueLabel': 'Nghĩa tiếng Việt:',
+    'scramble.clearBtn': '🔄 Xóa hết',
+    'scramble.checkBtn': '✓ Xác nhận',
+    'scramble.readyText': 'Sẵn sàng chưa?',
+
+    /* ── Race game session ── */
+    'race.wordLabel': 'Từ tiếng Anh:',
+
+    /* ── Detective game ── */
+    'det.configSub': 'Đoán từ qua các gợi ý bí ẩn từ AI',
+    'det.aiThinking': 'AI đang nghĩ gợi ý',
+
+    /* ── Hangman game ── */
+    'hangman.hintBudget': 'Quỹ gợi ý: {n}đ',
+    'hangman.revealBtn': '🔓 Mở ô chữ (−25đ)',
+    'hangman.aiHintBtn': '🤖 Gợi ý AI (−30đ)',
+    'hangman.revealTitle': 'Mở 1 ô chữ (−25đ)',
+
+    /* ── Bomb game ── */
+    'bomb.configSub': 'Điền từ bị ẩn trước khi bom phát nổ!',
+    'bomb.inputPlaceholder': 'Nhập từ còn thiếu...',
+    'bomb.submitBtn': 'Nổ 💥',
+    'bomb.exitTitle': 'Thoát game?',
+    'bomb.exitDesc': 'Tiến trình hiện tại sẽ không được lưu.<br>Bạn có chắc muốn thoát không?',
+    'bomb.continueBtn': '← Tiếp tục',
+    'bomb.exitConfirmBtn': 'Thoát',
+
+    /* ── Mixed quiz ── */
+    'mixed.confirmBtn': 'Xác nhận ✓',
+
     'notif.langSwitched': 'Đã chuyển sang Tiếng Việt',
 
     /* ── Set card buttons ── */
@@ -704,6 +757,59 @@ const I18N = {
     /* ── Prompt/Confirm modal ── */
     'promptModal.cancel': 'Cancel',
 
+/* ── Form labels / section headers ── */
+    'label.gameMode': 'Game mode',
+    'label.wordCount': 'Number of words',
+    'label.timeMode': 'Time mode',
+    'label.wordCountPlay': 'Words to play',
+    'label.numWords': '📚 Words',
+    'label.difficulty': '⚡ Hint difficulty',
+    'label.hintLang': '🌐 Hint language',
+    'label.timePerQ': '⏱ Time / question',
+    'label.setName': 'Set name',
+    'label.color': 'Color',
+    'label.wordList': 'Word list',
+    'label.wordListHint': '(each line: English word | phonetic | meaning | example)',
+    'label.topic': 'Topic or word list to learn',
+    'label.wordCountCreate': 'Number of words to create',
+    'label.uploadImage': 'Upload image (lesson photo, book page, notes...)',
+    'label.uploadFile': 'Upload text file',
+    'label.wordCountExtract': 'Number of words to extract',
+    'label.wordListEdit': 'Word list (editable)',
+    'label.setNameResult': 'Set name',
+    'label.colorResult': 'Color',
+
+    /* ── Scramble game session ── */
+    'scramble.clueLabel': 'Vietnamese meaning:',
+    'scramble.clearBtn': '🔄 Clear',
+    'scramble.checkBtn': '✓ Confirm',
+    'scramble.readyText': 'Ready?',
+
+    /* ── Race game session ── */
+    'race.wordLabel': 'English word:',
+
+    /* ── Detective game ── */
+    'det.configSub': 'Guess words from mysterious AI clues',
+    'det.aiThinking': 'AI is thinking of hints',
+
+    /* ── Hangman game ── */
+    'hangman.hintBudget': 'Hint budget: {n}pts',
+    'hangman.revealBtn': '🔓 Reveal letter (−25pts)',
+    'hangman.aiHintBtn': '🤖 AI hint (−30pts)',
+    'hangman.revealTitle': 'Reveal 1 letter (−25pts)',
+
+    /* ── Bomb game ── */
+    'bomb.configSub': 'Fill in the missing word before the bomb explodes!',
+    'bomb.inputPlaceholder': 'Type the missing word...',
+    'bomb.submitBtn': 'Boom 💥',
+    'bomb.exitTitle': 'Exit game?',
+    'bomb.exitDesc': 'Current progress will not be saved.<br>Are you sure you want to exit?',
+    'bomb.continueBtn': '← Continue',
+    'bomb.exitConfirmBtn': 'Exit',
+
+    /* ── Mixed quiz ── */
+    'mixed.confirmBtn': 'Confirm ✓',
+
     'notif.langSwitched': 'Switched to English',
 
     /* ── Set card buttons ── */
@@ -851,6 +957,20 @@ function applyLang(lang) {
     const key = el.getAttribute('data-i18n-placeholder');
     const val = t(key);
     if (val) el.placeholder = val;
+  });
+
+  // Apply data-i18n-placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const val = t(key);
+    if (val) el.placeholder = val;
+  });
+
+  // Apply data-i18n-title
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const val = t(key);
+    if (val) el.title = val;
   });
 
   // Apply data-i18n-html (innerHTML for strings containing HTML tags)
