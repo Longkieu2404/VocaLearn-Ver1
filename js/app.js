@@ -871,7 +871,7 @@ function createSetCard(set) {
     const wrap = document.createElement('div');
     wrap.className = 'set-card-mobile-wrap set-color-' + (set.colorIndex || 0);
     const pctColor = pctMastered === 100 ? 'var(--green)' : pctMastered >= 50 ? 'var(--yellow)' : 'var(--text3)';
-    const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' ' + t('study.ok') + '</span>' : '';
+    const learningBadge = learning > 0 ? ' <span class="sc-mobile-badge">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : '';
     wrap.innerHTML = `
       <div class="set-card-mobile">
         <div class="sc-mobile-thumb" style="position:relative">${getSetTopicSVG(set)}${renderThumbChangeBtn(set.id)}</div>
@@ -885,7 +885,7 @@ function createSetCard(set) {
             </div>
           </div>
           <div class="sc-mobile-meta">
-            <span class="sc-mobile-meta-left">${mastered}/${total} ${t("study.easy")}${learningBadge}</span>
+            <span class="sc-mobile-meta-left">${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}${learningBadge}</span>
             <span class="sc-mobile-pct" style="color:${pctColor}">${pctMastered}%</span>
           </div>
         </div>
@@ -916,7 +916,7 @@ function createSetCard(set) {
         <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
       </div>
       <div class="set-card-meta">
-        <span>${mastered}/${total} ${t('study.easy')}${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' ' + t('study.ok') + '</span>' : ''}</span>
+        <span>${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}${learning > 0 ? ' <span style="color:var(--yellow)">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : ''}</span>
         <span style="color:var(--green)">${pctMastered}%</span>
       </div>
       <div class="set-card-actions">
