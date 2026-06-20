@@ -18,18 +18,18 @@
       <span class="login-logo-icon">⚡</span>
       <span class="login-logo-text">VocaLearn</span>
     </div>
-    <p class="login-tagline">Học từ vựng thông minh — mọi lúc, mọi nơi</p>
+    <p class="login-tagline" data-i18n="login.tagline">Học từ vựng thông minh — mọi lúc, mọi nơi</p>
 
-    <div class="login-divider"><span>Chào mừng bạn</span></div>
+    <div class="login-divider"><span data-i18n="login.welcome">Chào mừng bạn</span></div>
 
     <button class="btn-login-google" id="btnLoginGoogle">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-      Đăng nhập bằng Google
+      <span data-i18n="login.google">Đăng nhập bằng Google</span>
     </button>
 
-    <div class="login-or"><span>hoặc</span></div>
+    <div class="login-or"><span data-i18n="login.or">hoặc</span></div>
 
-    <button class="btn-login-offline" id="btnLoginOffline">
+    <button class="btn-login-offline" id="btnLoginOffline" data-i18n="login.offline">
       🖥️ Dùng offline (không đồng bộ)
     </button>
 
@@ -47,29 +47,29 @@
     <span class="logo-text">VocaLearn</span>
   </div>
   <ul class="sidebar-nav">
-    <li><a href="#" class="nav-item active" data-page="home"><span class="nav-icon">🏠</span><span>Trang chủ</span></a></li>
-    <li><a href="#" class="nav-item" data-page="sets"><span class="nav-icon">📚</span><span>Bộ thẻ của tôi</span></a></li>
-    <li><a href="#" class="nav-item" data-page="mixedquiz"><span class="nav-icon">🎯</span><span>Kiểm tra tổng hợp</span></a></li>
-    <li><a href="#" class="nav-item" data-page="scramble"><span class="nav-icon">🎮</span><span>Trò chơi</span></a></li>
-    <li><a href="#" class="nav-item" data-page="stats"><span class="nav-icon">📊</span><span>Thống kê</span></a></li>
-    <li><a href="#" class="nav-item" data-page="chat"><span class="nav-icon">💬</span><span>Trợ lý AI</span></a></li>
-    <li><a href="#" class="nav-item" data-page="trash"><span class="nav-icon">🗑️</span><span>Thùng rác</span><span class="trash-badge" id="trashBadge" style="display:none"></span></a></li>
+    <li><a href="#" class="nav-item active" data-page="home"><span class="nav-icon">🏠</span><span data-i18n="nav.home">Trang chủ</span></a></li>
+    <li><a href="#" class="nav-item" data-page="sets"><span class="nav-icon">📚</span><span data-i18n="nav.sets">Bộ thẻ của tôi</span></a></li>
+    <li><a href="#" class="nav-item" data-page="mixedquiz"><span class="nav-icon">🎯</span><span data-i18n="nav.mixedquiz">Kiểm tra tổng hợp</span></a></li>
+    <li><a href="#" class="nav-item" data-page="scramble"><span class="nav-icon">🎮</span><span data-i18n="nav.games">Trò chơi</span></a></li>
+    <li><a href="#" class="nav-item" data-page="stats"><span class="nav-icon">📊</span><span data-i18n="nav.stats">Thống kê</span></a></li>
+    <li><a href="#" class="nav-item" data-page="chat"><span class="nav-icon">💬</span><span data-i18n="nav.chat">Trợ lý AI</span></a></li>
+    <li><a href="#" class="nav-item" data-page="trash"><span class="nav-icon">🗑️</span><span data-i18n="nav.trash">Thùng rác</span><span class="trash-badge" id="trashBadge" style="display:none"></span></a></li>
   </ul>
   <div class="sidebar-footer">
     <!-- 1. Streak -->
     <div class="streak-badge">
       <span>🔥</span>
       <span class="streak-count" id="streakCount">0</span>
-      <span>ngày liên tiếp</span>
+      <span data-i18n="nav.streak">ngày liên tiếp</span>
     </div>
 
     <!-- 3. Firebase Auth -->
     <div class="auth-panel" id="authPanel">
       <div class="auth-login-state" id="authLoginState">
-        <p class="auth-login-hint">Đồng bộ dữ liệu trên mọi thiết bị</p>
+        <p class="auth-login-hint" data-i18n="nav.syncHint">Đồng bộ dữ liệu trên mọi thiết bị</p>
         <button class="btn-google-login" id="btnFirebaseLogin">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16" height="16" alt="">
-          Đăng nhập Google
+          <span data-i18n="nav.loginGoogle">Đăng nhập Google</span>
         </button>
       </div>
       <div class="auth-user-card" id="authUserCard" style="display:none" onclick="_settingsOpen()" role="button" title="Cài đặt tài khoản">
@@ -109,7 +109,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title" id="homeGreeting">Xin chào! 👋</h1>
-        <p class="page-subtitle">Hôm nay bạn muốn học gì?</p>
+        <p class="page-subtitle" data-i18n="home.subtitle">Hôm nay bạn muốn học gì?</p>
       </div>
 
     </div>
@@ -117,19 +117,19 @@
     <div class="quick-stats">
       <div class="stat-card accent-yellow">
         <div class="stat-num" id="totalCards">0</div>
-        <div class="stat-label">Tổng thẻ</div>
+        <div class="stat-label" data-i18n="home.totalCards">Tổng thẻ</div>
       </div>
       <div class="stat-card accent-green">
         <div class="stat-num" id="masteredCards">0</div>
-        <div class="stat-label">Đã thuộc</div>
+        <div class="stat-label" data-i18n="home.mastered">Đã thuộc</div>
       </div>
       <div class="stat-card accent-blue">
         <div class="stat-num" id="todayStudied">0</div>
-        <div class="stat-label">Học hôm nay</div>
+        <div class="stat-label" data-i18n="home.todayStudied">Học hôm nay</div>
       </div>
       <div class="stat-card accent-pink" style="cursor:default">
         <div class="stat-num" id="dueReview">0</div>
-        <div class="stat-label">Cần ôn tập hôm nay</div>
+        <div class="stat-label" data-i18n="home.dueReview">Cần ôn tập hôm nay</div>
         <div class="stat-hint" id="dueHint"></div>
       </div>
     </div>
@@ -139,17 +139,17 @@
       <div class="review-banner-left">
         <div class="review-banner-icon">⏰</div>
         <div>
-          <div class="review-banner-title">Đã đến lúc ôn tập!</div>
-          <div class="review-banner-sub" id="reviewBannerSub">Bạn có thẻ cần ôn để không bị quên.</div>
+          <div class="review-banner-title" data-i18n="home.reviewBannerTitle">Đã đến lúc ôn tập!</div>
+          <div class="review-banner-sub" id="reviewBannerSub" data-i18n="home.reviewBannerSub">Bạn có thẻ cần ôn để không bị quên.</div>
         </div>
       </div>
-      <button class="btn-review-now" id="btnReviewNow">Ôn tập ngay →</button>
+      <button class="btn-review-now" id="btnReviewNow" data-i18n="home.reviewNow">Ôn tập ngay →</button>
     </div>
 
-    <div class="section-title">Bộ thẻ mẫu — Tiếng Anh lớp 6</div>
+    <div class="section-title" data-i18n="home.sampleSets">Bộ thẻ mẫu — Tiếng Anh lớp 6</div>
     <div class="sets-grid" id="sampleSets"></div>
 
-    <div class="section-title" style="margin-top:2rem">Bộ thẻ của tôi</div>
+    <div class="section-title" style="margin-top:2rem" data-i18n="home.mySets">Bộ thẻ của tôi</div>
     <div class="sets-grid" id="mySetsHome"></div>
 
     <button class="fab" id="fabCreate" title="Tạo bộ thẻ mới">+</button>
@@ -196,12 +196,12 @@
   <!-- PAGE: MY SETS -->
   <div class="page" id="page-sets">
     <div class="page-header">
-      <h1 class="page-title">Bộ thẻ của tôi 📚</h1>
+      <h1 class="page-title" data-i18n="sets.title">Bộ thẻ của tôi 📚</h1>
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-        <button class="btn-ghost btn-sm" id="btnImport" title="Nhập dữ liệu">📥 Nhập</button>
-        <button class="btn-ghost btn-sm" id="btnExport" title="Xuất dữ liệu">📤 Xuất</button>
-        <button class="btn-ai" id="btnCreateAI">✨ Tạo bằng AI</button>
-        <button class="btn-primary" id="btnCreateSet">+ Tạo thủ công</button>
+        <button class="btn-ghost btn-sm" id="btnImport" title="Nhập dữ liệu" data-i18n="sets.import">📥 Nhập</button>
+        <button class="btn-ghost btn-sm" id="btnExport" title="Xuất dữ liệu" data-i18n="sets.export">📤 Xuất</button>
+        <button class="btn-ai" id="btnCreateAI" data-i18n="sets.createAI">✨ Tạo bằng AI</button>
+        <button class="btn-primary" id="btnCreateSet" data-i18n="sets.createManual">+ Tạo thủ công</button>
       </div>
     </div>
     <input type="file" id="importFileInput" accept=".json" style="display:none">
@@ -216,15 +216,15 @@
   <!-- PAGE: STUDY -->
   <div class="page" id="page-study">
     <div class="page-header">
-      <h1 class="page-title">Học thẻ 🎴</h1>
+      <h1 class="page-title" data-i18n="study.title">Học thẻ 🎴</h1>
     </div>
     <div id="studySelectSet">
-      <p class="page-subtitle">Chọn bộ thẻ để bắt đầu:</p>
+      <p class="page-subtitle" data-i18n="study.selectSubtitle">Chọn bộ thẻ để bắt đầu:</p>
       <div class="sets-grid" id="studySets"></div>
     </div>
     <div id="studySession" style="display:none">
       <div class="study-header">
-        <button class="btn-ghost" id="btnExitStudy">← Thoát</button>
+        <button class="btn-ghost" id="btnExitStudy" data-i18n="study.exit">← Thoát</button>
         <div class="study-progress-wrap">
           <div class="study-progress-bar"><div class="study-progress-fill" id="studyProgressFill"></div></div>
           <span id="studyProgressText">0 / 0</span>
@@ -239,7 +239,7 @@
               <button class="speak-btn" id="speakFront" title="Nghe phát âm" onclick="event.stopPropagation();speakWord(document.getElementById('cardFrontWord').textContent)">🔊</button>
               <div class="card-word" id="cardFrontWord"></div>
               <div class="card-phonetic" id="cardPhonetic"></div>
-              <div class="flip-hint">Nhấn để lật thẻ ↻</div>
+              <div class="flip-hint" data-i18n="study.flipHint">Nhấn để lật thẻ ↻</div>
             </div>
             <div class="flashcard-back">
               <div class="card-tag back-tag">VI</div>
@@ -250,24 +250,24 @@
           </div>
         </div>
         <div class="rating-buttons" id="ratingBtns" style="display:none">
-          <button class="rate-btn rate-hard" onclick="rateCard(1)">😓 Khó<br><small>Ôn lại sớm</small></button>
-          <button class="rate-btn rate-ok" onclick="rateCard(3)">🤔 Được<br><small>2 ngày nữa</small></button>
-          <button class="rate-btn rate-easy" onclick="rateCard(5)">😊 Dễ<br><small>5 ngày nữa</small></button>
+          <button class="rate-btn rate-hard" onclick="rateCard(1)">😓 <span data-i18n="study.rateHard">Khó</span><br><small data-i18n="study.rateHardSub">Ôn lại sớm</small></button>
+          <button class="rate-btn rate-ok" onclick="rateCard(3)">🤔 <span data-i18n="study.rateOk">Được</span><br><small data-i18n="study.rateOkSub">2 ngày nữa</small></button>
+          <button class="rate-btn rate-easy" onclick="rateCard(5)">😊 <span data-i18n="study.rateEasy">Dễ</span><br><small data-i18n="study.rateEasySub">5 ngày nữa</small></button>
         </div>
         <div class="show-answer-wrap" id="showAnswerWrap">
-          <button class="btn-primary btn-large" id="btnShowAnswer">Xem đáp án</button>
+          <button class="btn-primary btn-large" id="btnShowAnswer" data-i18n="study.showAnswer">Xem đáp án</button>
         </div>
       </div>
       <div class="study-done" id="studyDone" style="display:none">
         <div class="done-icon">🎉</div>
-        <h2>Hoàn thành buổi học!</h2>
+        <h2 data-i18n="study.done">Hoàn thành buổi học!</h2>
         <div class="done-stats">
-          <div class="done-stat"><span id="doneEasy">0</span><small>Dễ</small></div>
-          <div class="done-stat"><span id="doneOk">0</span><small>Được</small></div>
-          <div class="done-stat"><span id="doneHard">0</span><small>Khó</small></div>
+          <div class="done-stat"><span id="doneEasy">0</span><small data-i18n="study.easy">Dễ</small></div>
+          <div class="done-stat"><span id="doneOk">0</span><small data-i18n="study.ok">Được</small></div>
+          <div class="done-stat"><span id="doneHard">0</span><small data-i18n="study.hard">Khó</small></div>
         </div>
-        <button class="btn-primary" id="btnStudyAgain">Học lại</button>
-        <button class="btn-ghost" onclick="exitStudy()">Về trang chủ</button>
+        <button class="btn-primary" id="btnStudyAgain" data-i18n="study.again">Học lại</button>
+        <button class="btn-ghost" onclick="exitStudy()" data-i18n="study.backHome">Về trang chủ</button>
       </div>
     </div>
   </div>
@@ -275,17 +275,17 @@
   <!-- PAGE: QUIZ -->
   <div class="page" id="page-quiz">
     <div class="page-header">
-      <h1 class="page-title">Kiểm tra 🧠</h1>
+      <h1 class="page-title" data-i18n="quiz.title">Kiểm tra 🧠</h1>
     </div>
     <div id="quizSelectSet">
-      <p class="page-subtitle">Chọn bộ thẻ để kiểm tra:</p>
+      <p class="page-subtitle" data-i18n="quiz.selectSubtitle">Chọn bộ thẻ để kiểm tra:</p>
       <div class="sets-grid" id="quizSets"></div>
     </div>
     <!-- Mode Selection Modal moved to top-level -->
 
     <div id="quizSession" style="display:none">
       <div class="study-header">
-        <button class="btn-ghost" id="btnExitQuiz">← Thoát</button>
+        <button class="btn-ghost" id="btnExitQuiz" data-i18n="quiz.exit">← Thoát</button>
         <div class="study-progress-wrap">
           <div class="study-progress-bar"><div class="study-progress-fill" id="quizProgressFill"></div></div>
           <span id="quizProgressText">0 / 0</span>
@@ -294,7 +294,7 @@
       </div>
       <div class="quiz-area">
         <div class="quiz-question">
-          <div class="quiz-q-label" id="quizQLabel">Từ tiếng Anh này nghĩa là gì?</div>
+          <div class="quiz-q-label" id="quizQLabel" data-i18n="quiz.qLabel">Từ tiếng Anh này nghĩa là gì?</div>
           <div class="quiz-q-word" id="quizWord"></div>
           <div class="quiz-q-phonetic" id="quizPhonetic"></div>
           <button class="speak-btn speak-btn-quiz" id="speakQuiz" title="Nghe phát âm" onclick="speakWord(document.getElementById('quizWord').textContent)">🔊 Nghe phát âm</button>
@@ -304,8 +304,8 @@
         <!-- Tự luận input -->
         <div id="quizEssayArea" style="display:none">
           <div class="essay-input-wrap">
-            <input type="text" id="quizEssayInput" class="essay-input" placeholder="Nhập câu trả lời của bạn..." autocomplete="off" autocorrect="off" spellcheck="false" />
-            <button class="btn-primary" id="btnSubmitEssay">Xác nhận ✓</button>
+            <input type="text" id="quizEssayInput" class="essay-input" placeholder="Nhập câu trả lời của bạn..." data-i18n-placeholder="quiz.essayPlaceholder" autocomplete="off" autocorrect="off" spellcheck="false" />
+            <button class="btn-primary" id="btnSubmitEssay" data-i18n="quiz.submit">Xác nhận ✓</button>
           </div>
         </div>
         <div class="quiz-feedback" id="quizFeedback" style="display:none"></div>
@@ -313,14 +313,14 @@
       </div>
       <div class="study-done" id="quizDone" style="display:none">
         <div class="done-icon" id="quizDoneIcon">🏆</div>
-        <h2>Kết quả kiểm tra</h2>
+        <h2 data-i18n="quiz.result">Kết quả kiểm tra</h2>
         <div class="quiz-result-score" id="quizResultScore"></div>
         <div class="done-stats">
-          <div class="done-stat correct-stat"><span id="quizCorrect">0</span><small>Đúng</small></div>
-          <div class="done-stat wrong-stat"><span id="quizWrong">0</span><small>Sai</small></div>
+          <div class="done-stat correct-stat"><span id="quizCorrect">0</span><small data-i18n="quiz.correct">Đúng</small></div>
+          <div class="done-stat wrong-stat"><span id="quizWrong">0</span><small data-i18n="quiz.wrong">Sai</small></div>
         </div>
-        <button class="btn-primary" id="btnQuizAgain">Làm lại</button>
-        <button class="btn-ghost" onclick="exitQuiz()">Về trang chủ</button>
+        <button class="btn-primary" id="btnQuizAgain" data-i18n="quiz.again">Làm lại</button>
+        <button class="btn-ghost" onclick="exitQuiz()" data-i18n="quiz.backHome">Về trang chủ</button>
       </div>
     </div>
   </div>
@@ -328,7 +328,7 @@
   <!-- PAGE: MIXED QUIZ -->
   <div class="page" id="page-mixedquiz">
     <div class="page-header">
-      <h1 class="page-title">Kiểm tra tổng hợp 🎯</h1>
+      <h1 class="page-title" data-i18n="mixedquiz.title">Kiểm tra tổng hợp 🎯</h1>
     </div>
     <div id="mixedQuizConfig">
       <p class="page-subtitle">Chọn các bộ thẻ muốn tổng hợp:</p>
@@ -1123,7 +1123,7 @@
   <!-- PAGE: STATS -->
   <div class="page" id="page-stats">
     <div class="page-header">
-      <h1 class="page-title">Thống kê 📊</h1>
+      <h1 class="page-title" data-i18n="stats.title">Thống kê 📊</h1>
     </div>
     <div class="stats-grid">
       <div class="stats-card stats-card-progress">
@@ -1158,8 +1158,8 @@
   <div class="page" id="page-chat">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Trợ lý AI 💬</h1>
-        <p class="page-subtitle">Hỏi về từ vựng, ngữ pháp, hoặc cách học tiếng Anh hiệu quả</p>
+        <h1 class="page-title" data-i18n="chat.title">Trợ lý AI 💬</h1>
+        <p class="page-subtitle" data-i18n="chat.subtitle">Hỏi về từ vựng, ngữ pháp, hoặc cách học tiếng Anh hiệu quả</p>
       </div>
       <div class="model-status-bar" id="modelStatusBar">
         <span class="model-status-label" id="modelStatusLabel">⏳ Chưa tải model</span>
@@ -1213,7 +1213,7 @@
   <div class="page" id="page-trash">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Thùng rác 🗑️</h1>
+        <h1 class="page-title" data-i18n="trash.title">Thùng rác 🗑️</h1>
         <p class="page-subtitle">Các bộ thẻ đã xóa — khôi phục hoặc xóa vĩnh viễn</p>
       </div>
       <button class="btn-ghost btn-sm" id="btnEmptyTrash" onclick="emptyTrash()" style="display:none;color:var(--accent)">🗑 Xóa tất cả</button>
@@ -1447,6 +1447,7 @@
   </div>
 </div>
 
+<script src="js/i18n.js?v=1"></script>
 <script src="data/sample-sets.js"></script>
 <script src="js/storage.js?v=2"></script>
 <script src="js/spaced-repetition.js?v=2"></script>
@@ -1465,7 +1466,7 @@
 
     <!-- Header -->
     <div class="settings-header">
-      <span class="settings-title">⚙️ Cài đặt</span>
+      <span class="settings-title" data-i18n="settings.title">⚙️ Cài đặt</span>
       <button class="settings-close-btn" onclick="_settingsClose(null)">✕</button>
     </div>
 
@@ -1474,20 +1475,20 @@
       <nav class="settings-nav">
         <button class="settings-nav-item active" data-tab="profile" onclick="_settingsTab(this,'profile')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          Hồ sơ
+          <span data-i18n="settings.profile">Hồ sơ</span>
         </button>
         <button class="settings-nav-item" data-tab="appearance" onclick="_settingsTab(this,'appearance')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-          Giao diện
+          <span data-i18n="settings.appearance">Giao diện</span>
         </button>
         <button class="settings-nav-item" data-tab="language" onclick="_settingsTab(this,'language')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          Ngôn ngữ
+          <span data-i18n="settings.language">Ngôn ngữ</span>
         </button>
         <div class="settings-nav-divider"></div>
         <button class="settings-nav-item settings-nav-danger" onclick="_settingsLogout()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Đăng xuất
+          <span data-i18n="settings.logout">Đăng xuất</span>
         </button>
       </nav>
 
@@ -1496,7 +1497,7 @@
 
         <!-- PROFILE TAB -->
         <div class="settings-tab-panel active" id="stab-profile">
-          <div class="settings-section-title">Hồ sơ</div>
+          <div class="settings-section-title" data-i18n="settings.profile">Hồ sơ</div>
 
           <!-- Avatar -->
           <div class="settings-avatar-row">
@@ -1505,73 +1506,88 @@
               <span id="settingsAvatarInitials" class="settings-avatar-initials"></span>
             </div>
             <div>
-              <div class="settings-field-label">Ảnh đại diện</div>
-              <div style="font-size:0.78rem;color:var(--text3);margin-top:2px">Lấy từ tài khoản Google</div>
+              <div class="settings-field-label" data-i18n="settings.avatar">Ảnh đại diện</div>
+              <div style="font-size:0.78rem;color:var(--text3);margin-top:2px" data-i18n="settings.avatarNote">Lấy từ tài khoản Google</div>
             </div>
           </div>
 
           <!-- Display name -->
           <div class="settings-field">
-            <label class="settings-field-label" for="settingsDisplayName">Tên hiển thị</label>
+            <label class="settings-field-label" for="settingsDisplayName" data-i18n="settings.displayName">Tên hiển thị</label>
             <div class="settings-field-row">
-              <input id="settingsDisplayName" class="settings-input" type="text" placeholder="Nhập tên của bạn..." maxlength="40" autocomplete="off"/>
-              <button class="settings-save-btn" onclick="_settingsSaveName()">Lưu</button>
+              <input id="settingsDisplayName" class="settings-input" type="text" placeholder="Nhập tên của bạn..." data-i18n-placeholder="settings.displayNamePlaceholder" maxlength="40" autocomplete="off"/>
+              <button class="settings-save-btn" onclick="_settingsSaveName()" data-i18n="settings.save">Lưu</button>
             </div>
           </div>
 
           <!-- Email (readonly) -->
           <div class="settings-field">
-            <label class="settings-field-label">Email</label>
+            <label class="settings-field-label" data-i18n="settings.email">Email</label>
             <div id="settingsEmail" class="settings-input settings-input-readonly"></div>
           </div>
         </div>
 
         <!-- APPEARANCE TAB -->
         <div class="settings-tab-panel" id="stab-appearance">
-          <div class="settings-section-title">Giao diện</div>
+          <div class="settings-section-title" data-i18n="settings.appearance">Giao diện</div>
 
-          <div class="settings-field-label" style="margin-bottom:0.75rem">Chế độ màu</div>
+          <div class="settings-field-label" style="margin-bottom:0.75rem" data-i18n="settings.colorMode">Chế độ màu</div>
           <div class="settings-theme-grid">
             <button class="settings-theme-opt" id="stheme-system" onclick="_settingsSetTheme('system')">
               <div class="settings-theme-preview settings-theme-system">
                 <div class="stp-left"></div><div class="stp-right"></div>
               </div>
-              <span>Hệ thống</span>
+              <span data-i18n="settings.themeSystem">Hệ thống</span>
             </button>
             <button class="settings-theme-opt" id="stheme-light" onclick="_settingsSetTheme('light')">
               <div class="settings-theme-preview settings-theme-light">
                 <div class="stp-circle"></div>
                 <div class="stp-lines"><div></div><div></div></div>
               </div>
-              <span>Sáng</span>
+              <span data-i18n="settings.themeLight">Sáng</span>
             </button>
             <button class="settings-theme-opt" id="stheme-dark" onclick="_settingsSetTheme('dark')">
               <div class="settings-theme-preview settings-theme-dark">
                 <div class="stp-circle"></div>
                 <div class="stp-lines"><div></div><div></div></div>
               </div>
-              <span>Tối</span>
+              <span data-i18n="settings.themeDark">Tối</span>
             </button>
           </div>
         </div>
 
         <!-- LANGUAGE TAB -->
         <div class="settings-tab-panel" id="stab-language">
-          <div class="settings-section-title">Ngôn ngữ giao diện</div>
-          <div class="settings-field-label" style="margin-bottom:0.75rem">Chọn ngôn ngữ hiển thị</div>
+          <div class="settings-section-title" data-i18n="settings.langTitle">Ngôn ngữ giao diện</div>
+          <div class="settings-field-label" style="margin-bottom:0.75rem" data-i18n="settings.langSubtitle">Chọn ngôn ngữ hiển thị</div>
           <div class="settings-lang-grid">
             <button class="settings-lang-opt" id="slang-vi" onclick="_settingsSetLang('vi')">
-              <span class="settings-lang-flag">🇻🇳</span>
+              <span class="settings-lang-flag">
+                <!-- Vietnam flag SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="28" height="19" style="border-radius:3px;display:block">
+                  <rect width="30" height="20" fill="#DA251D"/>
+                  <polygon points="15,3.5 16.76,8.9 22.4,8.9 17.82,12.1 19.58,17.5 15,14.3 10.42,17.5 12.18,12.1 7.6,8.9 13.24,8.9" fill="#FFFF00"/>
+                </svg>
+              </span>
               <span class="settings-lang-name">Tiếng Việt</span>
               <span class="settings-lang-check">✓</span>
             </button>
             <button class="settings-lang-opt" id="slang-en" onclick="_settingsSetLang('en')">
-              <span class="settings-lang-flag">🇬🇧</span>
+              <span class="settings-lang-flag">
+                <!-- UK flag SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" width="28" height="19" style="border-radius:3px;display:block">
+                  <rect width="60" height="30" fill="#012169"/>
+                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+                  <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/>
+                  <path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/>
+                  <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" stroke-width="6"/>
+                </svg>
+              </span>
               <span class="settings-lang-name">English</span>
               <span class="settings-lang-check">✓</span>
             </button>
           </div>
-          <div style="font-size:0.78rem;color:var(--text3);margin-top:1rem;line-height:1.6">
+          <div id="settingsLangNote" style="font-size:0.78rem;color:var(--text3);margin-top:1rem;line-height:1.6" data-i18n="settings.langNote">
             ⚠️ Tính năng đa ngôn ngữ đang phát triển. Hiện tại giao diện hiển thị tiếng Việt.
           </div>
         </div>

@@ -4656,10 +4656,14 @@ function _settingsOpen() {
   });
 
   // Sync lang active state
-  const curLang = localStorage.getItem(SETTINGS_LANG_KEY) || 'vi';
-  document.querySelectorAll('.settings-lang-opt').forEach(btn => {
-    btn.classList.toggle('active', btn.id === 'slang-' + curLang);
-  });
+  if (typeof applyLang === 'function') {
+    applyLang();
+  } else {
+    const curLang = localStorage.getItem(SETTINGS_LANG_KEY) || 'vi';
+    document.querySelectorAll('.settings-lang-opt').forEach(btn => {
+      btn.classList.toggle('active', btn.id === 'slang-' + curLang);
+    });
+  }
 
   // Reset to profile tab
   _settingsTab(document.querySelector('.settings-nav-item[data-tab="profile"]'), 'profile');
@@ -4721,10 +4725,9 @@ function _settingsSetTheme(theme) {
 
 function _settingsSetLang(lang) {
   localStorage.setItem(SETTINGS_LANG_KEY, lang);
-  document.querySelectorAll('.settings-lang-opt').forEach(btn => {
-    btn.classList.toggle('active', btn.id === 'slang-' + lang);
-  });
-  showNotif(lang === 'vi' ? 'Đã chuyển sang Tiếng Việt' : 'Switched to English', '🌐');
+  // Apply translations across the whole UI
+  if (typeof applyLang === 'function') applyLang(lang);
+  showNotif(lang === 'vi' ? 'Đã chuyển sang Tiếng Việt 🇻🇳' : 'Switched to English 🇬🇧', '🌐');
 }
 
 function _settingsLogout() {

@@ -5978,7 +5978,8 @@ body.game-fullscreen #hangSession .study-header {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
 }
-.settings-lang-flag { font-size: 1.4rem; }
+.settings-lang-flag { font-size: 1.4rem; display:flex; align-items:center; }
+.settings-lang-flag svg { box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 .settings-lang-name { font-size: 0.9rem; font-weight: 600; color: var(--text); flex: 1; text-align:left; }
 .settings-lang-check {
   color: var(--accent);
