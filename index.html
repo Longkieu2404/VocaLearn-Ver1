@@ -158,7 +158,7 @@
   <!-- PAGE: REVIEW SESSION -->
   <div class="page" id="page-review">
     <div class="study-header">
-      <button class="btn-ghost" id="btnExitReview">← Thoát</button>
+      <button class="btn-ghost" id="btnExitReview" data-i18n="review.exitBtn">← Thoát</button>
       <div class="study-progress-wrap">
         <div class="study-progress-bar"><div class="study-progress-fill" id="reviewProgressFill"></div></div>
         <span id="reviewProgressText">0 / 0</span>
@@ -359,7 +359,7 @@
     </div>
     <div id="mixedQuizSession" style="display:none">
       <div class="study-header">
-        <button class="btn-ghost" id="btnExitMixedQuiz">← Thoát</button>
+        <button class="btn-ghost" id="btnExitMixedQuiz" data-i18n="quiz.exitMixed">← Thoát</button>
         <div class="study-progress-wrap">
           <div class="study-progress-bar"><div class="study-progress-fill" id="mixedProgressFill"></div></div>
           <span id="mixedProgressText">0 / 0</span>
@@ -531,8 +531,8 @@
             <div class="scramble-mode-btns">
               <button class="scramble-mode-btn active" id="scrModeRelax" onclick="selectScrambleMode('relax')">
                 <span>🌿</span>
-                <span class="smode-label">Thư giãn</span>
-                <span class="smode-desc">Không giới hạn thời gian</span>
+                <span class="smode-label" data-i18n="scramble.relaxLabel">Thư giãn</span>
+                <span class="smode-desc" data-i18n="scramble.relaxDesc">Không giới hạn thời gian</span>
               </button>
               <button class="scramble-mode-btn" id="scrModeChallenge" onclick="selectScrambleMode('challenge')">
                 <span>⚡</span>
@@ -561,7 +561,7 @@
     <!-- GAME SESSION -->
     <div id="scrambleSession" style="display:none">
       <div class="study-header">
-        <button class="btn-ghost" id="btnExitScramble">← Thoát</button>
+        <button class="btn-ghost" id="btnExitScramble" data-i18n="scramble.exitBtn">← Thoát</button>
         <div class="study-progress-wrap">
           <div class="study-progress-bar"><div class="study-progress-fill" id="scrambleProgressFill"></div></div>
           <span id="scrambleProgressText">0 / 0</span>
@@ -661,7 +661,7 @@
 
       <!-- Header: exit + timer + score -->
       <div class="study-header">
-        <button class="btn-ghost" id="btnExitRace">← Thoát</button>
+        <button class="btn-ghost" id="btnExitRace" data-i18n="race.exitBtn">← Thoát</button>
         <div id="raceTimerWrap" style="flex:1;display:flex;align-items:center;gap:0.75rem;margin:0 1rem;">
           <div class="race-timer-bar-track">
             <div class="race-timer-bar" id="raceTimerBar"></div>
@@ -807,9 +807,9 @@
           <div class="det-setting-block">
             <div class="det-setting-label">⚡ Độ khó gợi ý</div>
             <div class="det-btn-group">
-              <button class="det-option-btn det-diff-btn" data-diff="easy" onclick="_detSelectDiff('easy')">🌿<span>Dễ</span></button>
-              <button class="det-option-btn det-diff-btn active" data-diff="normal" onclick="_detSelectDiff('normal')">⚡<span>Thường</span></button>
-              <button class="det-option-btn det-diff-btn" data-diff="hard" onclick="_detSelectDiff('hard')">🔥<span>Khó</span></button>
+              <button class="det-option-btn det-diff-btn" data-diff="easy" onclick="_detSelectDiff('easy')">🌿<span data-i18n="det.diffEasy">Dễ</span></button>
+              <button class="det-option-btn det-diff-btn active" data-diff="normal" onclick="_detSelectDiff('normal')">⚡<span data-i18n="det.diffNormal">Thường</span></button>
+              <button class="det-option-btn det-diff-btn" data-diff="hard" onclick="_detSelectDiff('hard')">🔥<span data-i18n="det.diffHard">Khó</span></button>
             </div>
           </div>
 
@@ -817,9 +817,9 @@
           <div class="det-setting-block" style="grid-column:1/-1">
             <div class="det-setting-label">🌐 Ngôn ngữ gợi ý</div>
             <div class="det-btn-group">
-              <button class="det-option-btn det-lang-btn active" data-lang="vi" onclick="_detSelectLang('vi')">🇻🇳<span>Tiếng Việt</span></button>
+              <button class="det-option-btn det-lang-btn active" data-lang="vi" onclick="_detSelectLang('vi')">🇻🇳<span data-i18n="det.langVI">Tiếng Việt</span></button>
               <button class="det-option-btn det-lang-btn" data-lang="en" onclick="_detSelectLang('en')">🇬🇧<span>English</span></button>
-              <button class="det-option-btn det-lang-btn" data-lang="bilingual" onclick="_detSelectLang('bilingual')">🌏<span>Song ngữ</span></button>
+              <button class="det-option-btn det-lang-btn" data-lang="bilingual" onclick="_detSelectLang('bilingual')">🌏<span data-i18n="det.langBilingual">Song ngữ</span></button>
             </div>
           </div>
         </div>
@@ -836,7 +836,7 @@
     <div id="detSession" style="display:none">
       <!-- Top bar -->
       <div class="det-session-topbar">
-        <button class="btn-ghost det-exit-btn" onclick="_detBackToHub()">← Thoát</button>
+        <button class="btn-ghost det-exit-btn" onclick="_detBackToHub()" data-i18n="det.exitBtn">← Thoát</button>
         <div class="det-progress-wrap">
           <div class="det-progress-track"><div class="det-progress-bar" id="detProgressFill" style="width:0%"></div></div>
           <span id="detProgressText" class="det-progress-text">0 / 0</span>
@@ -869,15 +869,15 @@
 
           <!-- Answer row -->
           <div id="detAnswerRow" class="det-answer-row">
-            <input type="text" id="detAnswerInput" class="det-answer-input" placeholder="Nhập từ tiếng Anh bạn đoán..."
+            <input type="text" id="detAnswerInput" class="det-answer-input" placeholder="Nhập từ tiếng Anh bạn đoán..." data-i18n-placeholder="det.answerPlaceholder"
               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-            <button class="det-submit-btn" id="detBtnSubmit" onclick="_detSubmitAnswer()" disabled>✔ Trả lời</button>
+            <button class="det-submit-btn" id="detBtnSubmit" onclick="_detSubmitAnswer()" disabled data-i18n="det.submitBtn">✔ Trả lời</button>
           </div>
 
           <!-- Action buttons -->
           <div id="detActionRow" class="det-action-row">
             <button class="det-hint-btn" id="detBtnNextHint" onclick="_detRevealHint()" data-i18n="game.nextHint">Gợi ý tiếp (−150đ)</button>
-            <button class="det-skip-btn" id="detBtnSkip" onclick="_detSkip()">⏭ Bỏ qua</button>
+            <button class="det-skip-btn" id="detBtnSkip" onclick="_detSkip()" data-i18n="det.skipBtn">⏭ Bỏ qua</button>
           </div>
 
           <!-- Next card -->
@@ -918,7 +918,7 @@
     <!-- WORD HANGMAN: SESSION -->
     <div id="hangSession" style="display:none">
       <div class="study-header">
-        <button class="btn-ghost" id="btnExitHangman">← Thoát</button>
+        <button class="btn-ghost" id="btnExitHangman" data-i18n="hangman.exitBtn">← Thoát</button>
         <div class="det-progress-wrap" style="flex:1;margin:0 1rem;">
           <div class="det-progress-track" style="flex:1"><div class="det-progress-bar" id="hangProgressFill" style="width:0%"></div></div>
           <span id="hangProgressText" class="det-progress-text">Từ 1 / 0</span>
@@ -962,7 +962,7 @@
         <div class="hang-action-row">
           <button class="hang-hint-btn hang-hint-reveal-btn" id="hangBtnHintReveal" title="Mở 1 ô chữ (−25đ)">🔓 Mở ô chữ (−25đ)</button>
           <button class="det-hint-btn" id="hangBtnAIHint">🤖 Gợi ý AI (−30đ)</button>
-          <button class="det-skip-btn" id="hangBtnSkip">⏭ Bỏ qua</button>
+          <button class="det-skip-btn" id="hangBtnSkip" data-i18n="hangman.skipBtn">⏭ Bỏ qua</button>
           <button class="det-next-btn" id="hangBtnNext" style="display:none">Từ tiếp theo →</button>
         </div>
       </div>
@@ -976,7 +976,7 @@
       <div id="hangDoneHighScore" style="font-size:0.9rem;margin-bottom:1rem"></div>
       <div class="done-stats">
         <div class="done-stat correct-stat"><span id="hangDoneCorrect">0</span><small>Đoán đúng</small></div>
-        <div class="done-stat wrong-stat"><span id="hangDoneWrong">0</span><small>Thua/Bỏ qua</small></div>
+        <div class="done-stat wrong-stat"><span id="hangDoneWrong">0</span><small data-i18n="hangman.loseSkip">Thua/Bỏ qua</small></div>
         <div class="done-stat"><span id="hangDoneAvgWrong">0</span><small data-i18n="game.wrongAvg">Sai TB/từ</small></div>
       </div>
       <div class="hang-results-list" id="hangResultsList"></div>
@@ -1042,7 +1042,7 @@
         <button class="det-start-btn" onclick="_bombStartGame()" data-i18n="game.startBomb">
           <span>💣</span> Bắt đầu!
         </button>
-        <button class="btn-ghost det-back-btn" onclick="_bombBackToHub()">← Trở về</button>
+        <button class="btn-ghost det-back-btn" onclick="_bombBackToHub()" data-i18n="bomb.backBtn">← Trở về</button>
 
       </div>
     </div>
@@ -1052,7 +1052,7 @@
 
       <!-- TOP BAR: Exit + Progress + Score/Streak -->
       <div class="bomb-topbar">
-        <button class="btn-ghost bomb-exit-btn" onclick="_bombConfirmExit()">← Thoát</button>
+        <button class="btn-ghost bomb-exit-btn" onclick="_bombConfirmExit()" data-i18n="bomb.exitBtn">← Thoát</button>
         <div class="bomb-progress-block">
           <div class="bomb-progress-track">
             <div class="bomb-progress-fill" id="bombProgressFill" style="width:0%"></div>
@@ -1179,7 +1179,7 @@
     <div class="chat-container">
       <!-- Lịch sử hội thoại -->
       <div class="chat-history-sidebar">
-        <button class="btn-new-chat" id="btnNewChat">✏️ Cuộc hội thoại mới</button>
+        <button class="btn-new-chat" id="btnNewChat" data-i18n="chat.newConversation">✏️ Cuộc hội thoại mới</button>
         <div class="chat-hist-label">Lịch sử</div>
         <div class="chat-hist-list" id="chatHistList"></div>
       </div>
@@ -1196,14 +1196,14 @@
             </svg>
           </button>
           <input type="file" id="chatFileInput" accept="image/*,.pdf,.doc,.docx,.txt" style="display:none" multiple>
-          <textarea class="chat-input" id="chatInput" placeholder="Nhập câu hỏi của bạn..." rows="1"></textarea>
+          <textarea class="chat-input" id="chatInput" placeholder="Nhập câu hỏi của bạn..." data-i18n-placeholder="chat.inputPlaceholder" rows="1"></textarea>
           <button class="chat-send-btn" id="chatSendBtn" title="Gửi">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
         </div>
         <div class="chat-attach-hint" id="chatAttachHint">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-          Hỗ trợ: Ảnh (JPG/PNG/WEBP), PDF, Word (.docx), TXT
+          <span data-i18n="chat.fileSupport">Hỗ trợ: Ảnh (JPG/PNG/WEBP), PDF, Word (.docx), TXT</span>
         </div>
       </div>
       </div>
@@ -1245,7 +1245,7 @@
         </div>
         <div class="thumb-upload-placeholder" id="thumbPreviewPlaceholder" onclick="openThumbUpload('')">
           <span class="thumb-upload-icon">🖼️</span>
-          <span class="thumb-upload-hint">Nhấn để tải ảnh bìa lên<br><small>(tuỳ chọn)</small></span>
+          <span class="thumb-upload-hint"><span data-i18n="modal.thumbHint">Nhấn để tải ảnh bìa lên</span><br><small data-i18n="modal.thumbOptional">(tuỳ chọn)</small></span>
         </div>
         <input type="file" id="thumbFileInput" accept="image/*" style="display:none" onchange="onThumbFileSelected(event, '')"/>
       </div>
@@ -1256,8 +1256,8 @@
         placeholder="hello | /həˈloʊ/ | xin chào | Hello! How are you?&#10;school | /skuːl/ | trường học | I go to school every day.&#10;book | /bʊk/ | quyển sách | I read a book."></textarea>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeCreateModal()">Hủy</button>
-      <button class="btn-primary" id="btnSaveSet">Lưu bộ thẻ</button>
+      <button class="btn-ghost" onclick="closeCreateModal()" data-i18n="modal.cancel">Hủy</button>
+      <button class="btn-primary" id="btnSaveSet" data-i18n="modal.saveSet">Lưu bộ thẻ</button>
     </div>
   </div>
 </div>
@@ -1293,14 +1293,14 @@
 <div class="modal-overlay" id="modalAICreate">
   <div class="modal modal-wide">
     <div class="modal-header">
-      <h2>✨ Tạo bộ thẻ bằng AI</h2>
+      <h2 data-i18n="ai.modalTitle">✨ Tạo bộ thẻ bằng AI</h2>
       <button class="modal-close" onclick="closeAIModal()">✕</button>
     </div>
     <div class="modal-body">
       <div class="ai-tabs">
-        <button class="ai-tab active" data-tab="text">📝 Nhập chủ đề</button>
-        <button class="ai-tab" data-tab="image">🖼️ Từ ảnh</button>
-        <button class="ai-tab" data-tab="file">📄 Từ file văn bản</button>
+        <button class="ai-tab active" data-tab="text" data-i18n="ai.tabText">📝 Nhập chủ đề</button>
+        <button class="ai-tab" data-tab="image" data-i18n="ai.tabImage">🖼️ Từ ảnh</button>
+        <button class="ai-tab" data-tab="file" data-i18n="ai.tabFile">📄 Từ file văn bản</button>
       </div>
 
       <!-- API Key -->
@@ -1336,7 +1336,7 @@
         <div class="ai-upload-zone" id="imageUploadZone">
           <div class="upload-icon">🖼️</div>
           <p>Kéo thả ảnh vào đây hoặc <span class="upload-link">nhấn để chọn</span></p>
-          <p class="upload-hint">Hỗ trợ: JPG, PNG, WEBP (tối đa 5MB)</p>
+          <p class="upload-hint" data-i18n="ai.imageSupport">Hỗ trợ: JPG, PNG, WEBP (tối đa 5MB)</p>
           <input type="file" id="imageFileInput" accept="image/*" style="display:none">
         </div>
         <div class="ai-preview-img" id="imagePreview" style="display:none">
@@ -1351,7 +1351,7 @@
         <div class="ai-upload-zone" id="fileUploadZone">
           <div class="upload-icon">📄</div>
           <p>Kéo thả file vào đây hoặc <span class="upload-link">nhấn để chọn</span></p>
-          <p class="upload-hint">Hỗ trợ: TXT (tối đa 2MB)</p>
+          <p class="upload-hint" data-i18n="ai.fileSupport">Hỗ trợ: TXT (tối đa 2MB)</p>
           <input type="file" id="textFileInput" accept=".txt" style="display:none">
         </div>
         <div class="ai-file-info" id="fileInfo" style="display:none">
@@ -1389,9 +1389,9 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeAIModal()">Hủy</button>
-      <button class="btn-ai" id="btnGenerateAI">✨ Tạo bằng AI</button>
-      <button class="btn-primary" id="btnSaveAISet" style="display:none">💾 Lưu bộ thẻ</button>
+      <button class="btn-ghost" onclick="closeAIModal()" data-i18n="ai.cancelBtn">Hủy</button>
+      <button class="btn-ai" id="btnGenerateAI" data-i18n="ai.generateBtn">✨ Tạo bằng AI</button>
+      <button class="btn-primary" id="btnSaveAISet" style="display:none" data-i18n="ai.saveBtn">💾 Lưu bộ thẻ</button>
     </div>
   </div>
 </div>

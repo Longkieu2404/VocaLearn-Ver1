@@ -149,7 +149,7 @@ function startDetectiveFromHub() {
   });
 
   if (pool.length < 4) {
-    showNotif('Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
+    showNotif(getLang()==='en' ? 'You need at least 4 words to play! Study more vocabulary 📚' : 'Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
     return;
   }
 
@@ -158,14 +158,14 @@ function startDetectiveFromHub() {
   [5, 8, 10, 15].forEach(n => {
     if (n <= pool.length) {
       const o = document.createElement('option');
-      o.value = n; o.textContent = `${n} từ`;
+      o.value = n; o.textContent = `${n} ` + (getLang()==='en' ? 'words' : 'từ');
       if (n === 10) o.selected = true;
       countSel.appendChild(o);
     }
   });
 
   document.getElementById('detConfigInfo').textContent =
-    `Word Detective — ${pool.length} từ trong pool`;
+    (getLang()==='en' ? `Word Detective — ${pool.length} words in pool` : `Word Detective — ${pool.length} từ trong pool`);
 
   _detShowSection('config');
   document.body.classList.add('game-fullscreen');
@@ -202,12 +202,12 @@ async function _detLoadCard() {
   // Progress — show current card position (detIndex+1 out of total)
   const pct = ((detIndex + 1) / detCards.length) * 100;
   document.getElementById('detProgressFill').style.width = pct + '%';
-  document.getElementById('detProgressText').textContent = `Từ ${detIndex + 1} / ${detCards.length}`;
+  document.getElementById('detProgressText').textContent = getLang()==='en' ? `Word ${detIndex + 1} / ${detCards.length}` : `Từ ${detIndex + 1} / ${detCards.length}`;
   document.getElementById('detScoreBadge').innerHTML = `🏅 <span id="detScore">${detTotalScore}</span>`;
   document.getElementById('detHintsWrap').innerHTML = '';
   document.getElementById('detAnswerInput').value = '';
   document.getElementById('detAnswerInput').disabled = false;
-  document.getElementById('detAnswerInput').placeholder = 'AI đang chuẩn bị gợi ý...';
+  document.getElementById('detAnswerInput').placeholder = getLang()==='en' ? 'AI is preparing hints...' : 'AI đang chuẩn bị gợi ý...';
   document.getElementById('detBtnSubmit').disabled = true;
   document.getElementById('detBtnNextHint').disabled = true;
   document.getElementById('detBtnNextHint').textContent = 'Gợi ý tiếp (−150đ)';
@@ -342,14 +342,14 @@ function _detRevealHint() {
 
   if (detHintsUsed >= detHints.length) {
     document.getElementById('detBtnNextHint').disabled = true;
-    document.getElementById('detBtnNextHint').textContent = 'Hết gợi ý';
+    document.getElementById('detBtnNextHint').textContent = getLang()==='en' ? 'No more hints' : 'Hết gợi ý';
   } else {
     const nextPts = DET_SCORES[detHintsUsed - 1] - DET_SCORES[detHintsUsed];
     document.getElementById('detBtnNextHint').textContent = `Gợi ý tiếp (−${nextPts}đ)`;
   }
 
   document.getElementById('detCurrentScore').textContent =
-    `Điểm nếu đúng ngay bây giờ: ${DET_SCORES[detHintsUsed - 1]}đ`;
+    (getLang()==='en' ? `Score if correct now: ${DET_SCORES[detHintsUsed - 1]} pts` : `Điểm nếu đúng ngay bây giờ: ${DET_SCORES[detHintsUsed - 1]}đ`);
 }
 
 // ---- SUBMIT ----
@@ -376,8 +376,8 @@ function _detSubmitAnswer() {
   fb.style.display = '';
   fb.className = 'det-feedback ' + (correct ? 'det-feedback-correct' : 'det-feedback-wrong');
   fb.innerHTML = correct
-    ? `<span class="det-fb-icon">✅</span><div><strong>Đúng rồi!</strong> +${pts} điểm<br><span class="det-fb-word">${card.term||card.word}</span> — ${card.meaning||card.definition||''}</div>`
-    : `<span class="det-fb-icon">❌</span><div><strong>Sai!</strong> Đáp án: <span class="det-fb-word">${card.term||card.word}</span><br>${card.meaning||card.definition||''}</div>`;
+    ? `<span class="det-fb-icon">✅</span><div><strong>${getLang()==='en'?'Correct!':'Đúng rồi!'}</strong> +${pts} ${getLang()==='en'?'pts':'điểm'}<br><span class="det-fb-word">${card.term||card.word}</span> — ${card.meaning||card.definition||''}</div>`
+    : `<span class="det-fb-icon">❌</span><div><strong>${getLang()==='en'?'Wrong!':'Sai!'}</strong> ${getLang()==='en'?'Answer:':'Đáp án:'} <span class="det-fb-word">${card.term||card.word}</span><br>${card.meaning||card.definition||''}</div>`;
 
   if (typeof AudioFX !== 'undefined') correct ? AudioFX.correct() : AudioFX.wrong();
 
@@ -409,7 +409,7 @@ function _detSkip() {
   const fb = document.getElementById('detFeedback');
   fb.style.display = '';
   fb.className = 'det-feedback det-feedback-wrong';
-  fb.innerHTML = `<span class="det-fb-icon">⏭️</span><div><strong>Bỏ qua!</strong> Đáp án: <span class="det-fb-word">${card.term||card.word}</span><br>${card.meaning||card.definition||''}</div>`;
+  fb.innerHTML = `<span class="det-fb-icon">⏭️</span><div><strong>${getLang()==='en'?'Skipped!':'Bỏ qua!'}</strong> ${getLang()==='en'?'Answer:':'Đáp án:'} <span class="det-fb-word">${card.term||card.word}</span><br>${card.meaning||card.definition||''}</div>`;
 
   // Hide input row and action row, show Next
   document.getElementById('detAnswerRow').style.display  = 'none';
@@ -448,13 +448,13 @@ function _detFinish() {
   // Determine result tier
   let resultMsg, resultIcon;
   if (rate >= 0.8) {
-    resultMsg = '🎉 Xuất sắc! Bạn là thám tử đỉnh!';
+    resultMsg = getLang()==='en' ? '🎉 Excellent! You are a top detective!' : '🎉 Xuất sắc! Bạn là thám tử đỉnh!';
     resultIcon = '🏆';
   } else if (rate >= 0.5) {
-    resultMsg = '👍 Tốt lắm! Tiếp tục luyện tập nhé!';
+    resultMsg = getLang()==='en' ? '👍 Well done! Keep practicing!' : '👍 Tốt lắm! Tiếp tục luyện tập nhé!';
     resultIcon = '🥈';
   } else {
-    resultMsg = '💪 Cố lên! Học thêm để đoán nhanh hơn!';
+    resultMsg = getLang()==='en' ? '💪 Keep going! Study more to guess faster!' : '💪 Cố lên! Học thêm để đoán nhanh hơn!';
     resultIcon = '🌱';
   }
 
@@ -462,24 +462,24 @@ function _detFinish() {
   doneEl.innerHTML = `
     <div class="det-done-wrap">
       <div style="font-size:3.5rem;margin-bottom:0.25rem">${resultIcon}</div>
-      <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem">Kết quả Word Detective</div>
+      <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem">${getLang()==='en'?'Word Detective Results':'Kết quả Word Detective'}</div>
       <div style="font-size:0.9rem;color:var(--text3);margin-bottom:1.25rem">${resultMsg}</div>
       <div class="det-done-stats">
         <div class="det-done-stat">
           <div class="det-done-stat-val" style="color:var(--accent2)">${detTotalScore}</div>
-          <div class="det-done-stat-label">Tổng điểm</div>
+          <div class="det-done-stat-label">${getLang()==='en'?'Total score':'Tổng điểm'}</div>
         </div>
         <div class="det-done-stat">
           <div class="det-done-stat-val" style="color:#60a5fa">${hi}</div>
-          <div class="det-done-stat-label">Cao nhất</div>
+          <div class="det-done-stat-label">${getLang()==='en'?'Record':'Cao nhất'}</div>
         </div>
         <div class="det-done-stat">
           <div class="det-done-stat-val">${correctCount}/${detResults.length}</div>
-          <div class="det-done-stat-label">Đoán đúng</div>
+          <div class="det-done-stat-label">${getLang()==='en'?'Correct':'Đoán đúng'}</div>
         </div>
         <div class="det-done-stat">
           <div class="det-done-stat-val">${avgHints}</div>
-          <div class="det-done-stat-label">Gợi ý TB/từ</div>
+          <div class="det-done-stat-label">${getLang()==='en'?'Avg hints/word':'Gợi ý TB/từ'}</div>
         </div>
       </div>
       <div class="det-done-results">
@@ -487,13 +487,13 @@ function _detFinish() {
           <div class="det-done-row ${r.correct?'det-done-correct':'det-done-wrong'}">
             <span class="det-done-row-icon">${r.correct?'✅':'❌'}</span>
             <span class="det-done-row-word">${r.word}</span>
-            <span class="det-done-row-hints">${r.hintsUsed} gợi ý</span>
+            <span class="det-done-row-hints">${r.hintsUsed} ${getLang()==='en'?'hints':'gợi ý'}</span>
             <span class="det-done-row-score">+${r.score}đ</span>
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem">
-        <button class="det-start-btn" style="width:auto;padding:0.75rem 1.75rem" onclick="startDetectiveFromHub()">🔄 Chơi lại</button>
-        <button class="btn-ghost" style="padding:0.75rem 1.25rem" onclick="_detBackToHub()">← Trở về</button>
+        <button class="det-start-btn" style="width:auto;padding:0.75rem 1.75rem" onclick="startDetectiveFromHub()">${getLang()==='en'?'🔄 Play again':'🔄 Chơi lại'}</button>
+        <button class="btn-ghost" style="padding:0.75rem 1.25rem" onclick="_detBackToHub()">${getLang()==='en'?'← Back':'← Trở về'}</button>
       </div>
     </div>`;
 

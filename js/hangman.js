@@ -57,7 +57,7 @@ function startHangmanFromHub() {
   });
 
   if (pool.length < 4) {
-    showNotif('Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
+    showNotif(getLang()==='en' ? 'You need at least 4 words to play! Study more vocabulary 📚' : 'Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
     return;
   }
 
@@ -66,7 +66,7 @@ function startHangmanFromHub() {
   [5, 8, 10, 15].forEach(n => {
     if (n <= pool.length) {
       const o = document.createElement('option');
-      o.value = n; o.textContent = `${n} từ`;
+      o.value = n; o.textContent = `${n} ` + (getLang()==='en' ? 'words' : 'từ');
       if (n === 8) o.selected = true;
       countSel.appendChild(o);
     }
@@ -76,7 +76,7 @@ function startHangmanFromHub() {
   countSel.appendChild(oAll);
 
   document.getElementById('hangConfigInfo').textContent =
-    `🎯 Word Hangman — ${pool.length} từ trong pool`;
+    getLang()==='en' ? `🎯 Word Hangman — ${pool.length} words in pool` : `🎯 Word Hangman — ${pool.length} từ trong pool`;
 
   _hangShowSection('config');
   document.body.classList.add('game-fullscreen');
@@ -128,7 +128,7 @@ function _hangLoadWord() {
 
   // Gợi ý ban đầu: AI tạo bằng tiếng Việt, hiện loading trong lúc chờ
   const meaningEl = document.getElementById('hangMeaning');
-  meaningEl.textContent = '✨ Đang tạo gợi ý...';
+  meaningEl.textContent = getLang()==='en' ? '✨ Generating hint...' : '✨ Đang tạo gợi ý...';
   meaningEl.classList.remove('hang-meaning-reveal');
   meaningEl.classList.add('hang-meaning-hint');
   document.getElementById('hangPhonetic').textContent = '';
@@ -177,7 +177,7 @@ function _hangRenderHintBudget() {
   bar.style.width = pct + '%';
   bar.className = 'hang-hint-budget-fill' +
     (pct > 50 ? ' budget-high' : pct > 20 ? ' budget-mid' : ' budget-low');
-  label.textContent = `Quỹ gợi ý: ${hangHintBudget}đ`;
+  label.textContent = getLang()==='en' ? `Hint budget: ${hangHintBudget}pts` : `Quỹ gợi ý: ${hangHintBudget}đ`;
 
   // Cập nhật trạng thái nút gợi ý
   const btnMeaning = document.getElementById('hangBtnHintMeaning');
@@ -201,7 +201,7 @@ function _hangRenderHintBudget() {
 function _hangHintRevealLetter() {
   if (hangRoundOver) return;
   if (hangHintBudget < HANG_HINT_REVEAL_COST) {
-    showNotif('Không đủ quỹ gợi ý! Hãy tiết kiệm điểm hơn nhé 💸', '⚠️');
+    showNotif(getLang()==='en' ? 'Not enough hint budget! Save your points 💸' : 'Không đủ quỹ gợi ý! Hãy tiết kiệm điểm hơn nhé 💸', '⚠️');
     return;
   }
 
@@ -210,7 +210,7 @@ function _hangHintRevealLetter() {
     hangWord.split('').filter(ch => ch !== ' ' && !hangGuessed.includes(ch))
   )];
   if (hiddenLetters.length === 0) {
-    showNotif('Tất cả ô chữ đã được mở rồi!', 'ℹ️');
+    showNotif(getLang()==='en' ? 'All letters already revealed!' : 'Tất cả ô chữ đã được mở rồi!', 'ℹ️');
     return;
   }
 
@@ -594,12 +594,12 @@ function _hangEndRound(won, skipped = false) {
   fb.style.display = '';
   if (won) {
     fb.className = 'hang-feedback hang-feedback-correct';
-    fb.innerHTML = `✅ <strong>Chính xác!</strong> +${wordScore} điểm<br><span class="hang-fb-meaning">${card.meaning || card.definition || ''}</span>`;
+    fb.innerHTML = `✅ <strong>${getLang()==='en'?'Correct!':'Chính xác!'}</strong> +${wordScore} ${getLang()==='en'?'pts':'điểm'}<br><span class="hang-fb-meaning">${card.meaning || card.definition || ''}</span>`;
     AudioFX.completedPass();
   } else {
     fb.className = 'hang-feedback hang-feedback-wrong';
     const label = skipped ? 'Đã bỏ qua!' : 'Hết lượt đoán!';
-    fb.innerHTML = `${skipped ? '⏭️' : '💀'} <strong>${label}</strong> Đáp án: <strong class="hang-fb-word">${hangWord.toUpperCase()}</strong><br><span class="hang-fb-meaning">${card.meaning || card.definition || ''}</span>`;
+    fb.innerHTML = `${skipped ? '⏭️' : '💀'} <strong>${label}</strong> ${getLang()==='en'?'Answer:':'Đáp án:'} <strong class="hang-fb-word">${hangWord.toUpperCase()}</strong><br><span class="hang-fb-meaning">${card.meaning || card.definition || ''}</span>`;
     AudioFX.completedFail();
   }
 
@@ -651,28 +651,28 @@ function _hangFinish() {
 
   let icon, title;
   if (gameOverByLoss) {
-    icon = '💀'; title = `Game Over! Bạn thua ở từ ${hangIndex + 1}/${hangCards.length}`;
+    icon = '💀'; title = getLang()==='en' ? `Game Over! You lost on word ${hangIndex + 1}/${hangCards.length}` : `Game Over! Bạn thua ở từ ${hangIndex + 1}/${hangCards.length}`;
   } else if (rate >= 0.8) {
-    icon = '🏆'; title = 'Xuất sắc! Bạn là cao thủ Hangman!';
+    icon = '🏆'; title = getLang()==='en' ? 'Excellent! You are a Hangman master!' : 'Xuất sắc! Bạn là cao thủ Hangman!';
   } else if (rate >= 0.5) {
-    icon = '👏'; title = 'Khá tốt! Tiếp tục luyện tập!';
+    icon = '👏'; title = getLang()==='en' ? 'Good job! Keep practicing!' : 'Khá tốt! Tiếp tục luyện tập!';
   } else {
-    icon = '📖'; title = 'Cần luyện thêm nhé!';
+    icon = '📖'; title = getLang()==='en' ? 'Needs more practice!' : 'Cần luyện thêm nhé!';
   }
 
   document.getElementById('hangDoneIcon').textContent = icon;
   document.getElementById('hangDoneTitle').textContent = title;
-  document.getElementById('hangDoneScore').textContent = hangTotalScore + ' điểm';
+  document.getElementById('hangDoneScore').textContent = hangTotalScore + (getLang()==='en' ? ' pts' : ' điểm');
   document.getElementById('hangDoneCorrect').textContent = hangRoundCorrect;
   document.getElementById('hangDoneWrong').textContent = hangRoundWrong;
   document.getElementById('hangDoneAvgWrong').textContent = avgWrong;
 
   const hsEl = document.getElementById('hangDoneHighScore');
   if (isNewHigh && hangTotalScore > 0) {
-    hsEl.textContent = '🎉 Kỷ lục mới: ' + hangTotalScore + ' điểm!';
+    hsEl.textContent = getLang()==='en' ? '🎉 New record: ' + hangTotalScore + ' pts!' : '🎉 Kỷ lục mới: ' + hangTotalScore + ' điểm!';
     hsEl.style.color = 'var(--accent2)';
   } else {
-    hsEl.textContent = 'Kỷ lục: ' + hi + ' điểm';
+    hsEl.textContent = getLang()==='en' ? 'Record: ' + hi + ' pts' : 'Kỷ lục: ' + hi + ' điểm';
     hsEl.style.color = 'var(--text2)';
   }
 

@@ -233,6 +233,78 @@ const I18N = {
     'hangman.scoring': '💀 Sai <b>6 lần</b> là thua &nbsp;|&nbsp; 💡 Quỹ gợi ý: <b>60đ/từ</b> (Mở ô −25đ • AI −30đ)',
 
     'settings.aiKeyPrompt': 'Nhập Gemini API Key để sử dụng trợ lý AI',
+/* ── Detective game ── */
+    'det.poolInfo': 'Word Detective — {n} từ trong pool',
+    'det.diffEasy': 'Dễ',
+    'det.diffNormal': 'Thường',
+    'det.diffHard': 'Khó',
+    'det.langVI': 'Tiếng Việt',
+    'det.langEN': 'English',
+    'det.langBilingual': 'Song ngữ',
+    'det.answerPlaceholder': 'Nhập từ tiếng Anh bạn đoán...',
+    'det.submitBtn': '✔ Trả lời',
+    'det.skipBtn': '⏭ Bỏ qua',
+    'det.exitBtn': '← Thoát',
+    'det.progressText': 'Từ {cur} / {total}',
+
+    /* ── Scramble game ── */
+    'scramble.poolInfo': '🧩 Word Scramble — {n} từ đang học & đã thuộc',
+    'scramble.relaxLabel': 'Thư giãn',
+    'scramble.relaxDesc': 'Không giới hạn thời gian',
+    'scramble.wordUnit': '{n} từ',
+    'scramble.exitBtn': '← Thoát',
+
+    /* ── Hangman game ── */
+    'hangman.poolInfo': '🎯 Word Hangman — {n} từ trong pool',
+    'hangman.wordUnit': '{n} từ',
+    'hangman.progressText': 'Từ {cur} / {total}',
+    'hangman.skipBtn': '⏭ Bỏ qua',
+    'hangman.exitBtn': '← Thoát',
+    'hangman.loseSkip': 'Thua/Bỏ qua',
+
+    /* ── Race game ── */
+    'race.exitBtn': '← Thoát',
+
+    /* ── Bomb game ── */
+    'bomb.exitBtn': '← Thoát',
+    'bomb.backBtn': '← Trở về',
+
+    /* ── Review / Quiz ── */
+    'review.exitBtn': '← Thoát',
+    'quiz.exitMixed': '← Thoát',
+    'quiz.questionLabel': 'Nghĩa tiếng Việt của từ này là gì?',
+    'mixed.questionLabel': 'Nghĩa tiếng Việt là gì?',
+    'mixed.questionLabel2': 'Nghĩa là gì?',
+
+    /* ── Chat page ── */
+    'chat.newConversation': '✏️ Cuộc hội thoại mới',
+    'chat.newConversationTitle': 'Cuộc hội thoại mới',
+    'chat.inputPlaceholder': 'Nhập câu hỏi của bạn...',
+    'chat.fileSupport': 'Hỗ trợ: Ảnh (JPG/PNG/WEBP), PDF, Word (.docx), TXT',
+    'chat.keySaved': '✅ Gemini API Key đã được lưu',
+    'chat.changeKey': 'Đổi key',
+
+    /* ── Create/Edit set modal ── */
+    'modal.cancel': 'Hủy',
+    'modal.saveSet': 'Lưu bộ thẻ',
+    'modal.thumbHint': 'Nhấn để tải ảnh bìa lên',
+    'modal.thumbOptional': '(tuỳ chọn)',
+    'modal.confirmCancel': 'Hủy',
+
+    /* ── AI modal ── */
+    'ai.modalTitle': '✨ Tạo bộ thẻ bằng AI',
+    'ai.tabText': '📝 Nhập chủ đề',
+    'ai.tabImage': '🖼️ Từ ảnh',
+    'ai.tabFile': '📄 Từ file văn bản',
+    'ai.imageSupport': 'Hỗ trợ: JPG, PNG, WEBP (tối đa 5MB)',
+    'ai.fileSupport': 'Hỗ trợ: TXT (tối đa 2MB)',
+    'ai.cancelBtn': 'Hủy',
+    'ai.generateBtn': '✨ Tạo bằng AI',
+    'ai.saveBtn': '💾 Lưu bộ thẻ',
+
+    /* ── Prompt/Confirm modal ── */
+    'promptModal.cancel': 'Hủy',
+
     'notif.langSwitched': 'Đã chuyển sang Tiếng Việt',
 
     /* ── Set card buttons ── */
@@ -560,6 +632,78 @@ const I18N = {
     'hangman.scoring': '💀 <b>6 wrong</b> and you lose &nbsp;|&nbsp; 💡 Hint budget: <b>60pts/word</b> (Reveal −25pts • AI −30pts)',
 
     'settings.aiKeyPrompt': 'Enter Gemini API Key to use the AI assistant',
+/* ── Detective game ── */
+    'det.poolInfo': 'Word Detective — {n} words in pool',
+    'det.diffEasy': 'Easy',
+    'det.diffNormal': 'Normal',
+    'det.diffHard': 'Hard',
+    'det.langVI': 'Vietnamese',
+    'det.langEN': 'English',
+    'det.langBilingual': 'Bilingual',
+    'det.answerPlaceholder': 'Type the English word...',
+    'det.submitBtn': '✔ Answer',
+    'det.skipBtn': '⏭ Skip',
+    'det.exitBtn': '← Exit',
+    'det.progressText': 'Word {cur} / {total}',
+
+    /* ── Scramble game ── */
+    'scramble.poolInfo': '🧩 Word Scramble — {n} words learning & mastered',
+    'scramble.relaxLabel': 'Relaxed',
+    'scramble.relaxDesc': 'No time limit',
+    'scramble.wordUnit': '{n} words',
+    'scramble.exitBtn': '← Exit',
+
+    /* ── Hangman game ── */
+    'hangman.poolInfo': '🎯 Word Hangman — {n} words in pool',
+    'hangman.wordUnit': '{n} words',
+    'hangman.progressText': 'Word {cur} / {total}',
+    'hangman.skipBtn': '⏭ Skip',
+    'hangman.exitBtn': '← Exit',
+    'hangman.loseSkip': 'Lost/Skipped',
+
+    /* ── Race game ── */
+    'race.exitBtn': '← Exit',
+
+    /* ── Bomb game ── */
+    'bomb.exitBtn': '← Exit',
+    'bomb.backBtn': '← Back',
+
+    /* ── Review / Quiz ── */
+    'review.exitBtn': '← Exit',
+    'quiz.exitMixed': '← Exit',
+    'quiz.questionLabel': 'What is the Vietnamese meaning of this word?',
+    'mixed.questionLabel': 'What is the Vietnamese meaning?',
+    'mixed.questionLabel2': 'What is the meaning?',
+
+    /* ── Chat page ── */
+    'chat.newConversation': '✏️ New conversation',
+    'chat.newConversationTitle': 'New conversation',
+    'chat.inputPlaceholder': 'Ask a question...',
+    'chat.fileSupport': 'Supports: Images (JPG/PNG/WEBP), PDF, Word (.docx), TXT',
+    'chat.keySaved': '✅ Gemini API Key saved',
+    'chat.changeKey': 'Change key',
+
+    /* ── Create/Edit set modal ── */
+    'modal.cancel': 'Cancel',
+    'modal.saveSet': 'Save set',
+    'modal.thumbHint': 'Click to upload cover image',
+    'modal.thumbOptional': '(optional)',
+    'modal.confirmCancel': 'Cancel',
+
+    /* ── AI modal ── */
+    'ai.modalTitle': '✨ Create set with AI',
+    'ai.tabText': '📝 Enter topic',
+    'ai.tabImage': '🖼️ From image',
+    'ai.tabFile': '📄 From text file',
+    'ai.imageSupport': 'Supports: JPG, PNG, WEBP (max 5MB)',
+    'ai.fileSupport': 'Supports: TXT (max 2MB)',
+    'ai.cancelBtn': 'Cancel',
+    'ai.generateBtn': '✨ Generate with AI',
+    'ai.saveBtn': '💾 Save set',
+
+    /* ── Prompt/Confirm modal ── */
+    'promptModal.cancel': 'Cancel',
+
     'notif.langSwitched': 'Switched to English',
 
     /* ── Set card buttons ── */

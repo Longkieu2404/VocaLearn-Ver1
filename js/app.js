@@ -481,7 +481,7 @@ function showNotif(msg, icon = '💬', buttons = [{ label: 'OK', primary: true }
 
 function showConfirm(msg, icon = '❓') {
   return showNotif(msg, icon, [
-    { label: 'Hủy', primary: false, value: false },
+    { label: t('modal.cancel'), primary: false, value: false },
     { label: 'Đồng ý', primary: true, value: true }
   ]);
 }
@@ -514,7 +514,7 @@ function showPromptModal(title, defaultValue = '', icon = '✏️', placeholder 
 
     const btnCancel = document.createElement('button');
     btnCancel.className = 'btn-ghost';
-    btnCancel.textContent = 'Hủy';
+    btnCancel.textContent = t('modal.cancel');
     btnCancel.onclick = () => finish(null);
 
     const btnOk = document.createElement('button');
@@ -1427,7 +1427,7 @@ function showQuizQuestion() {
     document.getElementById('btnSubmitEssay').style.display = '';
 
     if (quizEssayDirection === 'en2vi') {
-      document.getElementById('quizQLabel').textContent = 'Nghĩa tiếng Việt của từ này là gì?';
+      document.getElementById('quizQLabel').textContent = t('quiz.questionLabel');
       document.getElementById('quizWord').textContent = card.word;
       document.getElementById('quizPhonetic').textContent = card.phonetic || '';
       document.getElementById('speakQuiz').style.display = '';
@@ -2147,7 +2147,7 @@ function showMixedQuestion() {
 
     if (dir === 'en2vi') {
       document.getElementById('mixedSetLabel').innerHTML =
-        `<span style="color:${card._setColor}">● ${card._setName}</span> · Nghĩa tiếng Việt là gì?`;
+        `<span style="color:${card._setColor}">● ${card._setName}</span> · ${t('mixed.questionLabel')}`;
       document.getElementById('mixedWord').textContent = card.word;
       document.getElementById('mixedPhonetic').textContent = card.phonetic || '';
       speakBtn.style.display = '';
@@ -2175,7 +2175,7 @@ function showMixedQuestion() {
     essayArea.style.display = 'none';
     optionsEl.style.display = '';
     document.getElementById('mixedSetLabel').innerHTML =
-      `<span style="color:${card._setColor}">● ${card._setName}</span> · Nghĩa là gì?`;
+      `<span style="color:${card._setColor}">● ${card._setName}</span> · ${t('mixed.questionLabel2')}`;
     document.getElementById('mixedWord').textContent = card.word;
     document.getElementById('mixedPhonetic').textContent = card.phonetic || '';
     speakBtn.style.display = '';
@@ -3332,7 +3332,7 @@ const ChatSessions = {
   create() {
     const id = 'cs_' + Date.now();
     const list = this.getAll();
-    list.unshift({ id, title: 'Cuộc hội thoại mới', createdAt: new Date().toISOString(), messages: [] });
+    list.unshift({ id, title: t('chat.newConversationTitle'), createdAt: new Date().toISOString(), messages: [] });
     if (list.length > this.MAX) list.splice(this.MAX);
     this._save(list);
     return id;
@@ -3347,7 +3347,7 @@ const ChatSessions = {
     const idx = list.findIndex(s => s.id === id);
     if (idx === -1) return;
     const firstUser = messages.find(m => m.role === 'user');
-    if (firstUser && list[idx].title === 'Cuộc hội thoại mới') {
+    if (firstUser && (list[idx].title === 'Cuộc hội thoại mới' || list[idx].title === 'New conversation')) {
       const raw = firstUser.content.trim().replace(/\n/g, ' ');
       list[idx].title = raw.length > 42 ? raw.slice(0, 42) + '\u2026' : raw;
     }
@@ -3460,7 +3460,7 @@ function renderChatPage() {
   const savedKey = localStorage.getItem('vocalearn_gemini_key') || '';
   const bar = document.getElementById('chatApiKeyBar');
   if (savedKey) {
-    bar.innerHTML = '<span class="chat-apikey-icon">🔑</span><div class="chat-key-saved-badge">✅ Gemini API Key đã được lưu</div><button class="btn-ghost" id="chatApiKeyResetBtn" style="font-size:0.8rem;padding:0.3rem 0.6rem">Đổi key</button>';
+    bar.innerHTML = '<span class="chat-apikey-icon">🔑</span><div class="chat-key-saved-badge">' + t('chat.keySaved') + '</div><button class="btn-ghost" id="chatApiKeyResetBtn" style="font-size:0.8rem;padding:0.3rem 0.6rem">' + t('chat.changeKey') + '</button>';
     document.getElementById('chatApiKeyResetBtn').onclick = () => {
       localStorage.removeItem('vocalearn_gemini_key');
       if (window.FirebaseSync) FirebaseSync.triggerSave();
@@ -4006,7 +4006,7 @@ async function callChatAPI() {
       return '    - ' + c.word
         + (c.phonetic ? ' ' + c.phonetic : '')
         + ': ' + c.meaning
-        + (c.example ? ' | Ví dụ: ' + c.example : '')
+        + (c.example ? ' | ' + (getLang()==='en' ? 'Example: ' : 'Ví dụ: ') + c.example : '')
         + ' [' + status + ']';
     });
     if (cards.length > 0) {

@@ -57,7 +57,7 @@ function startScrambleFromHub() {
   });
 
   if (eligibleCards.length < 4) {
-    showNotif('Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
+    showNotif(getLang()==='en' ? 'You need at least 4 words to play! Study more vocabulary 📚' : 'Bạn cần học ít nhất 4 từ trước khi chơi! Hãy học thêm từ vựng nhé 📚', '⚠️');
     return;
   }
 
@@ -67,7 +67,7 @@ function startScrambleFromHub() {
 
   // Cập nhật UI config
   const count = eligibleCards.length;
-  document.getElementById('scrambleConfigSetName').textContent = `🧩 Word Scramble — ${count} từ đang học & đã thuộc`;
+  document.getElementById('scrambleConfigSetName').textContent = `🧩 Word Scramble — ${count} ` + (getLang()==='en' ? 'words learning & mastered' : 'từ đang học & đã thuộc');
 
   // Cập nhật options số từ
   const sel = document.getElementById('scrambleCount');
@@ -76,7 +76,7 @@ function startScrambleFromHub() {
   opts.forEach(n => {
     if (n <= count) {
       const o = document.createElement('option');
-      o.value = n; o.textContent = `${n} từ`;
+      o.value = n; o.textContent = `${n} ` + (getLang()==='en' ? 'words' : 'từ');
       if (n === 12) o.selected = true;
       sel.appendChild(o);
     }
@@ -110,7 +110,7 @@ function _scrStartGame() {
   if (countVal !== 'all') cards = cards.slice(0, parseInt(countVal));
 
   if (cards.length === 0) {
-    showNotif('Không có từ hợp lệ để chơi!', '⚠️');
+    showNotif(getLang()==='en' ? 'No valid words to play!' : 'Không có từ hợp lệ để chơi!', '⚠️');
     return;
   }
 
@@ -337,7 +337,7 @@ function scrambleUseHint() {
   scrHintsUsed++;
   scrScore = Math.max(0, scrScore - 5);
   document.getElementById('scrambleScore').textContent = scrScore;
-  document.getElementById('scrambleHintInfo').textContent = `+${scrHintCount} gợi ý`;
+  document.getElementById('scrambleHintInfo').textContent = `+${scrHintCount} ` + (getLang()==='en' ? 'hints' : 'gợi ý');
 
   // Vô hiệu hóa nút gợi ý nếu tất cả đã điền
   const allLocked = scrAnswer.every((s, i) => scrWord[i] === ' ' || s.locked);
@@ -385,7 +385,7 @@ function scrambleCheckAnswer() {
     document.getElementById('scrambleScore').textContent = scrScore;
 
     fb.className = 'scramble-feedback correct';
-    fb.innerHTML = `✅ Chính xác! <strong>+${points} điểm</strong>`;
+    fb.innerHTML = `✅ ${getLang()==='en'?'Correct!':'Chính xác!'} <strong>+${points}${getLang()==='en'?' pts':'đ'}</strong>`;
   } else {
     AudioFX.wrong();
     scrWrong++;
@@ -393,7 +393,7 @@ function scrambleCheckAnswer() {
     scrWrongList.push({ word: card.term || card.word || '', meaning: card.meaning || card.definition || '' });
 
     fb.className = 'scramble-feedback wrong';
-    fb.innerHTML = `❌ Sai rồi! Đáp án đúng: <strong style="text-transform:uppercase;letter-spacing:2px;color:var(--accent3)">${scrWord.toUpperCase()}</strong>`;
+    fb.innerHTML = `❌ ${getLang()==='en'?'Wrong! Correct answer:':'Sai rồi! Đáp án đúng:'} <strong style="text-transform:uppercase;letter-spacing:2px;color:var(--accent3)">${scrWord.toUpperCase()}</strong>`;
 
     // Hiển thị đáp án đúng trong slots
     const slotsAll = document.querySelectorAll('.answer-slot');
@@ -502,7 +502,7 @@ function _scrTimerExpired() {
   const fb = document.getElementById('scrambleFeedback');
   fb.style.display = '';
   fb.className = 'scramble-feedback skip';
-  fb.innerHTML = `⏰ Hết giờ! Đáp án: <strong style="text-transform:uppercase;letter-spacing:2px;color:var(--accent3)">${scrWord.toUpperCase()}</strong>`;
+  fb.innerHTML = `⏰ ${getLang()==='en'?"Time's up! Answer:":'Hết giờ! Đáp án:'} <strong style="text-transform:uppercase;letter-spacing:2px;color:var(--accent3)">${scrWord.toUpperCase()}</strong>`;
 
   document.getElementById('btnScrambleCheck').style.display = 'none';
   document.getElementById('btnScrambleClear').style.display = 'none';
@@ -552,14 +552,14 @@ function _scrShowDone() {
   const total = scrCards.length;
   const pct   = Math.round(scrCorrect / total * 100);
 
-  let icon = '🏆', title = 'Xuất sắc!';
-  if (pct >= 80)      { icon = '🏆'; title = 'Xuất sắc!'; AudioFX.completedPass(); }
-  else if (pct >= 50) { icon = '👏'; title = 'Khá tốt!';  AudioFX.completedPass(); }
-  else                { icon = '📖'; title = 'Cần luyện thêm!'; AudioFX.completedFail(); }
+  let icon = '🏆', title;
+  if (pct >= 80)      { icon = '🏆'; title = getLang()==='en' ? 'Excellent!'      : 'Xuất sắc!';        AudioFX.completedPass(); }
+  else if (pct >= 50) { icon = '👏'; title = getLang()==='en' ? 'Good job!'       : 'Khá tốt!';          AudioFX.completedPass(); }
+  else                { icon = '📖'; title = getLang()==='en' ? 'Needs practice!' : 'Cần luyện thêm!';  AudioFX.completedFail(); }
 
   document.getElementById('scrambleDoneIcon').textContent   = icon;
   document.getElementById('scrambleDoneTitle').textContent   = title;
-  document.getElementById('scrambleResultScore').textContent = scrScore + ' điểm';
+  document.getElementById('scrambleResultScore').textContent = scrScore + (getLang()==='en' ? ' pts' : ' điểm');
   document.getElementById('scrambleDoneCorrect').textContent = scrCorrect;
   document.getElementById('scrambleDoneWrong').textContent   = scrWrong;
   document.getElementById('scrambleDoneHints').textContent   = scrHintsUsed;
@@ -570,7 +570,7 @@ function _scrShowDone() {
   if (scrWrongList.length > 0) {
     const title = document.createElement('div');
     title.style.cssText = 'font-size:0.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:0.5rem;';
-    title.textContent = `Các từ cần ôn lại (${scrWrongList.length})`;
+    title.textContent = getLang()==='en' ? `Words to review (${scrWrongList.length})` : `Các từ cần ôn lại (${scrWrongList.length})`;
     rev.appendChild(title);
     scrWrongList.forEach(item => {
       const row = document.createElement('div');
