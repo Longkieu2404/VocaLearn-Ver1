@@ -455,6 +455,7 @@ body {
 /* ── Progress + meta: always at bottom, never moves ── */
 .set-card-bottom {
   margin-top: 0.6rem;
+  padding-bottom: 3rem; /* Reserve space for action buttons to prevent layout shift on hover */
 }
 .set-card-progress {
   height: 4px;
@@ -508,10 +509,7 @@ body {
   transform: translateY(0);
   pointer-events: auto;
 }
-/* Push bottom content up on hover so action buttons don't overlap progress bar */
-.set-card:hover .set-card-bottom {
-  padding-bottom: 3rem;
-}
+/* padding-bottom is always 3rem on .set-card-bottom — no layout shift on hover */
 .sca-btn {
   flex: 1;
   padding: 0.42rem 0.35rem;
