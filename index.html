@@ -163,21 +163,21 @@
         <div class="study-progress-bar"><div class="study-progress-fill" id="reviewProgressFill"></div></div>
         <span id="reviewProgressText">0 / 0</span>
       </div>
-      <div class="quiz-score-badge">Điểm: <span id="reviewScore">0</span></div>
+      <div class="quiz-score-badge"><span data-i18n="quiz.scoreBadge">Điểm:</span> <span id="reviewScore">0</span></div>
     </div>
     <div class="review-header-badge">
       <span>⏰ Ôn tập theo lịch SR</span>
     </div>
     <div class="quiz-area" id="reviewQuizArea">
       <div class="quiz-question">
-        <div class="quiz-q-label" id="reviewSetLabel">Ôn tập</div>
+        <div class="quiz-q-label" id="reviewSetLabel" data-i18n="review.label">Ôn tập</div>
         <div class="quiz-q-word" id="reviewWord"></div>
         <div class="quiz-q-phonetic" id="reviewPhonetic"></div>
-        <button class="speak-btn-quiz" onclick="speakWord(document.getElementById('reviewWord').textContent)">🔊 Nghe phát âm</button>
+        <button class="speak-btn-quiz" data-i18n="quiz.listenBtn" onclick="speakWord(document.getElementById('reviewWord').textContent)">🔊 Nghe phát âm</button>
       </div>
       <div class="quiz-options" id="reviewOptions"></div>
       <div class="quiz-feedback" id="reviewFeedback" style="display:none"></div>
-      <button class="btn-primary" id="btnNextReview" style="display:none;margin:1rem auto">Câu tiếp →</button>
+      <button class="btn-primary" id="btnNextReview" data-i18n="quiz.nextBtn" style="display:none;margin:1rem auto">Câu tiếp →</button>
     </div>
     <div class="study-done" id="reviewDone" style="display:none">
       <div class="done-icon" id="reviewDoneIcon">🏆</div>
@@ -236,7 +236,7 @@
           <div class="flashcard-inner" id="flashcardInner">
             <div class="flashcard-front">
               <div class="card-tag" id="cardTag">EN</div>
-              <button class="speak-btn" id="speakFront" title="Nghe phát âm" onclick="event.stopPropagation();speakWord(document.getElementById('cardFrontWord').textContent)">🔊</button>
+              <button class="speak-btn" id="speakFront" data-i18n-title="quiz.listenTitle" title="Nghe phát âm" onclick="event.stopPropagation();speakWord(document.getElementById('cardFrontWord').textContent)">🔊</button>
               <div class="card-word" id="cardFrontWord"></div>
               <div class="card-phonetic" id="cardPhonetic"></div>
               <div class="flip-hint" data-i18n="study.flipHint">Nhấn để lật thẻ ↻</div>
@@ -290,14 +290,14 @@
           <div class="study-progress-bar"><div class="study-progress-fill" id="quizProgressFill"></div></div>
           <span id="quizProgressText">0 / 0</span>
         </div>
-        <div class="quiz-score-badge">Điểm: <span id="quizScore">0</span></div>
+        <div class="quiz-score-badge"><span data-i18n="quiz.scoreBadge">Điểm:</span> <span id="quizScore">0</span></div>
       </div>
       <div class="quiz-area">
         <div class="quiz-question">
           <div class="quiz-q-label" id="quizQLabel" data-i18n="quiz.qLabel">Từ tiếng Anh này nghĩa là gì?</div>
           <div class="quiz-q-word" id="quizWord"></div>
           <div class="quiz-q-phonetic" id="quizPhonetic"></div>
-          <button class="speak-btn speak-btn-quiz" id="speakQuiz" title="Nghe phát âm" onclick="speakWord(document.getElementById('quizWord').textContent)">🔊 Nghe phát âm</button>
+          <button class="speak-btn speak-btn-quiz" id="speakQuiz" data-i18n="quiz.listenBtn" data-i18n-title="quiz.listenTitle" title="Nghe phát âm" onclick="speakWord(document.getElementById('quizWord').textContent)">🔊 Nghe phát âm</button>
         </div>
         <!-- Trắc nghiệm options -->
         <div class="quiz-options" id="quizOptions"></div>
@@ -309,7 +309,7 @@
           </div>
         </div>
         <div class="quiz-feedback" id="quizFeedback" style="display:none"></div>
-        <button class="btn-primary" id="btnNextQuiz" style="display:none;margin:1rem auto;display:none">Câu tiếp →</button>
+        <button class="btn-primary" id="btnNextQuiz" data-i18n="quiz.nextBtn" style="display:none;margin:1rem auto;display:none">Câu tiếp →</button>
       </div>
       <div class="study-done" id="quizDone" style="display:none">
         <div class="done-icon" id="quizDoneIcon">🏆</div>
@@ -364,14 +364,14 @@
           <div class="study-progress-bar"><div class="study-progress-fill" id="mixedProgressFill"></div></div>
           <span id="mixedProgressText">0 / 0</span>
         </div>
-        <div class="quiz-score-badge">Điểm: <span id="mixedScore">0</span></div>
+        <div class="quiz-score-badge"><span data-i18n="quiz.scoreBadge">Điểm:</span> <span id="mixedScore">0</span></div>
       </div>
       <div class="quiz-area">
         <div class="quiz-question">
-          <div class="quiz-q-label" id="mixedSetLabel">Tổng hợp</div>
+          <div class="quiz-q-label" id="mixedSetLabel" data-i18n="mixedquiz.title2">Tổng hợp</div>
           <div class="quiz-q-word" id="mixedWord"></div>
           <div class="quiz-q-phonetic" id="mixedPhonetic"></div>
-          <button class="speak-btn speak-btn-quiz" id="speakMixed" title="Nghe phát âm" onclick="speakWord(document.getElementById('mixedWord').textContent)">🔊 Nghe phát âm</button>
+          <button class="speak-btn speak-btn-quiz" id="speakMixed" data-i18n="quiz.listenBtn" data-i18n-title="quiz.listenTitle" title="Nghe phát âm" onclick="speakWord(document.getElementById('mixedWord').textContent)">🔊 Nghe phát âm</button>
         </div>
         <div class="quiz-options" id="mixedOptions"></div>
         <div id="mixedEssayArea" style="display:none">
@@ -381,7 +381,7 @@
           </div>
         </div>
         <div class="quiz-feedback" id="mixedFeedback" style="display:none"></div>
-        <button class="btn-primary" id="btnNextMixed" style="display:none;margin:1rem auto">Câu tiếp →</button>
+        <button class="btn-primary" id="btnNextMixed" data-i18n="quiz.nextBtn" style="display:none;margin:1rem auto">Câu tiếp →</button>
       </div>
       <div class="study-done" id="mixedDone" style="display:none">
         <div class="done-icon" id="mixedDoneIcon">🏆</div>
@@ -1429,21 +1429,21 @@
 <div id="quizModeModal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center">
   <div class="quiz-mode-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)" id="btnCancelModeBackdrop"></div>
   <div class="quiz-mode-card" style="position:relative;z-index:1">
-    <div class="quiz-mode-title">Chọn hình thức kiểm tra</div>
-    <div class="quiz-mode-subtitle">Bạn muốn làm bài theo kiểu nào?</div>
+    <div class="quiz-mode-title" data-i18n="quizMode.title">Chọn hình thức kiểm tra</div>
+    <div class="quiz-mode-subtitle" data-i18n="quizMode.subtitle">Bạn muốn làm bài theo kiểu nào?</div>
     <div class="quiz-mode-options">
       <button class="quiz-mode-btn" id="btnModeMultiple">
         <span class="quiz-mode-icon">🔤</span>
-        <span class="quiz-mode-name">Trắc nghiệm</span>
-        <span class="quiz-mode-desc">Chọn đáp án trong 4 lựa chọn</span>
+        <span class="quiz-mode-name" data-i18n="quizMode.multiple">Trắc nghiệm</span>
+        <span class="quiz-mode-desc" data-i18n="quizMode.multipleDesc">Chọn đáp án trong 4 lựa chọn</span>
       </button>
       <button class="quiz-mode-btn" id="btnModeEssay">
         <span class="quiz-mode-icon">✍️</span>
-        <span class="quiz-mode-name">Tự luận</span>
-        <span class="quiz-mode-desc">Tự nhập nghĩa của từ</span>
+        <span class="quiz-mode-name" data-i18n="quizMode.essay">Tự luận</span>
+        <span class="quiz-mode-desc" data-i18n="quizMode.essayDesc">Tự nhập nghĩa của từ</span>
       </button>
     </div>
-    <button class="btn-ghost" id="btnCancelMode" style="margin-top:0.5rem">Huỷ</button>
+    <button class="btn-ghost" id="btnCancelMode" data-i18n="quizMode.cancel" style="margin-top:0.5rem">Huỷ</button>
   </div>
 </div>
 

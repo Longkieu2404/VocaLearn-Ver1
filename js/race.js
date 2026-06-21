@@ -35,8 +35,7 @@ function startRaceFromHub() {
     return;
   }
   raceCards = shuffle([...pool]);
-  document.getElementById('raceConfigInfo').textContent =
-    tf('race.poolInfo', { n: pool.length });
+  document.getElementById('raceConfigInfo').textContent = '🏎️ Word Race';
   _raceSelectDuration(60);
   _raceShowSection('config');
   document.body.classList.add('game-fullscreen');  // vào fullscreen

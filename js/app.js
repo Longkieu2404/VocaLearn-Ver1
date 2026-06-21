@@ -912,19 +912,21 @@ function createSetCard(set) {
     <div class="set-card-body">
       <div class="set-card-name">${set.name}</div>
       <div class="set-card-count">${total} ${t('set.words')}</div>
-      <div class="set-card-progress">
-        <div class="set-card-progress-fill" style="width:${pctMastered+pctLearning}%;opacity:0.5;background:var(--yellow);position:absolute"></div>
-        <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
-      </div>
-      <div class="set-card-meta">
-        <span class="sca-meta-left">
-          <span class="sca-meta-mastered">${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}</span>${learning > 0 ? '<span class="sca-meta-learning">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : ''}
-        </span>
-        <span class="sca-meta-pct" style="color:${pctColor}">${pctMastered}%</span>
-      </div>
       <div class="set-card-actions">
         <button class="sca-btn sca-study" title="${t('set.studyTitle')}">${t('set.study')}</button>
         <button class="sca-btn sca-quiz" title="${t('set.quizTitle')}">${t('set.quiz')}</button>
+      </div>
+      <div class="set-card-bottom">
+        <div class="set-card-progress">
+          <div class="set-card-progress-fill" style="width:${pctMastered+pctLearning}%;opacity:0.4;background:var(--yellow);position:absolute"></div>
+          <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
+        </div>
+        <div class="set-card-meta">
+          <span class="sca-meta-left">
+            <span class="sca-meta-mastered">${mastered}/${total} ${getLang()==='en' ? 'mastered' : 'đã thuộc'}</span>${learning > 0 ? '<span class="sca-meta-learning">' + learning + ' ' + (getLang()==='en' ? 'learning' : 'đang học') + '</span>' : ''}
+          </span>
+          <span class="sca-meta-pct" style="color:${pctColor}">${pctMastered}%</span>
+        </div>
       </div>
     </div>`;
   div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });
@@ -1436,7 +1438,7 @@ function showQuizQuestion() {
       document.getElementById('speakQuiz').style.display = '';
       setTimeout(() => speakWord(card.word), 300);
     } else {
-      document.getElementById('quizQLabel').textContent = 'Từ tiếng Anh của nghĩa này là gì?';
+      document.getElementById('quizQLabel').textContent = t('quiz.qLabelReverse');
       document.getElementById('quizWord').textContent = card.meaning;
       document.getElementById('quizPhonetic').textContent = '';
       document.getElementById('speakQuiz').style.display = 'none';
@@ -1457,7 +1459,7 @@ function showQuizQuestion() {
     // Multiple choice mode
     document.getElementById('quizOptions').style.display = '';
     document.getElementById('quizEssayArea').style.display = 'none';
-    document.getElementById('quizQLabel').textContent = 'Từ tiếng Anh này nghĩa là gì?';
+    document.getElementById('quizQLabel').textContent = t('quiz.questionLabel');
     document.getElementById('quizWord').textContent = card.word;
     document.getElementById('quizPhonetic').textContent = card.phonetic || '';
     document.getElementById('speakQuiz').style.display = '';

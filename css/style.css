@@ -483,12 +483,17 @@ body {
 }
 .set-card-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
 .set-card-count { font-size: 0.8rem; color: var(--text2); }
-.set-card-progress {
+.set-card-bottom {
   margin-top: auto;
-  padding-top: 0.75rem;
-  height: 4px; background: var(--border);
-  border-radius: 4px; overflow: hidden;
+  padding-top: 0.6rem;
+}
+.set-card-progress {
+  height: 5px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
   position: relative;
+  margin-bottom: 0.45rem;
 }
 .set-card-progress-fill {
   height: 100%; border-radius: 4px;
@@ -497,10 +502,9 @@ body {
 }
 .set-card-meta {
   display: flex; justify-content: space-between;
-  align-items: flex-start; margin-top: 0.5rem;
+  align-items: flex-start;
   font-size: 0.75rem; color: var(--text3);
   gap: 0.4rem; flex-wrap: nowrap; min-width: 0;
-  min-height: 2.4em; /* keeps all cards same height regardless of wrap */
 }
 .sca-meta-left {
   min-width: 0; flex: 1;
@@ -508,9 +512,7 @@ body {
   gap: 0.3rem; flex-wrap: wrap;
   line-height: 1.5;
 }
-.sca-meta-mastered {
-  white-space: nowrap;
-}
+.sca-meta-mastered { white-space: nowrap; }
 .sca-meta-learning {
   color: var(--yellow);
   white-space: nowrap;

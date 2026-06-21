@@ -164,8 +164,7 @@ function startDetectiveFromHub() {
     }
   });
 
-  document.getElementById('detConfigInfo').textContent =
-    (getLang()==='en' ? `Word Detective — ${pool.length} words in pool` : `Word Detective — ${pool.length} từ trong pool`);
+  document.getElementById('detConfigInfo').textContent = 'Word Detective';
 
   _detShowSection('config');
   document.body.classList.add('game-fullscreen');

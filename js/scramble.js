@@ -67,7 +67,7 @@ function startScrambleFromHub() {
 
   // Cập nhật UI config
   const count = eligibleCards.length;
-  document.getElementById('scrambleConfigSetName').textContent = `🧩 Word Scramble — ${count} ` + (getLang()==='en' ? 'words learning & mastered' : 'từ đang học & đã thuộc');
+  document.getElementById('scrambleConfigSetName').textContent = '🧩 Word Scramble';
 
   // Cập nhật options số từ
   const sel = document.getElementById('scrambleCount');

@@ -370,6 +370,24 @@ const I18N = {
     /* ── AI done message ── */
     'ai.doneMsg': '✅ AI đã tạo xong! Kiểm tra và chỉnh sửa nếu cần:',
 
+/* ── Quiz / Study session ── */
+    'quiz.nextBtn': 'Câu tiếp →',
+    'quiz.scoreBadge': 'Điểm:',
+    'quiz.listenBtn': '🔊 Nghe phát âm',
+    'quiz.listenTitle': 'Nghe phát âm',
+    'quiz.qLabelReview': 'TỪ TIẾNG ANH NÀY NGHĨA LÀ GÌ?',
+
+    /* ── Quiz mode modal ── */
+    'quizMode.title': 'Chọn hình thức kiểm tra',
+    'quizMode.subtitle': 'Bạn muốn làm bài theo kiểu nào?',
+    'quizMode.multiple': 'Trắc nghiệm',
+    'quizMode.multipleDesc': 'Chọn đáp án trong 4 lựa chọn',
+    'quizMode.essay': 'Tự luận',
+    'quizMode.essayDesc': 'Tự nhập nghĩa của từ',
+    'quizMode.cancel': 'Huỷ',
+
+    'quiz.qLabelReverse': 'Từ tiếng Anh của nghĩa này là gì?',
+    'mixedquiz.title2': 'Tổng hợp',
     'notif.langSwitched': 'Đã chuyển sang Tiếng Việt',
 
     /* ── Set card buttons ── */
@@ -834,6 +852,24 @@ const I18N = {
     /* ── AI done message ── */
     'ai.doneMsg': '✅ AI finished! Review and edit if needed:',
 
+/* ── Quiz / Study session ── */
+    'quiz.nextBtn': 'Next →',
+    'quiz.scoreBadge': 'Score:',
+    'quiz.listenBtn': '🔊 Listen',
+    'quiz.listenTitle': 'Listen',
+    'quiz.qLabelReview': 'WHAT DOES THIS ENGLISH WORD MEAN?',
+
+    /* ── Quiz mode modal ── */
+    'quizMode.title': 'Choose quiz type',
+    'quizMode.subtitle': 'How would you like to be tested?',
+    'quizMode.multiple': 'Multiple choice',
+    'quizMode.multipleDesc': 'Choose from 4 options',
+    'quizMode.essay': 'Written',
+    'quizMode.essayDesc': 'Type the meaning yourself',
+    'quizMode.cancel': 'Cancel',
+
+    'quiz.qLabelReverse': 'What English word has this meaning?',
+    'mixedquiz.title2': 'Mixed quiz',
     'notif.langSwitched': 'Switched to English',
 
     /* ── Set card buttons ── */

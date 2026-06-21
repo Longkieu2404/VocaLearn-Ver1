@@ -141,7 +141,7 @@ function startBombFromHub() {
   }
 
   const infoEl = document.getElementById('bombConfigInfo');
-  if (infoEl) infoEl.textContent = tf('bomb.poolInfo', { n: pool.length });
+  if (infoEl) infoEl.textContent = 'Word Bomb';
 
   window._bombPool = pool;
   _bombSelectTime(_bombSelectedTime); // đảm bảo UI đúng với lựa chọn hiện tại

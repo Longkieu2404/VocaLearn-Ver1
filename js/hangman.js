@@ -75,8 +75,7 @@ function startHangmanFromHub() {
   oAll.value = 'all'; oAll.textContent = `Tất cả (${pool.length} từ)`;
   countSel.appendChild(oAll);
 
-  document.getElementById('hangConfigInfo').textContent =
-    getLang()==='en' ? `🎯 Word Hangman — ${pool.length} words in pool` : `🎯 Word Hangman — ${pool.length} từ trong pool`;
+  document.getElementById('hangConfigInfo').textContent = '🎯 Word Hangman';
 
   _hangShowSection('config');
   document.body.classList.add('game-fullscreen');
