@@ -199,8 +199,6 @@ const I18N = {
     'settings.themeDark': 'Tối',
     'settings.langTitle': 'Ngôn ngữ giao diện',
     'settings.langSubtitle': 'Chọn ngôn ngữ hiển thị',
-    'settings.langNote': '⚠️ Tính năng đa ngôn ngữ đang phát triển. Hiện tại giao diện hiển thị tiếng Việt.',
-
     /* ── Notifications ── */
 /* ── Game UI HTML strings ── */
     'game.correct': 'Đúng',
@@ -681,8 +679,6 @@ const I18N = {
     'settings.themeDark': 'Dark',
     'settings.langTitle': 'Interface language',
     'settings.langSubtitle': 'Choose display language',
-    'settings.langNote': '✅ Language switching is active. Select your preferred language above.',
-
     /* ── Notifications ── */
 /* ── Game UI HTML strings ── */
     'game.correct': 'Correct',
