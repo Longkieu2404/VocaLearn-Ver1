@@ -188,8 +188,8 @@
         <div class="done-stat wrong-stat"><span id="reviewWrong">0</span><small data-i18n="game.wrong">Sai</small></div>
       </div>
       <div class="mixed-wrong-list" id="reviewWrongList"></div>
-      <button class="btn-primary" id="btnReviewAgain">Ôn lại các từ sai</button>
-      <button class="btn-ghost" onclick="exitReview()">Về trang chủ</button>
+      <button class="btn-primary" id="btnReviewAgain" data-i18n="review.againBtn">Ôn lại các từ sai</button>
+      <button class="btn-ghost" onclick="exitReview()" data-i18n="review.backHomeBtn">Về trang chủ</button>
     </div>
   </div>
 
@@ -385,15 +385,15 @@
       </div>
       <div class="study-done" id="mixedDone" style="display:none">
         <div class="done-icon" id="mixedDoneIcon">🏆</div>
-        <h2>Kết quả kiểm tra tổng hợp</h2>
+        <h2 data-i18n="mixed.result">Kết quả kiểm tra tổng hợp</h2>
         <div class="quiz-result-score" id="mixedResultScore"></div>
         <div class="done-stats">
           <div class="done-stat correct-stat"><span id="mixedCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
           <div class="done-stat wrong-stat"><span id="mixedWrong">0</span><small data-i18n="game.wrong">Sai</small></div>
         </div>
         <div class="mixed-wrong-list" id="mixedWrongList"></div>
-        <button class="btn-primary" id="btnMixedAgain">Làm lại</button>
-        <button class="btn-ghost" onclick="exitMixedQuiz()">Về trang chủ</button>
+        <button class="btn-primary" id="btnMixedAgain" data-i18n="mixed.again">Làm lại</button>
+        <button class="btn-ghost" onclick="exitMixedQuiz()" data-i18n="mixed.backHome">Về trang chủ</button>
       </div>
     </div>
   </div>
@@ -1401,7 +1401,7 @@
   <div class="modal" style="max-width:440px;text-align:center">
     <div class="modal-body" style="padding:2.5rem 2rem">
       <div style="font-size:3.5rem;margin-bottom:0.5rem" id="resultIcon">🏆</div>
-      <h2 style="font-size:1.3rem;margin-bottom:0.5rem" id="resultTitle">Kết quả</h2>
+      <h2 style="font-size:1.3rem;margin-bottom:0.5rem" id="resultTitle" data-i18n="result.title">Kết quả</h2>
       <div class="quiz-result-score" id="resultScore" style="font-size:3rem;margin:0.5rem 0"></div>
       <div class="done-stats" style="justify-content:center;margin:1rem 0 1.5rem">
         <div class="done-stat correct-stat"><span id="resultCorrect">0</span><small data-i18n="game.correct">Đúng</small></div>
@@ -1409,8 +1409,8 @@
       </div>
       <div class="mixed-wrong-list" id="resultWrongList"></div>
       <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap">
-        <button class="btn-ghost" id="resultBtnHome">🏠 Về trang chủ</button>
-        <button class="btn-primary" id="resultBtnAgain">🔄 Làm lại</button>
+        <button class="btn-ghost" id="resultBtnHome" data-i18n="result.backHome">🏠 Về trang chủ</button>
+        <button class="btn-primary" id="resultBtnAgain" data-i18n="result.again">🔄 Làm lại</button>
       </div>
     </div>
   </div>

@@ -92,6 +92,15 @@ const I18N = {
     'quiz.wrong': 'Sai',
     'quiz.again': 'Làm lại',
     'quiz.backHome': 'Về trang chủ',
+    'mixed.result': 'Kết quả kiểm tra tổng hợp',
+    'mixed.again': 'Làm lại',
+    'mixed.backHome': 'Về trang chủ',
+    'result.title': 'Kết quả',
+    'result.backHome': '🏠 Về trang chủ',
+    'result.again': '🔄 Làm lại',
+    'review.backHomeBtn': 'Về trang chủ',
+    'review.againBtn': 'Ôn lại các từ sai',
+    'review.result': 'Kết quả ôn tập',
     'quiz.essayPlaceholder': 'Nhập câu trả lời của bạn...',
 
     /* ── Stats page ── */
@@ -572,6 +581,15 @@ const I18N = {
     'quiz.wrong': 'Wrong',
     'quiz.again': 'Try again',
     'quiz.backHome': 'Back to home',
+    'mixed.result': 'Combined quiz results',
+    'mixed.again': 'Try again',
+    'mixed.backHome': 'Back to home',
+    'result.title': 'Results',
+    'result.backHome': '🏠 Back to home',
+    'result.again': '🔄 Try again',
+    'review.backHomeBtn': 'Back to home',
+    'review.againBtn': 'Retry wrong cards',
+    'review.result': 'Review results',
     'quiz.essayPlaceholder': 'Type your answer...',
 
     /* ── Stats page ── */

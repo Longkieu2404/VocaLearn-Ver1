@@ -424,16 +424,20 @@ function showLoginScreen() {
 }
 
 // ===== MODAL KẾT QUẢ CHUNG =====
-function showResultModal({ correct, wrong, wrongCards = [], onAgain, onHome, title = 'Kết quả kiểm tra' }) {
+function showResultModal({ correct, wrong, wrongCards = [], onAgain, onHome, title = null }) {
   const total = correct + wrong;
   const pct = total > 0 ? Math.round(correct / total * 100) : 0;
   const icon = pct >= 80 ? '🏆' : pct >= 60 ? '😊' : '📚';
 
   document.getElementById('resultIcon').textContent = icon;
-  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultTitle').textContent = title || t('result.title');
   document.getElementById('resultScore').textContent = `${pct}%`;
   document.getElementById('resultCorrect').textContent = correct;
   document.getElementById('resultWrong').textContent = wrong;
+
+  // Cập nhật text nút theo ngôn ngữ
+  document.getElementById('resultBtnHome').textContent = t('result.backHome');
+  document.getElementById('resultBtnAgain').textContent = t('result.again');
 
   // Danh sách từ sai
   const wrongList = document.getElementById('resultWrongList');
@@ -1625,7 +1629,7 @@ function finishQuiz() {
     correct: quizCorrect,
     wrong: quizWrong,
     wrongCards,
-    title: 'Kết quả kiểm tra',
+    title: t('quiz.result'),
     onAgain: () => startQuiz(quizSetId),
     onHome: () => exitQuiz()
   });
@@ -2328,7 +2332,7 @@ function finishMixedQuiz() {
     correct: mixedCorrect,
     wrong: mixedWrong,
     wrongCards: mixedWrongCards,
-    title: 'Kết quả kiểm tra tổng hợp',
+    title: t('mixed.result'),
     onAgain: () => restartMixedQuiz(),
     onHome: () => exitMixedQuiz()
   });
@@ -3203,7 +3207,7 @@ function finishReview() {
     correct: reviewCorrect,
     wrong: reviewWrong,
     wrongCards: reviewWrongCards,
-    title: 'Kết quả ôn tập',
+    title: t('review.result'),
     onAgain: hasWrong ? () => restartReviewWrong() : null,
     onHome: () => { closeResultModal(); exitReview(); }
   });
