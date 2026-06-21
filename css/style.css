@@ -494,19 +494,23 @@ body {
 .set-card-actions {
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  padding: 0 1rem 1rem;
+  padding: 0.5rem 1rem 1rem;
   display: flex; gap: 0.4rem;
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 0.18s ease, transform 0.18s ease;
   pointer-events: none;
-  background: linear-gradient(to top, var(--surface) 70%, transparent);
+  background: linear-gradient(to top, var(--surface) 75%, transparent);
   border-radius: 0 0 var(--radius) var(--radius);
 }
 .set-card:hover .set-card-actions {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
+/* Push bottom content up on hover so action buttons don't overlap progress bar */
+.set-card:hover .set-card-bottom {
+  padding-bottom: 3rem;
 }
 .sca-btn {
   flex: 1;
@@ -3234,6 +3238,7 @@ body {
   font-weight: 800;
   color: var(--text);
   margin-bottom: 1.5rem;
+  text-align: center;
 }
 .scramble-config-row {
   display: flex;
