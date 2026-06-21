@@ -159,6 +159,10 @@ const I18N = {
     'games.bomb.tagline': 'Điền từ trước khi bom nổ',
     'games.bomb.desc': 'AI tạo câu có 1 từ bị ẩn — điền đúng trước khi hết giờ. Streak dài càng ít thời gian, điểm càng cao!',
     'games.bomb.badge': '💥 AI ngữ cảnh',
+    'games.comingSoon.title': 'Sắp ra mắt',
+    'games.comingSoon.tagline': 'Nhiều game thú vị đang được phát triển',
+    'games.comingSoon.desc': 'Chúng tôi đang xây dựng thêm nhiều trò chơi mới để giúp bạn học từ vựng hiệu quả hơn. Hãy đón chờ nhé!',
+    'games.comingSoon.badge': '🚀 Sắp có',
 
     /* ── Stats page extra ── */
     'stats.progress': 'Tiến độ học tập',
@@ -648,6 +652,10 @@ const I18N = {
     'games.bomb.tagline': 'Fill in the word before the bomb explodes',
     'games.bomb.desc': 'AI generates a sentence with one hidden word — fill it in before time runs out. Longer streaks, less time, higher score!',
     'games.bomb.badge': '💥 AI context',
+    'games.comingSoon.title': 'Coming Soon',
+    'games.comingSoon.tagline': 'More exciting games are in development',
+    'games.comingSoon.desc': 'We\'re building more new games to help you learn vocabulary more effectively. Stay tuned!',
+    'games.comingSoon.badge': '🚀 Coming Soon',
 
     /* ── Stats page extra ── */
     'stats.progress': 'Learning progress',
