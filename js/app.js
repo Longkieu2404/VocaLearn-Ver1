@@ -910,15 +910,13 @@ function createSetCard(set) {
       ${renderThumbChangeBtn(set.id)}
     </div>
     <div class="set-card-body">
-      <div class="set-card-name">${set.name}</div>
-      <div class="set-card-count">${total} ${t('set.words')}</div>
-      <div class="set-card-actions">
-        <button class="sca-btn sca-study" title="${t('set.studyTitle')}">${t('set.study')}</button>
-        <button class="sca-btn sca-quiz" title="${t('set.quizTitle')}">${t('set.quiz')}</button>
+      <div class="set-card-info">
+        <div class="set-card-name">${set.name}</div>
+        <div class="set-card-count">${total} ${t('set.words')}</div>
       </div>
       <div class="set-card-bottom">
         <div class="set-card-progress">
-          <div class="set-card-progress-fill" style="width:${pctMastered+pctLearning}%;opacity:0.4;background:var(--yellow);position:absolute"></div>
+          <div class="set-card-progress-fill" style="width:${pctMastered+pctLearning}%;opacity:0.35;background:var(--yellow);position:absolute"></div>
           <div class="set-card-progress-fill" style="width:${pctMastered}%"></div>
         </div>
         <div class="set-card-meta">
@@ -927,6 +925,10 @@ function createSetCard(set) {
           </span>
           <span class="sca-meta-pct" style="color:${pctColor}">${pctMastered}%</span>
         </div>
+      </div>
+      <div class="set-card-actions">
+        <button class="sca-btn sca-study" title="${t('set.studyTitle')}">${t('set.study')}</button>
+        <button class="sca-btn sca-quiz" title="${t('set.quizTitle')}">${t('set.quiz')}</button>
       </div>
     </div>`;
   div.querySelector('.sca-study').addEventListener('click', e => { e.stopPropagation(); startStudy(set.id); });

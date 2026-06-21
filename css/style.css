@@ -428,12 +428,102 @@ body {
   filter: drop-shadow(0 3px 8px rgba(0,0,0,0.18));
 }
 
+/* ===== SET CARD BODY ===== */
 .set-card-body {
-  padding: 1.1rem 1.25rem 1.25rem;
+  padding: 0.9rem 1rem 1rem;
   display: flex;
   flex-direction: column;
   flex: 1;
+  position: relative; /* needed for absolute overlay */
+  min-height: 0;
 }
+.set-card-info {
+  flex: 1;
+}
+.set-card-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  margin-bottom: 0.18rem;
+  color: var(--text1);
+}
+.set-card-count {
+  font-size: 0.74rem;
+  color: var(--text3);
+}
+
+/* ── Progress + meta: always at bottom, never moves ── */
+.set-card-bottom {
+  margin-top: 0.6rem;
+}
+.set-card-progress {
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 0.38rem;
+}
+.set-card-progress-fill {
+  height: 100%; border-radius: 4px;
+  background: var(--green);
+  transition: width 0.5s ease;
+}
+.set-card-meta {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  font-size: 0.71rem; color: var(--text3);
+  gap: 0.3rem; min-width: 0;
+}
+.sca-meta-left {
+  min-width: 0; flex: 1;
+  display: flex; align-items: center;
+  gap: 0.25rem; flex-wrap: wrap;
+  line-height: 1.4;
+}
+.sca-meta-mastered { white-space: nowrap; }
+.sca-meta-learning {
+  color: var(--yellow);
+  white-space: nowrap; flex-shrink: 0;
+}
+.sca-meta-pct {
+  flex-shrink: 0; font-weight: 700; font-size: 0.76rem;
+}
+
+/* ── Actions: absolute overlay at bottom, slides up on hover ── */
+.set-card-actions {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 0 1rem 1rem;
+  display: flex; gap: 0.4rem;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--surface) 70%, transparent);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.set-card:hover .set-card-actions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.sca-btn {
+  flex: 1;
+  padding: 0.42rem 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 0.76rem; font-weight: 600;
+  cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.sca-study:hover { background: rgba(255,209,102,0.15); color: var(--yellow); border-color: rgba(255,209,102,0.5); }
+.sca-quiz:hover  { background: rgba(199,125,255,0.15); color: var(--accent5); border-color: rgba(199,125,255,0.5); }
 
 /* ===== GAME CARDS (trong #gamesGrid) ===== */
 .game-card {
@@ -481,48 +571,6 @@ body {
   color: var(--text3);
   margin-top: 2px;
 }
-.set-card-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
-.set-card-count { font-size: 0.8rem; color: var(--text2); }
-.set-card-bottom {
-  margin-top: auto;
-  padding-top: 0.6rem;
-}
-.set-card-progress {
-  height: 5px;
-  background: var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 0.45rem;
-}
-.set-card-progress-fill {
-  height: 100%; border-radius: 4px;
-  background: var(--green);
-  transition: width 0.5s ease;
-}
-.set-card-meta {
-  display: flex; justify-content: space-between;
-  align-items: flex-start;
-  font-size: 0.75rem; color: var(--text3);
-  gap: 0.4rem; flex-wrap: nowrap; min-width: 0;
-}
-.sca-meta-left {
-  min-width: 0; flex: 1;
-  display: flex; align-items: flex-start;
-  gap: 0.3rem; flex-wrap: wrap;
-  line-height: 1.5;
-}
-.sca-meta-mastered { white-space: nowrap; }
-.sca-meta-learning {
-  color: var(--yellow);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.sca-meta-pct {
-  flex-shrink: 0; font-weight: 600;
-  line-height: 1.5;
-}
-
 /* ===== FAB ===== */
 .fab {
   position: fixed; bottom: 2rem; right: 2rem;
@@ -1644,30 +1692,6 @@ body {
 }
 
 /* ===== SET CARD QUICK ACTIONS ===== */
-.set-card-actions {
-  display: flex; gap: 0.5rem; margin-top: 0.9rem;
-  opacity: 0; transform: translateY(4px);
-  transition: var(--transition);
-}
-.set-card:hover .set-card-actions {
-  opacity: 1; transform: translateY(0);
-}
-.sca-btn {
-  flex: 1;
-  padding: 0.55rem 0.5rem;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border);
-  background: var(--bg3);
-  color: var(--text2);
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 0.82rem; font-weight: 600;
-  cursor: pointer; transition: var(--transition);
-  display: flex; align-items: center; justify-content: center; gap: 5px;
-  white-space: nowrap;
-}
-.sca-study:hover  { background: rgba(255,209,102,0.15); color: var(--yellow); border-color: rgba(255,209,102,0.4); }
-.sca-quiz:hover   { background: rgba(199,125,255,0.15); color: var(--accent5); border-color: rgba(199,125,255,0.4); }
-
 /* ===== BTN-SM ===== */
 .btn-sm {
   padding: 0.45rem 0.9rem !important;
