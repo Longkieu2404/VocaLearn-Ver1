@@ -615,6 +615,8 @@ function setupNav() {
   document.getElementById('btnCreateAI').addEventListener('click', openAIModal);
   document.getElementById('btnGenerateAI').addEventListener('click', generateWithAI);
   document.getElementById('btnSaveAISet').addEventListener('click', saveAISet);
+  setupAIWordCountCustomToggle('aiWordCount', 'aiWordCountCustom');
+  setupAIWordCountCustomToggle('aiFileWordCount', 'aiFileWordCountCustom');
   document.getElementById('btnStartMixedQuiz').addEventListener('click', startMixedQuiz);
   document.getElementById('btnExitMixedQuiz').addEventListener('click', handleExitMixedQuizClick);
   document.getElementById('btnNextMixed').addEventListener('click', nextMixedQuestion);
@@ -2533,6 +2535,27 @@ function clearAIResult() {
   document.getElementById('btnSaveAISet').style.display = 'none';
 }
 
+// Hiện/ẩn ô nhập số tùy chỉnh khi người dùng chọn "Tùy chỉnh..." trong dropdown số lượng từ
+function setupAIWordCountCustomToggle(selectId, customInputId) {
+  const select = document.getElementById(selectId);
+  const customInput = document.getElementById(customInputId);
+  if (!select || !customInput) return;
+  select.addEventListener('change', () => {
+    customInput.style.display = select.value === 'custom' ? '' : 'none';
+    if (select.value === 'custom') customInput.focus();
+  });
+}
+
+// Lấy số lượng từ đã chọn (từ dropdown hoặc ô tùy chỉnh), trả về null nếu không hợp lệ
+function getAIWordCount(selectId, customInputId) {
+  const select = document.getElementById(selectId);
+  if (select.value !== 'custom') return parseInt(select.value, 10);
+  const customInput = document.getElementById(customInputId);
+  const n = parseInt(customInput.value, 10);
+  if (!n || n < 1 || n > 50) return null;
+  return n;
+}
+
 async function generateWithAI() {
   const tab = aiCurrentTab;
 
@@ -2564,8 +2587,20 @@ async function generateWithAI() {
   document.getElementById('btnGenerateAI').style.display = 'none';
 
   const wordCount = tab === 'file'
-    ? document.getElementById('aiFileWordCount').value
-    : document.getElementById('aiWordCount').value;
+    ? getAIWordCount('aiFileWordCount', 'aiFileWordCountCustom')
+    : getAIWordCount('aiWordCount', 'aiWordCountCustom');
+
+  if (!wordCount) {
+    showNotif(
+      getLang() === 'en'
+        ? 'Please enter a valid word count (1-50).'
+        : 'Vui lòng nhập số lượng từ hợp lệ (1-50).',
+      '✏️'
+    );
+    document.getElementById('btnGenerateAI').style.display = '';
+    document.getElementById('aiLoading').style.display = 'none';
+    return;
+  }
 
   try {
     let prompt = '';
@@ -2615,7 +2650,10 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts }] })
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig: { maxOutputTokens: Math.max(2048, wordCount * 120) }
+            })
           }
         );
         if (!response.ok) {
@@ -4079,7 +4117,7 @@ async function callChatAPI() {
         + ' [' + status + ']';
     });
     if (cards.length > 0) {
-      setsContext.push('Bộ thẻ "' + s.name + '" (' + cards.length + ' từ):\n' + cards.join('\n'));
+      setsContext.push('Bộ thẻ "' + s.name + '" (id: ' + s.id + ', ' + cards.length + ' từ):\n' + cards.join('\n'));
     }
   });
 
@@ -4092,6 +4130,7 @@ async function callChatAPI() {
       + '- Status: new = not studied, learning = in progress, mastered = known\n\n'
       + setsContext.join('\n\n')
       + '\n\nKeep answers concise. Use emojis sparingly to stay friendly.'
+      + '\n\nADD-CARD SUGGESTION FEATURE: If the user asks about the meaning/usage of ONE specific English word during the conversation, and that word: (1) is NOT already present in the user\'s vocabulary data above, and (2) clearly fits the topic of ONE of the existing sets above (based on that set\'s name and the words already in it), then append EXACTLY one hidden line at the very end of your reply (do not mention or explain this line to the user) in this exact format:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nUse the exact "setId" shown next to the matching set above. If no existing set clearly fits, or the word is already known, or the question isn\'t about one specific word, do NOT add this line. Never mention the word "id" or this hidden feature anywhere in the visible reply.'
     : 'Bạn là trợ lý AI của VocaLearn – ứng dụng học từ vựng tiếng Anh. Hãy trả lời bằng tiếng Việt, thân thiện và dễ hiểu.\n\n'
       + 'Nhiệm vụ: giải thích từ vựng, ngữ pháp tiếng Anh, gợi ý mẹo học, đặt câu ví dụ.\n\n'
       + 'QUAN TRỌNG: Khi người dùng hỏi về một từ hoặc bộ thẻ cụ thể, hãy ưu tiên dùng đúng dữ liệu từ vựng bên dưới của họ (nghĩa, phiên âm, ví dụ) thay vì tự nghĩ ra.\n\n'
@@ -4099,7 +4138,8 @@ async function callChatAPI() {
       + '- Tổng: ' + totalCount + ' từ | Đã thuộc: ' + masteredCount + ' từ\n'
       + '- Trạng thái: new = chưa học, learning = đang học, mastered = đã thuộc\n\n'
       + setsContext.join('\n\n')
-      + '\n\nTrả lời ngắn gọn, súc tích. Dùng emoji vừa phải để tạo cảm giác thân thiện.';
+      + '\n\nTrả lời ngắn gọn, súc tích. Dùng emoji vừa phải để tạo cảm giác thân thiện.'
+      + '\n\nTÍNH NĂNG ĐỀ XUẤT THÊM TỪ: Nếu trong lúc trò chuyện, người dùng hỏi về nghĩa/cách dùng của MỘT từ vựng tiếng Anh cụ thể, và từ đó: (1) CHƯA có sẵn trong dữ liệu từ vựng của người dùng ở trên, và (2) phù hợp rõ ràng với chủ đề của MỘT trong các bộ thẻ đã có (dựa trên tên bộ thẻ và các từ đã có trong đó), thì hãy thêm CHÍNH XÁC một dòng ẩn ở cuối cùng câu trả lời (không nhắc đến hay giải thích gì về dòng này với người dùng) theo đúng định dạng:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nsetId phải lấy đúng như "id" ghi bên cạnh bộ thẻ tương ứng ở trên. Nếu không có bộ thẻ nào phù hợp, hoặc từ đó người dùng đã biết/đã có sẵn, hoặc câu hỏi không phải về một từ vựng cụ thể, thì KHÔNG được thêm dòng này. Không bao giờ nhắc đến chữ "id" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.';
 
   // Build Gemini contents — support multipart (text + images) when _parts present
   const contents = chatHistory.map(function(m) {
@@ -4171,11 +4211,13 @@ async function callChatAPI() {
               );
               const d2 = await r2.json();
               if (!d2.error) {
-                const reply2 = (d2.candidates && d2.candidates[0] && d2.candidates[0].content && d2.candidates[0].content.parts
+                const reply2raw = (d2.candidates && d2.candidates[0] && d2.candidates[0].content && d2.candidates[0].content.parts
                   ? d2.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('') : '');
+                const { cleanText: reply2, suggestion: suggestion2 } = extractAddCardSuggestion(reply2raw);
                 removeTypingIndicator();
                 chatHistory.push({ role: 'assistant', content: reply2, ts: new Date().toISOString() });
                 appendBubble('ai', reply2);
+                if (suggestion2) offerAddCardToSet(suggestion2);
                 _saveSession();
                 return;
               }
@@ -4187,12 +4229,14 @@ async function callChatAPI() {
         }
 
         // Thành công
-        const reply = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts
+        const replyRaw = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts
           ? data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('')
           : '');
+        const { cleanText: reply, suggestion } = extractAddCardSuggestion(replyRaw);
         removeTypingIndicator();
         chatHistory.push({ role: 'assistant', content: reply, ts: new Date().toISOString() });
         appendBubble('ai', reply);
+        if (suggestion) offerAddCardToSet(suggestion);
         _saveSession();
         return;
 
@@ -4209,7 +4253,109 @@ async function callChatAPI() {
   appendErrorBubble(t('notif.aiError') + ' <button onclick="sendChatMessage()" style="margin-left:8px;padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;font-size:0.85rem">' + t('chat.retryBtn') + '</button>');
 }
 
-// ===== AUTO FLASHCARD OFFER FROM CHAT =====
+// ===== CHAT → THÊM 1 TỪ VÀO BỘ THẺ CÓ SẴN =====
+
+// Tách dòng ẩn <!--ADDCARD:{...}--> ra khỏi nội dung hiển thị, trả về text đã làm sạch + gợi ý thẻ (nếu có)
+function extractAddCardSuggestion(rawText) {
+  if (!rawText) return { cleanText: rawText, suggestion: null };
+  const m = rawText.match(/<!--\s*ADDCARD:\s*(\{[\s\S]*?\})\s*-->/);
+  if (!m) return { cleanText: rawText, suggestion: null };
+  const cleanText = (rawText.slice(0, m.index) + rawText.slice(m.index + m[0].length)).trim();
+  let parsed = null;
+  try { parsed = JSON.parse(m[1]); } catch (e) { return { cleanText, suggestion: null }; }
+  if (!parsed || !parsed.word || !parsed.meaning || !parsed.setId) return { cleanText, suggestion: null };
+  // Chỉ chấp nhận nếu setId thực sự tồn tại (tránh AI "bịa" id)
+  const sets = Storage.getSets();
+  const targetSet = sets.find(s => s.id === parsed.setId);
+  if (!targetSet) return { cleanText, suggestion: null };
+  // Bỏ qua nếu từ đã có sẵn trong chính bộ thẻ đó (không phiền người dùng)
+  const already = targetSet.cards.some(c => c.word.trim().toLowerCase() === parsed.word.trim().toLowerCase());
+  if (already) return { cleanText, suggestion: null };
+  return {
+    cleanText,
+    suggestion: {
+      word: parsed.word, phonetic: parsed.phonetic || '', meaning: parsed.meaning,
+      example: parsed.example || '', setId: targetSet.id, setName: targetSet.name
+    }
+  };
+}
+
+// Hiện bong bóng đề xuất "Thêm từ X vào bộ thẻ Y", cho phép người dùng đổi bộ thẻ đích trước khi xác nhận
+function offerAddCardToSet(suggestion) {
+  const messages = document.getElementById('chatMessages');
+  const sets = Storage.getSets();
+  if (!sets.length) return; // an toàn: không còn bộ thẻ nào để thêm vào
+
+  const offerId = 'chatAddCardOffer_' + Date.now();
+  const selectId = offerId + '_select';
+  const offerEl = document.createElement('div');
+  offerEl.className = 'chat-bubble chat-bubble-ai';
+  offerEl.id = offerId;
+
+  const setOptions = sets.map(s =>
+    `<option value="${s.id}" ${s.id === suggestion.setId ? 'selected' : ''}>${s.name} (${s.cards.length} từ)</option>`
+  ).join('');
+
+  const isEn = getLang() === 'en';
+  offerEl.innerHTML = `
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-offer-box">
+      <div class="chat-offer-text">${isEn ? `💡 Add <strong>"${suggestion.word}"</strong> to a flashcard set?` : `💡 Thêm từ <strong>"${suggestion.word}"</strong> vào bộ thẻ nào đó?`}</div>
+      <div style="font-size:0.85rem;opacity:0.85;margin:4px 0 8px">
+        ${suggestion.phonetic ? suggestion.phonetic + ' — ' : ''}${suggestion.meaning}
+        ${suggestion.example ? `<br><em>${suggestion.example}</em>` : ''}
+      </div>
+      <select id="${selectId}" class="chat-offer-input">${setOptions}</select>
+      <div class="chat-offer-actions">
+        <button class="btn-offer-yes" id="${offerId}_btnYes">${isEn ? '➕ Add to set' : '➕ Thêm vào bộ thẻ'}</button>
+        <button class="btn-offer-no" id="${offerId}_btnNo">Huỷ</button>
+      </div>
+    </div>
+  `;
+  messages.appendChild(offerEl);
+  messages.scrollTop = messages.scrollHeight;
+
+  document.getElementById(offerId + '_btnNo').onclick = function() { offerEl.remove(); };
+  document.getElementById(offerId + '_btnYes').onclick = function() {
+    const chosenSetId = document.getElementById(selectId).value;
+    const result = addCardToSet(chosenSetId, suggestion);
+    offerEl.remove();
+    const doneEl = document.createElement('div');
+    doneEl.className = 'chat-bubble chat-bubble-ai';
+    doneEl.innerHTML = `
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-text">
+        ${result.ok
+          ? `✅ ${isEn ? `Added <strong>"${suggestion.word}"</strong> to <strong>"${result.setName}"</strong>!` : `Đã thêm từ <strong>"${suggestion.word}"</strong> vào bộ thẻ <strong>"${result.setName}"</strong>!`}
+             <button onclick="navigateTo('sets');renderSetsPage();" style="margin-top:6px;display:block;padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:0.9rem">📂 ${isEn ? 'View set' : 'Xem bộ thẻ'} →</button>`
+          : `⚠️ ${isEn ? `"${suggestion.word}" already exists in that set.` : `Từ "${suggestion.word}" đã có sẵn trong bộ thẻ đó rồi.`}`
+        }
+      </div>
+    `;
+    messages.appendChild(doneEl);
+    messages.scrollTop = messages.scrollHeight;
+  };
+}
+
+// Thêm 1 thẻ vào bộ thẻ đã có, lưu qua Storage (tự động kích hoạt đồng bộ Firebase nếu đang bật)
+function addCardToSet(setId, cardData) {
+  const sets = Storage.getSets();
+  const set = sets.find(s => s.id === setId);
+  if (!set) return { ok: false };
+  const already = set.cards.some(c => c.word.trim().toLowerCase() === cardData.word.trim().toLowerCase());
+  if (already) return { ok: false, setName: set.name };
+  set.cards.push({
+    id: `${setId}_card_${Date.now()}`,
+    word: cardData.word,
+    phonetic: cardData.phonetic || '',
+    meaning: cardData.meaning,
+    example: cardData.example || ''
+  });
+  Storage.saveSets(sets);
+  return { ok: true, setName: set.name };
+}
+
+
 // ===== CHAT → FLASHCARD: CHỈ KHI NGƯỜI DÙNG YÊU CẦU =====
 
 // Từ khoá nhận diện ý định tạo bộ thẻ từ tin nhắn người dùng

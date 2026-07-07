@@ -1349,12 +1349,17 @@
         <textarea class="form-textarea" id="aiTopicInput" rows="4"
           placeholder="VD: 10 từ vựng tiếng Anh về động vật cho học sinh lớp 6&#10;hoặc: apple, banana, orange, grape, watermelon&#10;hoặc: các từ về thời tiết trong tiếng Anh"></textarea>
         <label class="form-label" style="margin-top:1rem" data-i18n="label.wordCountCreate">Số lượng từ muốn tạo</label>
-        <select class="form-input" id="aiWordCount" style="width:140px">
-          <option value="8">8 từ</option>
-          <option value="10" selected>10 từ</option>
-          <option value="15">15 từ</option>
-          <option value="20">20 từ</option>
-        </select>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+          <select class="form-input" id="aiWordCount" style="width:140px">
+            <option value="8">8 từ</option>
+            <option value="10" selected>10 từ</option>
+            <option value="15">15 từ</option>
+            <option value="20">20 từ</option>
+            <option value="custom">Tùy chỉnh...</option>
+          </select>
+          <input type="number" class="form-input" id="aiWordCountCustom" min="1" max="50" value="25"
+            placeholder="Số từ (1-50)" style="width:130px;display:none">
+        </div>
       </div>
 
       <!-- Tab: Image -->
@@ -1387,12 +1392,17 @@
           <button class="btn-ghost" style="padding:0.3rem 0.6rem;font-size:0.8rem" onclick="clearFileUpload()">✕</button>
         </div>
         <label class="form-label" style="margin-top:1rem" data-i18n="label.wordCountExtract">Số lượng từ muốn trích xuất</label>
-        <select class="form-input" id="aiFileWordCount" style="width:140px">
-          <option value="8">8 từ</option>
-          <option value="10" selected>10 từ</option>
-          <option value="15">15 từ</option>
-          <option value="20">20 từ</option>
-        </select>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+          <select class="form-input" id="aiFileWordCount" style="width:140px">
+            <option value="8">8 từ</option>
+            <option value="10" selected>10 từ</option>
+            <option value="15">15 từ</option>
+            <option value="20">20 từ</option>
+            <option value="custom">Tùy chỉnh...</option>
+          </select>
+          <input type="number" class="form-input" id="aiFileWordCountCustom" min="1" max="50" value="25"
+            placeholder="Số từ (1-50)" style="width:130px;display:none">
+        </div>
       </div>
 
       <!-- AI Result -->
