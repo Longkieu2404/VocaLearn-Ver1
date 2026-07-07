@@ -346,6 +346,13 @@ Storage.saveStreak      = v => { _origSaveStreak(v);      FirebaseSync.triggerSa
 Storage.saveSampleThumbs = v => { _origSaveSampleThumbs(v); FirebaseSync.triggerSave(); };
 Trash._save              = v => { _origTrashSave(v);       FirebaseSync.triggerSave(); };
 
+// Lịch sử chat (ChatSessions) lưu trực tiếp qua localStorage trong app.js, không đi qua
+// đối tượng Storage ở trên, nên cần vá riêng để mỗi tin nhắn cũng kích hoạt đồng bộ Firebase.
+if (typeof ChatSessions !== 'undefined') {
+  const _origChatSave = ChatSessions._save.bind(ChatSessions);
+  ChatSessions._save = list => { _origChatSave(list); FirebaseSync.triggerSave(); };
+}
+
 // ===== NETWORK RECONNECT =====
 window.addEventListener('online', async () => {
   FirebaseSync._isOnline = true;
