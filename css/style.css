@@ -4072,6 +4072,19 @@ body.game-fullscreen #scrambleDone {
   box-sizing: border-box;
 }
 
+/* ===== STUDY / QUIZ SESSION FULLSCREEN MODE ===== */
+/* Khi đang học thẻ / làm kiểm tra: ẩn sidebar, ẩn topbar mobile, và căn giữa nội dung
+   trên toàn bộ chiều rộng màn hình (thay vì lệch theo sidebar). */
+body.session-fullscreen .sidebar          { transform: translateX(-100%); }
+body.session-fullscreen .sidebar-backdrop { display: none !important; }
+body.session-fullscreen .topbar           { display: none !important; }
+body.session-fullscreen .main {
+  margin-left: 0 !important;
+}
+@media (max-width: 900px) {
+  body.session-fullscreen .main { padding-top: 2.5rem !important; }
+}
+
 /* Transition mượt */
 .sidebar { transition: transform 0.28s ease; }
 .main     { transition: margin-left 0.28s ease, padding 0.28s ease; }

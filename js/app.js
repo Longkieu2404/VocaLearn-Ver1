@@ -233,12 +233,14 @@ let studyQueue = [];
 let studyIndex = 0;
 let studyFlipped = false;
 let studyResults = { easy: 0, ok: 0, hard: 0 };
+let studySessionComplete = false; // true khi đã hoàn thành buổi học (dùng để quyết định có cần xác nhận khi thoát không)
 let quizSetId = null;
 let quizCards = [];
 let quizIndex = 0;
 let quizCorrect = 0;
 let quizWrong = 0;
 let quizResultMap = {};
+let quizSessionComplete = false; // true khi đã hoàn thành bài kiểm tra
 let quizMode = 'multiple'; // 'multiple' | 'essay'
 let quizEssayDirection = 'en2vi'; // 'en2vi' | 'vi2en'
 let detailSetId = null;
@@ -596,9 +598,9 @@ function setupNav() {
   const thumbPickerGlobal = document.getElementById('thumbPickerGlobal');
   if (thumbPickerGlobal) thumbPickerGlobal.addEventListener('change', onThumbPickerGlobalChange);
   document.getElementById('btnShowAnswer').addEventListener('click', showAnswer);
-  document.getElementById('btnExitStudy').addEventListener('click', exitStudy);
+  document.getElementById('btnExitStudy').addEventListener('click', handleExitStudyClick);
   document.getElementById('btnStudyAgain').addEventListener('click', () => startStudy(studySetId));
-  document.getElementById('btnExitQuiz').addEventListener('click', exitQuiz);
+  document.getElementById('btnExitQuiz').addEventListener('click', handleExitQuizClick);
   document.getElementById('btnQuizAgain').addEventListener('click', () => showQuizModeModal(quizSetId));
   document.getElementById('flashcard').addEventListener('click', flipCard);
   document.getElementById('btnNextQuiz').addEventListener('click', nextQuizQuestion);
@@ -614,7 +616,7 @@ function setupNav() {
   document.getElementById('btnGenerateAI').addEventListener('click', generateWithAI);
   document.getElementById('btnSaveAISet').addEventListener('click', saveAISet);
   document.getElementById('btnStartMixedQuiz').addEventListener('click', startMixedQuiz);
-  document.getElementById('btnExitMixedQuiz').addEventListener('click', exitMixedQuiz);
+  document.getElementById('btnExitMixedQuiz').addEventListener('click', handleExitMixedQuizClick);
   document.getElementById('btnNextMixed').addEventListener('click', nextMixedQuestion);
   document.getElementById('btnMixedAgain').addEventListener('click', restartMixedQuiz);
   setupAITabs();
@@ -631,6 +633,10 @@ function navigateTo(page) {
   if (page !== 'scramble') {
     document.body.classList.remove('game-fullscreen');
     if (typeof AudioFX !== 'undefined') AudioFX.raceBgStop();
+  }
+  // Thoát chế độ session (ẩn sidebar, căn giữa) nếu rời khỏi trang học/kiểm tra
+  if (page !== 'study' && page !== 'quiz' && page !== 'mixedquiz') {
+    document.body.classList.remove('session-fullscreen');
   }
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.page === page);
@@ -1239,6 +1245,7 @@ function startStudy(setId) {
   studyIndex = 0;
   studyResults = { easy: 0, ok: 0, hard: 0 };
   studyFlipped = false;
+  studySessionComplete = false;
 
   document.getElementById('studySelectSet').style.display = 'none';
   document.getElementById('studySession').style.display = '';
@@ -1246,6 +1253,7 @@ function startStudy(setId) {
   document.getElementById('flashcard').style.display = '';
   document.getElementById('ratingBtns').style.display = 'none';
   document.getElementById('showAnswerWrap').style.display = '';
+  document.body.classList.add('session-fullscreen');
 
   showStudyCard();
 }
@@ -1306,6 +1314,7 @@ function rateCard(rating) {
 }
 
 function finishStudy() {
+  studySessionComplete = true;
   Storage.recordStudyToday(studyQueue.map(c => c.id));
   // Âm thanh hoàn thành: đạt nếu tỉ lệ khó < 40%
   const total = studyResults.easy + studyResults.ok + studyResults.hard;
@@ -1328,7 +1337,21 @@ function finishStudy() {
 function exitStudy() {
   document.getElementById('studySession').style.display = 'none';
   document.getElementById('studySelectSet').style.display = '';
+  document.body.classList.remove('session-fullscreen');
   navigateTo('home');
+}
+
+// Xử lý khi bấm nút "Thoát" trong lúc học — nếu chưa hoàn thành thì hỏi xác nhận,
+// và không ghi nhận lịch sử học của lượt đó (finishStudy/recordStudyToday sẽ không được gọi)
+async function handleExitStudyClick() {
+  if (studySessionComplete) { exitStudy(); return; }
+  const ok = await showConfirm(
+    getLang() === 'en'
+      ? 'You haven\'t finished this study session. If you exit now, this session won\'t be saved to your history. Exit anyway?'
+      : 'Bạn chưa hoàn thành buổi học này. Nếu thoát bây giờ, lượt học này sẽ không được ghi nhận vào lịch sử. Vẫn thoát?',
+    '⚠️'
+  );
+  if (ok) exitStudy();
 }
 
 // ---- QUIZ PAGE ----
@@ -1402,12 +1425,14 @@ function startQuiz(setId, mode) {
   if (!set) return;
   quizCards = shuffle([...set.cards]).slice(0, 15);
   quizIndex = 0; quizCorrect = 0; quizWrong = 0; quizResultMap = {};
+  quizSessionComplete = false;
 
   // Direction will be randomized per question in showQuizQuestion
 
   document.getElementById('quizSelectSet').style.display = 'none';
   document.getElementById('quizSession').style.display = '';
   document.getElementById('quizDone').style.display = 'none';
+  document.body.classList.add('session-fullscreen');
 
   showQuizQuestion();
 }
@@ -1599,6 +1624,7 @@ function checkAnswer(selected, correct, container) {
 }
 
 function finishQuiz() {
+  quizSessionComplete = true;
   const total = quizCards.length;
   const pct = Math.round(quizCorrect / total * 100);
 
@@ -1638,7 +1664,21 @@ function finishQuiz() {
 function exitQuiz() {
   document.getElementById('quizSession').style.display = 'none';
   document.getElementById('quizSelectSet').style.display = '';
+  document.body.classList.remove('session-fullscreen');
   navigateTo('home');
+}
+
+// Xử lý khi bấm nút "Thoát" trong lúc kiểm tra — nếu chưa hoàn thành thì hỏi xác nhận,
+// và không ghi nhận lịch sử của lượt kiểm tra đó
+async function handleExitQuizClick() {
+  if (quizSessionComplete) { exitQuiz(); return; }
+  const ok = await showConfirm(
+    getLang() === 'en'
+      ? 'You haven\'t finished this quiz. If you exit now, this attempt won\'t be saved to your history. Exit anyway?'
+      : 'Bạn chưa hoàn thành bài kiểm tra này. Nếu thoát bây giờ, lượt kiểm tra này sẽ không được ghi nhận vào lịch sử. Vẫn thoát?',
+    '⚠️'
+  );
+  if (ok) exitQuiz();
 }
 
 // ---- STATS PAGE ----
@@ -2004,6 +2044,7 @@ let mixedCorrect = 0;
 let mixedWrong = 0;
 let mixedResultMap = {};
 let mixedWrongCards = [];
+let mixedSessionComplete = false; // true khi đã hoàn thành bài kiểm tra tổng hợp
 let mixedQuizCountTarget = 15;
 let mixedQuizModeSelected = 'multiple'; // 'multiple' | 'essay' | 'random'
 let mixedCardDirections = []; // per-card direction for essay/random mode
@@ -2118,10 +2159,12 @@ function startMixedQuiz() {
 
   mixedIndex = 0; mixedCorrect = 0; mixedWrong = 0;
   mixedResultMap = {}; mixedWrongCards = [];
+  mixedSessionComplete = false;
 
   document.getElementById('mixedQuizConfig').style.display = 'none';
   document.getElementById('mixedQuizSession').style.display = '';
   document.getElementById('mixedDone').style.display = 'none';
+  document.body.classList.add('session-fullscreen');
   showMixedQuestion();
 }
 
@@ -2311,6 +2354,7 @@ function nextMixedQuestion() {
 }
 
 function finishMixedQuiz() {
+  mixedSessionComplete = true;
   // Lưu toàn bộ SR sau khi session kết thúc (batch save)
   const prog = getProgress();
   mixedQuizCards.forEach(card => {
@@ -2341,7 +2385,21 @@ function finishMixedQuiz() {
 function exitMixedQuiz() {
   document.getElementById('mixedQuizSession').style.display = 'none';
   document.getElementById('mixedQuizConfig').style.display = '';
+  document.body.classList.remove('session-fullscreen');
   navigateTo('home');
+}
+
+// Xử lý khi bấm nút "Thoát" trong lúc kiểm tra tổng hợp — nếu chưa hoàn thành thì hỏi xác nhận,
+// và không ghi nhận lịch sử của lượt kiểm tra đó
+async function handleExitMixedQuizClick() {
+  if (mixedSessionComplete) { exitMixedQuiz(); return; }
+  const ok = await showConfirm(
+    getLang() === 'en'
+      ? 'You haven\'t finished this quiz. If you exit now, this attempt won\'t be saved to your history. Exit anyway?'
+      : 'Bạn chưa hoàn thành bài kiểm tra này. Nếu thoát bây giờ, lượt kiểm tra này sẽ không được ghi nhận vào lịch sử. Vẫn thoát?',
+    '⚠️'
+  );
+  if (ok) exitMixedQuiz();
 }
 
 function restartMixedQuiz() {
