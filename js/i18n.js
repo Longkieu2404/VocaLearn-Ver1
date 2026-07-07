@@ -312,6 +312,15 @@ const I18N = {
     'ai.cancelBtn': 'Hủy',
     'ai.generateBtn': '✨ Tạo bằng AI',
     'ai.saveBtn': '💾 Lưu bộ thẻ',
+    'ai.apiKeyLink': 'Lấy miễn phí tại đây →',
+    'ai.topicPlaceholder': 'VD: 10 từ vựng tiếng Anh về động vật cho học sinh lớp 6\nhoặc: apple, banana, orange, grape, watermelon\nhoặc: các từ về thời tiết trong tiếng Anh',
+    'ai.wc8': '8 từ',
+    'ai.wc10': '10 từ',
+    'ai.wc15': '15 từ',
+    'ai.wc20': '20 từ',
+    'ai.wcCustom': 'Tùy chỉnh...',
+    'ai.wcCustomPlaceholder': 'Số từ (1-50)',
+    'ai.loadingDefault': 'AI đang tạo từ vựng...',
 
     /* ── Prompt/Confirm modal ── */
     'promptModal.cancel': 'Hủy',
@@ -805,6 +814,15 @@ const I18N = {
     'ai.cancelBtn': 'Cancel',
     'ai.generateBtn': '✨ Generate with AI',
     'ai.saveBtn': '💾 Save set',
+    'ai.apiKeyLink': 'Get one free here →',
+    'ai.topicPlaceholder': 'E.g.: 10 English vocabulary words about animals for 6th grade students\nor: apple, banana, orange, grape, watermelon\nor: words about weather in English',
+    'ai.wc8': '8 words',
+    'ai.wc10': '10 words',
+    'ai.wc15': '15 words',
+    'ai.wc20': '20 words',
+    'ai.wcCustom': 'Custom...',
+    'ai.wcCustomPlaceholder': 'Words (1-50)',
+    'ai.loadingDefault': 'AI is creating vocabulary...',
 
     /* ── Prompt/Confirm modal ── */
     'promptModal.cancel': 'Cancel',

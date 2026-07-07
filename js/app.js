@@ -575,7 +575,23 @@ function friendlyAIError(rawMsg) {
 function isRetryableAIError(status, msg) {
   msg = msg || '';
   if ([429, 404, 400, 500, 502, 503, 504].includes(status)) return true;
-  return /quota|Quota|not found|RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|Internal error/i.test(msg);
+  return /quota|Quota|not found|RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|Internal error|timeout/i.test(msg);
+}
+
+// Gọi fetch nhưng tự huỷ sau `timeoutMs` nếu không có phản hồi — tránh trường hợp
+// một model AI bị treo/phản hồi rất chậm khiến cả tính năng chờ vô thời hạn.
+// Khi timeout, ném lỗi có message chứa "timeout" để logic retry-model phía trên coi là lỗi có thể thử lại.
+async function fetchWithTimeout(url, options, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Request timeout (quá thời gian chờ)');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ---- NAVIGATION ----
@@ -2637,15 +2653,15 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
     }
 
     const MODELS = await GeminiModels.getModels(apiKey);
-    document.getElementById('aiLoadingText').textContent = 'AI đang kết nối...';
+    document.getElementById('aiLoadingText').textContent = getLang() === 'en' ? 'AI is connecting...' : 'AI đang kết nối...';
 
     let lastError = null;
     let data = null;
 
     for (const model of MODELS) {
       try {
-        document.getElementById('aiLoadingText').textContent = `AI đang xử lý... (${model})`;
-        const response = await fetch(
+        document.getElementById('aiLoadingText').textContent = getLang() === 'en' ? `AI is processing... (${model})` : `AI đang xử lý... (${model})`;
+        const response = await fetchWithTimeout(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
@@ -2654,7 +2670,8 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
               contents: [{ parts }],
               generationConfig: { maxOutputTokens: Math.max(2048, wordCount * 120) }
             })
-          }
+          },
+          20000
         );
         if (!response.ok) {
           const errJson = await response.json().catch(() => ({}));
@@ -4035,8 +4052,10 @@ const GeminiModels = {
     // Thử cả v1 và v1beta
     for (const ver of ['v1', 'v1beta']) {
       try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/${ver}/models?key=${apiKey}&pageSize=50`
+        const res = await fetchWithTimeout(
+          `https://generativelanguage.googleapis.com/${ver}/models?key=${apiKey}&pageSize=50`,
+          {},
+          10000
         );
         const data = await res.json();
         if (data.error) continue;
@@ -4165,7 +4184,7 @@ async function callChatAPI() {
     let succeeded = false;
     for (const apiVer of ['v1', 'v1beta']) {
       try {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
           'https://generativelanguage.googleapis.com/' + apiVer + '/models/' + model + ':generateContent?key=' + apiKey,
           {
             method: 'POST',
@@ -4176,7 +4195,8 @@ async function callChatAPI() {
               generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
             })
           // Note: if system_instruction fails (400), we retry below with embedded system prompt
-          }
+          },
+          15000
         );
 
         const data = await response.json();
@@ -4198,7 +4218,7 @@ async function callChatAPI() {
           // 400: thử lại không dùng system_instruction, nhúng vào contents
           if (code === 400) {
             try {
-              const r2 = await fetch(
+              const r2 = await fetchWithTimeout(
                 'https://generativelanguage.googleapis.com/' + apiVer + '/models/' + model + ':generateContent?key=' + apiKey,
                 {
                   method: 'POST',
@@ -4207,7 +4227,8 @@ async function callChatAPI() {
                     contents: contentsWithSystem,
                     generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
                   })
-                }
+                },
+                15000
               );
               const d2 = await r2.json();
               if (!d2.error) {
@@ -4476,7 +4497,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   let lastError2 = null;
   for (const model of dynamicModels2) {
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
           method: 'POST',
@@ -4485,7 +4506,8 @@ async function generateFlashcardsFromChat(offerId, topic) {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
           })
-        }
+        },
+        15000
       );
       const json = await response.json();
       if (!json.error) { data = json; break; }
