@@ -2676,7 +2676,7 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts }],
-              generationConfig: { maxOutputTokens: Math.max(3000, wordCount * 150), thinkingConfig: { thinkingBudget: 0 } }
+              generationConfig: { maxOutputTokens: Math.max(3000, wordCount * 150) }
             })
           },
           20000
@@ -4204,7 +4204,7 @@ async function callChatAPI() {
             body: JSON.stringify({
               system_instruction: { parts: [{ text: systemPrompt }] },
               contents: contents,
-              generationConfig: { maxOutputTokens: 4096, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
+              generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
             })
           // Note: if system_instruction fails (400), we retry below with embedded system prompt
           },
@@ -4237,7 +4237,7 @@ async function callChatAPI() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     contents: contentsWithSystem,
-                    generationConfig: { maxOutputTokens: 4096, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
+                    generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
                   })
                 },
                 15000
@@ -4280,7 +4280,17 @@ async function callChatAPI() {
   // Tất cả đều thất bại
   removeTypingIndicator();
   GeminiModels.clearCache(); // Xóa cache để lần sau fetch lại
-  appendErrorBubble(t('notif.aiError') + ' <button onclick="sendChatMessage()" style="margin-left:8px;padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;font-size:0.85rem">' + t('chat.retryBtn') + '</button>');
+  appendErrorBubble(t('notif.aiError') + ' <button onclick="retryLastChatMessage()" style="margin-left:8px;padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;font-size:0.85rem">' + t('chat.retryBtn') + '</button>');
+}
+
+// Nút "Thử lại" khi gửi tin nhắn thất bại: tin nhắn của người dùng đã được lưu sẵn trong chatHistory
+// (ô nhập đã bị xoá trắng ngay sau khi gửi), nên chỉ cần gọi lại API — KHÔNG gọi sendChatMessage()
+// vì lúc đó ô nhập rỗng sẽ không gửi được gì cả (đây chính là lý do nút "Thử lại" trước đây không hoạt động).
+function retryLastChatMessage() {
+  if (chatTyping) return;
+  if (!chatHistory.length || chatHistory[chatHistory.length - 1].role !== 'user') return;
+  showTypingIndicator();
+  callChatAPI();
 }
 
 // ===== CHAT → THÊM 1 TỪ VÀO BỘ THẺ CÓ SẴN =====
@@ -4598,7 +4608,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 3000, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
+            generationConfig: { maxOutputTokens: 3000, temperature: 0.7 }
           })
         },
         15000
