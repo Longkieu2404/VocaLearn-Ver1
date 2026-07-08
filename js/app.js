@@ -4143,7 +4143,9 @@ async function callChatAPI() {
   var systemPrompt = getLang() === 'en'
     ? 'You are the AI assistant of VocaLearn – an English vocabulary learning app. Reply in English, in a friendly and clear style.\n\n'
       + 'Tasks: explain vocabulary, English grammar, suggest learning tips, make example sentences.\n\n'
-      + 'IMPORTANT: When the user asks about a specific word or set, prioritize using their exact vocabulary data below (meaning, phonetic, example) rather than guessing.\n\n'
+      + 'IMPORTANT ABOUT VOCABULARY DATA:\n'
+      + '- If the user asks about a SPECIFIC word or set that already exists in their data below (e.g. "what does apple mean in my Fruits set", "how am I doing on the Animals set"), use their EXACT data (meaning, phonetic, example, status) — never invent different values for something they already have.\n'
+      + '- If the user simply asks you to give/teach/suggest a NEW list of vocabulary on a topic (e.g. "give me 10 words about the environment", "teach me animal vocabulary"), you should generate a genuinely useful list yourself — prefer words that are NOT already in their data below (so they learn something new), unless they explicitly ask to review existing words. Do NOT claim the list "comes from your flashcard sets" or similar unless the words you list are literally, verbatim already present in their data above — never fabricate that connection.\n\n'
       + '=== USER VOCABULARY DATA ===\n'
       + '- Total: ' + totalCount + ' words | Mastered: ' + masteredCount + ' words\n'
       + '- Status: new = not studied, learning = in progress, mastered = known\n\n'
@@ -4152,7 +4154,9 @@ async function callChatAPI() {
       + '\n\nADD-CARD SUGGESTION FEATURE: If the user asks about the meaning/usage of ONE specific English word during the conversation, and that word: (1) is NOT already present in the user\'s vocabulary data above, and (2) clearly fits the topic of ONE of the existing sets above (based on that set\'s name and the words already in it), then append EXACTLY one hidden line at the very end of your reply (do not mention or explain this line to the user) in this exact format:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nUse the exact "setId" shown next to the matching set above. If no existing set clearly fits, or the word is already known, or the question isn\'t about one specific word, do NOT add this line. Never mention the word "id" or this hidden feature anywhere in the visible reply.'
     : 'Bạn là trợ lý AI của VocaLearn – ứng dụng học từ vựng tiếng Anh. Hãy trả lời bằng tiếng Việt, thân thiện và dễ hiểu.\n\n'
       + 'Nhiệm vụ: giải thích từ vựng, ngữ pháp tiếng Anh, gợi ý mẹo học, đặt câu ví dụ.\n\n'
-      + 'QUAN TRỌNG: Khi người dùng hỏi về một từ hoặc bộ thẻ cụ thể, hãy ưu tiên dùng đúng dữ liệu từ vựng bên dưới của họ (nghĩa, phiên âm, ví dụ) thay vì tự nghĩ ra.\n\n'
+      + 'QUAN TRỌNG VỀ DỮ LIỆU TỪ VỰNG:\n'
+      + '- Nếu người dùng hỏi về MỘT từ/bộ thẻ CỤ THỂ đã có sẵn trong dữ liệu bên dưới (vd: "từ apple trong bộ Fruits của tôi nghĩa là gì", "tôi học bộ Animals đến đâu rồi"), hãy dùng ĐÚNG dữ liệu đó (nghĩa, phiên âm, ví dụ, trạng thái) — không tự bịa ra giá trị khác cho những từ họ đã có.\n'
+      + '- Nếu người dùng chỉ đơn giản nhờ bạn cho/dạy/gợi ý một DANH SÁCH TỪ VỰNG MỚI theo chủ đề (vd: "cho tôi 10 từ vựng về chủ đề môi trường", "dạy tôi từ vựng về động vật"), hãy TỰ tạo ra một danh sách phù hợp, hữu ích — ưu tiên chọn những từ CHƯA có trong dữ liệu bên dưới của họ (để họ học được từ mới), trừ khi họ yêu cầu ôn lại từ cũ. TUYỆT ĐỐI KHÔNG được nói rằng danh sách này "được lấy từ bộ thẻ của bạn" hay tương tự, trừ khi các từ đó thực sự xuất hiện y nguyên trong dữ liệu bên dưới — không bịa ra mối liên hệ đó.\n\n'
       + '=== DỮ LIỆU TỪ VỰNG CỦA NGƯỜI DÙNG ===\n'
       + '- Tổng: ' + totalCount + ' từ | Đã thuộc: ' + masteredCount + ' từ\n'
       + '- Trạng thái: new = chưa học, learning = đang học, mastered = đã thuộc\n\n'
@@ -4404,9 +4408,18 @@ function extractTopicFromMessage(text) {
     /(?:về|chủ\s+đề|topic)\s+["""'']?([^"""''.,!?\n]+)/i,
     /(?:create|make|generate)\s+(?:flashcard|set|vocabulary)\s+(?:about|on|for)\s+([^.,!?\n]+)/i,
   ];
+  // Các cụm chỉ MANG TÍNH THAM CHIẾU tới nội dung đã có ở trên trong hội thoại (không phải chủ đề thật),
+  // vd "10 từ trên", "các từ đó", "danh sách vừa rồi", "the words above"... → không dùng làm tên/chủ đề,
+  // để hệ thống tự nhận diện & tái sử dụng danh sách từ đã có (xem parseWordListFromText) thay vì hiển thị
+  // nguyên văn cụm tham chiếu này cho người dùng (gây cảm giác AI không hiểu ngữ cảnh).
+  const referenceOnlyRe = /^(?:với\s+|các\s+|những\s+|toàn\s+bộ\s+)*\d*\s*từ\s*(?:trên|đó|này|vừa\s+rồi|đã\s+(?:cho|nêu|liệt\s+kê)|ở\s+trên)\.?$|^(?:the\s+)?(?:words?|list)\s+(?:above|mentioned)\.?$/i;
   for (const p of patterns) {
     const m = text.match(p);
-    if (m && m[1] && m[1].trim().length > 1) return m[1].trim();
+    if (m && m[1] && m[1].trim().length > 1) {
+      const captured = m[1].trim();
+      if (referenceOnlyRe.test(captured)) return null;
+      return captured;
+    }
   }
   return null;
 }
@@ -4420,13 +4433,15 @@ function offerFlashcardConfirm(topic) {
   offerEl.className = 'chat-bubble chat-bubble-ai';
   offerEl.id = offerId;
 
-  const placeholder = topic || '';
   // Nếu hội thoại gần đây đã có sẵn danh sách từ (AI đã liệt kê), báo cho người dùng biết là sẽ dùng lại đúng các từ đó
   let hasReusableList = false;
   for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 6; i--) {
     if (chatHistory[i].role !== 'assistant') continue;
     if (parseWordListFromText(chatHistory[i].content).length >= 3) { hasReusableList = true; break; }
   }
+  // Khi sẽ tái sử dụng danh sách có sẵn, không điền sẵn "chủ đề" thô vào ô nhập (tránh hiển thị
+  // những cụm không có ý nghĩa như "với 10 từ trên") — để trống, người dùng có thể tự đặt tên nếu muốn.
+  const placeholder = hasReusableList ? '' : (topic || '');
   const inputPlaceholder = hasReusableList
     ? (getLang() === 'en' ? 'Set name (optional) — will reuse the words listed above' : 'Tên bộ thẻ (không bắt buộc) — sẽ dùng lại đúng các từ đã liệt kê ở trên')
     : (getLang() === 'en' ? 'Enter topic (e.g. Animals, Weather, School...)' : 'Nhập chủ đề (vd: Animals, Weather, School...)');
