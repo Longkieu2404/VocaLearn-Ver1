@@ -578,6 +578,14 @@ function isRetryableAIError(status, msg) {
   return /quota|Quota|not found|RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|Internal error|timeout/i.test(msg);
 }
 
+// Một số model Gemini có khả năng "suy nghĩ" (thinking) trả về thêm các phần nội dung nội bộ
+// (đánh dấu bằng part.thought === true) mô tả quá trình suy luận — phần này KHÔNG phải câu trả lời
+// dành cho người dùng và không được hiển thị. Hàm này chỉ lấy phần text thực sự là câu trả lời cuối cùng.
+function extractTextFromParts(parts) {
+  if (!parts || !Array.isArray(parts)) return '';
+  return parts.filter(function(p) { return !p.thought; }).map(function(p) { return p.text || ''; }).join('');
+}
+
 // Gọi fetch nhưng tự huỷ sau `timeoutMs` nếu không có phản hồi — tránh trường hợp
 // một model AI bị treo/phản hồi rất chậm khiến cả tính năng chờ vô thời hạn.
 // Khi timeout, ném lỗi có message chứa "timeout" để logic retry-model phía trên coi là lỗi có thể thử lại.
@@ -2668,7 +2676,7 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts }],
-              generationConfig: { maxOutputTokens: Math.max(2048, wordCount * 120) }
+              generationConfig: { maxOutputTokens: Math.max(3000, wordCount * 150), thinkingConfig: { thinkingBudget: 0 } }
             })
           },
           20000
@@ -2691,7 +2699,7 @@ Trả về JSON thuần (không có markdown, không có backtick), định dạ
     }
 
     if (!data) throw new Error(lastError || 'Không thể tạo bộ thẻ, vui lòng thử lại.');
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const raw = extractTextFromParts(data.candidates?.[0]?.content?.parts);
     const clean = raw.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
@@ -4196,7 +4204,7 @@ async function callChatAPI() {
             body: JSON.stringify({
               system_instruction: { parts: [{ text: systemPrompt }] },
               contents: contents,
-              generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+              generationConfig: { maxOutputTokens: 4096, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
             })
           // Note: if system_instruction fails (400), we retry below with embedded system prompt
           },
@@ -4229,15 +4237,14 @@ async function callChatAPI() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     contents: contentsWithSystem,
-                    generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+                    generationConfig: { maxOutputTokens: 4096, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
                   })
                 },
                 15000
               );
               const d2 = await r2.json();
               if (!d2.error) {
-                const reply2raw = (d2.candidates && d2.candidates[0] && d2.candidates[0].content && d2.candidates[0].content.parts
-                  ? d2.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('') : '');
+                const reply2raw = extractTextFromParts(d2.candidates && d2.candidates[0] && d2.candidates[0].content && d2.candidates[0].content.parts);
                 const { cleanText: reply2, suggestion: suggestion2 } = extractAddCardSuggestion(reply2raw);
                 removeTypingIndicator();
                 chatHistory.push({ role: 'assistant', content: reply2, ts: new Date().toISOString() });
@@ -4254,9 +4261,7 @@ async function callChatAPI() {
         }
 
         // Thành công
-        const replyRaw = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts
-          ? data.candidates[0].content.parts.map(function(p) { return p.text || ''; }).join('')
-          : '');
+        const replyRaw = extractTextFromParts(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts);
         const { cleanText: reply, suggestion } = extractAddCardSuggestion(replyRaw);
         removeTypingIndicator();
         chatHistory.push({ role: 'assistant', content: reply, ts: new Date().toISOString() });
@@ -4593,7 +4598,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: 3000, temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } }
           })
         },
         15000
@@ -4621,7 +4626,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   }
 
   try {
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const raw = extractTextFromParts(data.candidates?.[0]?.content?.parts);
     // Làm sạch: bỏ markdown fence, lấy phần JSON đầu tiên hợp lệ
     let clean = raw.replace(/```json|```/g, '').trim();
     // Nếu JSON bị cắt, thử tự đóng ngoặc
