@@ -4421,11 +4421,20 @@ function offerFlashcardConfirm(topic) {
   offerEl.id = offerId;
 
   const placeholder = topic || '';
+  // Nếu hội thoại gần đây đã có sẵn danh sách từ (AI đã liệt kê), báo cho người dùng biết là sẽ dùng lại đúng các từ đó
+  let hasReusableList = false;
+  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 6; i--) {
+    if (chatHistory[i].role !== 'assistant') continue;
+    if (parseWordListFromText(chatHistory[i].content).length >= 3) { hasReusableList = true; break; }
+  }
+  const inputPlaceholder = hasReusableList
+    ? (getLang() === 'en' ? 'Set name (optional) — will reuse the words listed above' : 'Tên bộ thẻ (không bắt buộc) — sẽ dùng lại đúng các từ đã liệt kê ở trên')
+    : (getLang() === 'en' ? 'Enter topic (e.g. Animals, Weather, School...)' : 'Nhập chủ đề (vd: Animals, Weather, School...)');
   offerEl.innerHTML = `
     <div class="chat-avatar">🤖</div>
     <div class="chat-offer-box">
       <div class="chat-offer-text">${t('chat.offerText')}</div>
-      <input id="${inputId}" class="chat-offer-input" type="text" placeholder="${getLang() === 'en' ? 'Enter topic (e.g. Animals, Weather, School...)' : 'Nhập chủ đề (vd: Animals, Weather, School...)'}" value="${placeholder.replace(/"/g, '&quot;')}" />
+      <input id="${inputId}" class="chat-offer-input" type="text" placeholder="${inputPlaceholder}" value="${placeholder.replace(/"/g, '&quot;')}" />
       <div class="chat-offer-actions">
         <button class="btn-offer-yes" id="${offerId}_btnYes">${getLang() === 'en' ? '📚 Create set' : '📚 Tạo bộ thẻ'}</button>
         <button class="btn-offer-no" id="${offerId}_btnNo">Huỷ</button>
@@ -4442,12 +4451,6 @@ function offerFlashcardConfirm(topic) {
   document.getElementById(offerId + '_btnYes').onclick = function() {
     const inputEl = document.getElementById(inputId);
     const finalTopic = inputEl ? inputEl.value.trim() : '';
-    if (!finalTopic) {
-      inputEl.style.borderColor = 'var(--pink)';
-      inputEl.placeholder = t('chat.enterTopic');
-      inputEl.focus();
-      return;
-    }
     generateFlashcardsFromChat(offerId, finalTopic);
   };
   // Enter để xác nhận
@@ -4460,18 +4463,85 @@ function offerFlashcardConfirm(topic) {
   }
 }
 
+// Cố gắng tách ra danh sách từ vựng đã được AI liệt kê trong một tin nhắn trước đó, dạng:
+// "1. **Word** /phonetic/: nghĩa" (có/không có ** và /phiên âm/ đều được).
+// Trả về mảng {word, phonetic, meaning} — dùng để TÁI SỬ DỤNG chính xác từ đã hiển thị,
+// thay vì để AI tự bịa ra một danh sách khác khi được yêu cầu "tạo bộ thẻ với các từ trên".
+function parseWordListFromText(text) {
+  if (!text) return [];
+  const results = [];
+  const lineRe = /^\s*\d+[\.\)]\s*\*{0,2}([A-Za-z][A-Za-z\s\-']{0,40}?)\*{0,2}\s*(\/[^\/\n]+\/)?\s*[:\-–]\s*(.+?)\s*$/gm;
+  let m;
+  while ((m = lineRe.exec(text)) !== null) {
+    const word = m[1].trim();
+    const phonetic = (m[2] || '').trim();
+    const meaning = m[3].trim().replace(/\*+$/, '').trim();
+    if (word && meaning) results.push({ word, phonetic, meaning });
+  }
+  return results;
+}
+
+// Hiện bong bóng kết quả sau khi tạo bộ thẻ thành công (dùng chung cho cả 2 nhánh: tái sử dụng & gọi AI)
+function showFlashcardCreatedBubble(messages, setName, cards) {
+  const isEn = getLang() === 'en';
+  const preview = cards.slice(0, 3).map(c => `<li><strong>${c.word}</strong> – ${c.meaning}</li>`).join('');
+  const resultEl = document.createElement('div');
+  resultEl.className = 'chat-bubble chat-bubble-ai';
+  resultEl.innerHTML = `
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-text">
+      ✅ ${isEn ? `Created set <strong>"${setName}"</strong> with <strong>${cards.length} words</strong>!` : `Đã tạo bộ thẻ <strong>"${setName}"</strong> với <strong>${cards.length} từ</strong>!`}<br>
+      <ul style="margin:8px 0 8px 16px;padding:0">${preview}${cards.length > 3 ? `<li style="opacity:0.6">${isEn ? '...and ' + (cards.length - 3) + ' more' : '...và ' + (cards.length - 3) + ' từ khác'}</li>` : ''}</ul>
+      <button onclick="navigateTo('sets');renderSetsPage();" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:0.9rem">📂 ${isEn ? 'View set now' : 'Xem bộ thẻ ngay'} →</button>
+    </div>
+  `;
+  messages.appendChild(resultEl);
+  messages.scrollTop = messages.scrollHeight;
+}
+
 async function generateFlashcardsFromChat(offerId, topic) {
   const offerEl = document.getElementById(offerId);
   if (offerEl) offerEl.remove();
 
+  const messages = document.getElementById('chatMessages');
+  const isEn = getLang() === 'en';
+
+  // BƯỚC 1: Ưu tiên tuyệt đối — nếu AI đã liệt kê sẵn một danh sách từ vựng trong hội thoại gần đây,
+  // dùng LẠI CHÍNH XÁC danh sách đó thay vì gọi AI tạo một danh sách mới (tránh bị lệch từ so với
+  // những gì người dùng đã thấy và đồng ý ở trên).
+  let reuseCards = null;
+  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 6; i--) {
+    if (chatHistory[i].role !== 'assistant') continue;
+    const found = parseWordListFromText(chatHistory[i].content);
+    if (found.length >= 3) { reuseCards = found; break; }
+  }
+
+  if (reuseCards) {
+    const setId = 'chat_' + Date.now();
+    const colorIndex = Math.floor(Math.random() * 6);
+    const cards = reuseCards.map((c, i) => ({
+      id: `${setId}_card_${i}`,
+      word: c.word,
+      phonetic: c.phonetic,
+      meaning: c.meaning,
+      example: ''
+    }));
+    const setName = (topic && topic.trim()) ? topic.trim() : (isEn ? 'Chat vocabulary set' : 'Bộ thẻ từ Chat');
+    const sets = Storage.getSets();
+    sets.push({ id: setId, name: setName, colorIndex, cards });
+    Storage.saveSets(sets);
+    showFlashcardCreatedBubble(messages, setName, cards);
+    return;
+  }
+
+  // BƯỚC 2: Không tìm thấy danh sách từ rõ ràng nào trong hội thoại gần đây → nhờ AI tạo mới
   const apiKey = localStorage.getItem('vocalearn_gemini_key');
   if (!apiKey) {
-    appendErrorBubble((getLang()==='en'?'Please enter a Gemini API Key to create flashcards.':'Vui lòng nhập Gemini API Key để tạo bộ thẻ.') + '<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">' + (getLang()==='en'?'Get one free here →':'Lấy miễn phí tại đây →') + '</a>');
+    appendErrorBubble((isEn?'Please enter a Gemini API Key to create flashcards.':'Vui lòng nhập Gemini API Key để tạo bộ thẻ.') + '<br><a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--blue)">' + (isEn?'Get one free here →':'Lấy miễn phí tại đây →') + '</a>');
     return;
   }
 
   // Loading bubble
-  const messages = document.getElementById('chatMessages');
   const loadingEl = document.createElement('div');
   loadingEl.className = 'chat-bubble chat-bubble-ai';
   loadingEl.id = 'chatFlashcardLoading';
@@ -4482,13 +4552,17 @@ async function generateFlashcardsFromChat(offerId, topic) {
   messages.appendChild(loadingEl);
   messages.scrollTop = messages.scrollHeight;
 
-  // Prompt: ưu tiên topic rõ ràng, fallback lịch sử chat
+  // Prompt: ưu tiên topic rõ ràng, fallback lịch sử chat.
+  // Luôn kèm theo vài tin nhắn gần nhất và yêu cầu rõ: nếu hội thoại đã có sẵn danh sách từ cụ thể
+  // thì PHẢI dùng lại đúng các từ đó (không tự bịa từ khác) — đây là lớp bảo hiểm thứ 2, phòng khi
+  // định dạng danh sách ở BƯỚC 1 không khớp được bằng regex.
+  const recentHistory = chatHistory.slice(-6).map(m => m.role + ': ' + m.content).join('\n');
+  const reuseInstruction = 'QUAN TRỌNG: Nếu đoạn hội thoại dưới đây đã liệt kê sẵn một danh sách từ vựng cụ thể, hãy dùng LẠI CHÍNH XÁC các từ đó (giữ nguyên từ, phiên âm, nghĩa đã cho) — KHÔNG được tự bịa ra từ khác hay đổi nghĩa. Chỉ khi hội thoại KHÔNG có sẵn danh sách từ cụ thể nào thì mới tự tạo từ mới phù hợp.';
   let prompt;
   if (topic && topic.trim()) {
-    prompt = `Tạo 10 từ vựng tiếng Anh về chủ đề "${topic.trim()}", phù hợp với học sinh lớp 6 Việt Nam.\nTrả về JSON thuần (không markdown, không backtick), định dạng:\n{"setName":"Tên bộ thẻ ngắn gọn","cards":[{"word":"...","phonetic":"/.../","meaning":"...","example":"..."}]}`;
+    prompt = `${reuseInstruction}\n\nBối cảnh hội thoại gần đây:\n${recentHistory}\n\nChủ đề/yêu cầu: "${topic.trim()}"\nSố lượng từ mong muốn: khoảng 10 (hoặc đúng số lượng đã được liệt kê sẵn trong hội thoại nếu có), phù hợp với học sinh lớp 6 Việt Nam.\nTrả về JSON thuần (không markdown, không backtick), định dạng:\n{"setName":"Tên bộ thẻ ngắn gọn","cards":[{"word":"...","phonetic":"/.../","meaning":"...","example":"..."}]}`;
   } else {
-    const recentHistory = chatHistory.slice(-4).map(m => m.role + ': ' + m.content).join('\n');
-    prompt = `Dựa trên hội thoại sau, tạo 10 từ vựng tiếng Anh phù hợp nhất, dành cho học sinh lớp 6 Việt Nam:\n\n${recentHistory}\n\nTrả về JSON thuần (không markdown, không backtick), định dạng:\n{"setName":"Tên bộ thẻ ngắn gọn","cards":[{"word":"...","phonetic":"/.../","meaning":"...","example":"..."}]}`;
+    prompt = `${reuseInstruction}\n\nHội thoại:\n${recentHistory}\n\nSố lượng từ mong muốn: khoảng 10 (hoặc đúng số lượng đã được liệt kê sẵn trong hội thoại nếu có), phù hợp với học sinh lớp 6 Việt Nam.\nTrả về JSON thuần (không markdown, không backtick), định dạng:\n{"setName":"Tên bộ thẻ ngắn gọn","cards":[{"word":"...","phonetic":"/.../","meaning":"...","example":"..."}]}`;
   }
 
   let dynamicModels2 = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-flash','gemini-1.5-flash-8b'];
@@ -4572,25 +4646,14 @@ async function generateFlashcardsFromChat(offerId, topic) {
       example: c.example || ''
     })).filter(c => c.word && c.meaning);
 
-    if (cards.length === 0) { appendErrorBubble('❌ ' + (getLang()==='en'?'No valid words were created.':'Không có từ hợp lệ nào được tạo.')); return; }
+    if (cards.length === 0) { appendErrorBubble('❌ ' + (isEn?'No valid words were created.':'Không có từ hợp lệ nào được tạo.')); return; }
 
+    const setName = parsed.setName || (isEn ? 'Chat vocabulary set' : 'Bộ thẻ từ Chat');
     const sets = Storage.getSets();
-    sets.push({ id: setId, name: parsed.setName || 'Bộ thẻ từ Chat', colorIndex, cards });
+    sets.push({ id: setId, name: setName, colorIndex, cards });
     Storage.saveSets(sets);
 
-    const preview = cards.slice(0, 3).map(c => `<li><strong>${c.word}</strong> – ${c.meaning}</li>`).join('');
-    const resultEl = document.createElement('div');
-    resultEl.className = 'chat-bubble chat-bubble-ai';
-    resultEl.innerHTML = `
-      <div class="chat-avatar">🤖</div>
-      <div class="chat-text">
-        ✅ Đã tạo bộ thẻ <strong>"${parsed.setName || 'Bộ thẻ từ Chat'}"</strong> với <strong>${cards.length} từ</strong>!<br>
-        <ul style="margin:8px 0 8px 16px;padding:0">${preview}${cards.length > 3 ? '<li style="opacity:0.6">...và ' + (cards.length - 3) + ' từ khác</li>' : ''}</ul>
-        <button onclick="navigateTo('sets');renderSetsPage();" style="margin-top:6px;padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:0.9rem">📂 Xem bộ thẻ ngay →</button>
-      </div>
-    `;
-    messages.appendChild(resultEl);
-    messages.scrollTop = messages.scrollHeight;
+    showFlashcardCreatedBubble(messages, setName, cards);
   } catch(e) {
     appendErrorBubble(friendlyAIError(e.message));
   }
