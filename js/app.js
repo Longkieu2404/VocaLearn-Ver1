@@ -4448,18 +4448,33 @@ function offerFlashcardConfirm(topic) {
   offerEl.className = 'chat-bubble chat-bubble-ai';
   offerEl.id = offerId;
 
-  // Nếu hội thoại gần đây đã có sẵn danh sách từ (AI đã liệt kê), báo cho người dùng biết là sẽ dùng lại đúng các từ đó
+  // Nếu hội thoại gần đây đã có sẵn danh sách từ (AI đã liệt kê), sẽ tái sử dụng đúng các từ đó.
+  // Đồng thời cố gắng đoán ra một TÊN BỘ THẺ hợp lý để điền sẵn vào ô nhập (người dùng có thể sửa lại),
+  // thay vì chỉ hiện dòng hướng dẫn suông.
   let hasReusableList = false;
+  let reusableListIdx = -1;
   for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 6; i--) {
     if (chatHistory[i].role !== 'assistant') continue;
-    if (parseWordListFromText(chatHistory[i].content).length >= 3) { hasReusableList = true; break; }
+    if (parseWordListFromText(chatHistory[i].content).length >= 3) { hasReusableList = true; reusableListIdx = i; break; }
   }
-  // Khi sẽ tái sử dụng danh sách có sẵn, không điền sẵn "chủ đề" thô vào ô nhập (tránh hiển thị
-  // những cụm không có ý nghĩa như "với 10 từ trên") — để trống, người dùng có thể tự đặt tên nếu muốn.
-  const placeholder = hasReusableList ? '' : (topic || '');
-  const inputPlaceholder = hasReusableList
-    ? (getLang() === 'en' ? 'Set name (optional) — will reuse the words listed above' : 'Tên bộ thẻ (không bắt buộc) — sẽ dùng lại đúng các từ đã liệt kê ở trên')
-    : (getLang() === 'en' ? 'Enter topic (e.g. Animals, Weather, School...)' : 'Nhập chủ đề (vd: Animals, Weather, School...)');
+
+  let suggestedName = (topic && topic.trim()) ? topic.trim() : '';
+  if (!suggestedName && reusableListIdx !== -1) {
+    // Thử đoán chủ đề từ câu giới thiệu của chính AI (vd: "...về chủ đề Môi trường...")
+    const topicRe = /chủ\s+đề\s*[:\-]?\s*\**([\p{L}\s]{2,30}?)\**(?:\s+(?:được|để|giúp|nhé|sau|dưới|nha|nè|này|đấy|nhá)|[:\n!]|$)/iu;
+    const m = chatHistory[reusableListIdx].content.match(topicRe);
+    if (m && m[1].trim()) suggestedName = m[1].trim();
+    // Nếu vẫn chưa có, thử trích từ chính câu hỏi trước đó của người dùng (câu đã tạo ra danh sách này)
+    if (!suggestedName && reusableListIdx > 0 && chatHistory[reusableListIdx - 1].role === 'user') {
+      const prevTopic = extractTopicFromMessage(chatHistory[reusableListIdx - 1].content);
+      if (prevTopic) suggestedName = prevTopic;
+    }
+  }
+  // Viết hoa chữ cái đầu cho đẹp
+  if (suggestedName) suggestedName = suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1);
+
+  const placeholder = suggestedName;
+  const inputPlaceholder = getLang() === 'en' ? 'Enter set name...' : 'Nhập tên bộ thẻ...';
   offerEl.innerHTML = `
     <div class="chat-avatar">🤖</div>
     <div class="chat-offer-box">
