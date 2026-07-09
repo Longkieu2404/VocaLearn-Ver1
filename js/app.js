@@ -4427,7 +4427,7 @@ function extractTopicFromMessage(text) {
   // vd "10 từ trên", "các từ đó", "danh sách vừa rồi", "the words above"... → không dùng làm tên/chủ đề,
   // để hệ thống tự nhận diện & tái sử dụng danh sách từ đã có (xem parseWordListFromText) thay vì hiển thị
   // nguyên văn cụm tham chiếu này cho người dùng (gây cảm giác AI không hiểu ngữ cảnh).
-  const referenceOnlyRe = /^(?:với\s+|các\s+|những\s+|toàn\s+bộ\s+)*\d*\s*từ\s*(?:trên|đó|này|vừa\s+rồi|đã\s+(?:cho|nêu|liệt\s+kê)|ở\s+trên)\.?$|^(?:the\s+)?(?:words?|list)\s+(?:above|mentioned)\.?$/i;
+  const referenceOnlyRe = /^(?:với\s+|các\s+|những\s+|toàn\s+bộ\s+)*(?:\d+\s*)?(?:từ|danh\s+sách|list)\s*(?:trên|đó|này|vừa\s+rồi|đã\s+(?:cho|nêu|liệt\s+kê)|ở\s+trên)\.?$|^(?:the\s+)?(?:words?|list)\s+(?:above|mentioned)\.?$/i;
   for (const p of patterns) {
     const m = text.match(p);
     if (m && m[1] && m[1].trim().length > 1) {
@@ -4435,6 +4435,26 @@ function extractTopicFromMessage(text) {
       if (referenceOnlyRe.test(captured)) return null;
       return captured;
     }
+  }
+  return null;
+}
+
+// Thử đoán "chủ đề" từ một đoạn văn tự do (thường là câu giới thiệu của AI trước danh sách từ),
+// bằng nhiều mẫu câu khác nhau — trả về null nếu không đoán được gì chắc chắn.
+function guessTopicFromText(text) {
+  if (!text) return null;
+  const stopWords = '(?:được|để|giúp|nhé|sau|dưới|nha|nè|này|đấy|nhá|cho|nhá!|cùng|nhé!|đây)';
+  const patterns = [
+    // "...về chủ đề X để/nhé/:..."
+    new RegExp('chủ\\s+đề\\s*[:\\-]?\\s*\\**([\\p{L}0-9\\s]{2,30}?)\\**(?:\\s+' + stopWords + '\\b|[:\\n!.,]|$)', 'iu'),
+    // "...về X để/nhé/:..." (không có chữ "chủ đề")
+    new RegExp('\\bvề\\s+\\**([\\p{L}0-9\\s]{2,30}?)\\**(?:\\s+' + stopWords + '\\b|[:\\n!.,]|$)', 'iu'),
+    // English: "...about/on the topic of X:"
+    /(?:topic\s+of|about|on)\s+\**([A-Za-z0-9\s]{2,30}?)\**(?:\s+(?:for|to|so|below)\b|[:\n!.,]|$)/i,
+  ];
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (m && m[1] && m[1].trim().length > 1) return m[1].trim();
   }
   return null;
 }
@@ -4453,22 +4473,22 @@ function offerFlashcardConfirm(topic) {
   // thay vì chỉ hiện dòng hướng dẫn suông.
   let hasReusableList = false;
   let reusableListIdx = -1;
-  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 6; i--) {
+  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
     if (chatHistory[i].role !== 'assistant') continue;
     if (parseWordListFromText(chatHistory[i].content).length >= 3) { hasReusableList = true; reusableListIdx = i; break; }
   }
 
   let suggestedName = (topic && topic.trim()) ? topic.trim() : '';
   if (!suggestedName && reusableListIdx !== -1) {
-    // Thử đoán chủ đề từ câu giới thiệu của chính AI (vd: "...về chủ đề Môi trường...")
-    const topicRe = /chủ\s+đề\s*[:\-]?\s*\**([\p{L}\s]{2,30}?)\**(?:\s+(?:được|để|giúp|nhé|sau|dưới|nha|nè|này|đấy|nhá)|[:\n!]|$)/iu;
-    const m = chatHistory[reusableListIdx].content.match(topicRe);
-    if (m && m[1].trim()) suggestedName = m[1].trim();
-    // Nếu vẫn chưa có, thử trích từ chính câu hỏi trước đó của người dùng (câu đã tạo ra danh sách này)
+    // Lớp 1: đoán chủ đề từ câu giới thiệu của chính AI (vd: "...về chủ đề Môi trường...")
+    suggestedName = guessTopicFromText(chatHistory[reusableListIdx].content) || '';
+    // Lớp 2: đoán từ câu hỏi trước đó của người dùng (câu đã khiến AI liệt kê danh sách này)
     if (!suggestedName && reusableListIdx > 0 && chatHistory[reusableListIdx - 1].role === 'user') {
-      const prevTopic = extractTopicFromMessage(chatHistory[reusableListIdx - 1].content);
-      if (prevTopic) suggestedName = prevTopic;
+      suggestedName = extractTopicFromMessage(chatHistory[reusableListIdx - 1].content)
+        || guessTopicFromText(chatHistory[reusableListIdx - 1].content) || '';
     }
+    // Loại bỏ tiền tố dư thừa nếu lỡ dính lại (vd extractTopicFromMessage trả về "chủ đề X")
+    suggestedName = suggestedName.replace(/^chủ\s+đề\s+/i, '').trim();
   }
   // Viết hoa chữ cái đầu cho đẹp
   if (suggestedName) suggestedName = suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1);
@@ -4555,7 +4575,7 @@ async function generateFlashcardsFromChat(offerId, topic) {
   // dùng LẠI CHÍNH XÁC danh sách đó thay vì gọi AI tạo một danh sách mới (tránh bị lệch từ so với
   // những gì người dùng đã thấy và đồng ý ở trên).
   let reuseCards = null;
-  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 6; i--) {
+  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
     if (chatHistory[i].role !== 'assistant') continue;
     const found = parseWordListFromText(chatHistory[i].content);
     if (found.length >= 3) { reuseCards = found; break; }
