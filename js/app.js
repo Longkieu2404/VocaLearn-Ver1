@@ -4148,7 +4148,7 @@ async function callChatAPI() {
       + setsContext.join('\n\n')
       + '\n\nKeep answers concise. Use emojis sparingly to stay friendly.'
       + '\n\nADD-CARD SUGGESTION FEATURE: If the user asks about the meaning/usage of ONE specific English word during the conversation, and that word: (1) is NOT already present in the user\'s vocabulary data above, and (2) clearly fits the topic of ONE of the existing sets above (based on that set\'s name and the words already in it), then append EXACTLY one hidden line at the very end of your reply (do not mention or explain this line to the user) in this exact format:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nUse the exact "setId" shown next to the matching set above. If no existing set clearly fits, or the word is already known, or the question isn\'t about one specific word, do NOT add this line. Never mention the word "id" or this hidden feature anywhere in the visible reply.'
-      + '\n\nCREATE-SET DETECTION (important — use real understanding, not exact keywords): If, based on the natural meaning of the user\'s message and the conversation so far, they are asking you to create/save/turn something into a flashcard set — REGARDLESS of the exact words they use to phrase it — reply with a short, warm confirmation sentence (do not repeat the whole word list), then append EXACTLY one hidden line at the very end (never mention or explain this line to the user) in this exact format:\n<!--CREATESET:{"setName":"...","reuseLastList":true}-->\n- "setName": a short, sensible name for the set, inferred from the conversation context (e.g. if you already listed vocabulary about "wild animals" earlier, and the user says "make flashcards from that"/"turn those into a deck"/"save this list" — however they phrase it — infer setName as "Wild animals").\n- "reuseLastList": true if the user is referring to a vocabulary list you ALREADY gave earlier in this conversation (in any phrasing — "that list", "the words above", "those", "what you just gave me", etc. — understand this from context, not fixed wording); false if they want a brand-new list on a topic you have not listed yet.\nOnly add this marker when the create/save intent is genuinely clear from context — do not add it for casual mentions of "flashcard" that aren\'t actually a request. Never mention "setName", "reuseLastList", or this hidden feature anywhere in the visible reply.'
+      + '\n\nCREATE-SET DETECTION (important — use real understanding, not exact keywords): If, based on the natural meaning of the user\'s message and the conversation so far, they are asking you to create/save/turn something into a flashcard set — REGARDLESS of the exact words they use to phrase it — reply with a short, warm sentence saying you\'re about to prepare that set for them (e.g. "Sure, I\'ll set that up for you now!") — do NOT claim it is already created/saved/done, since the actual creation happens as a separate step right after your reply, and do not repeat the whole word list or state a specific word count (the exact count is determined separately and may differ from what was discussed). Then append EXACTLY one hidden line at the very end (never mention or explain this line to the user) in this exact format:\n<!--CREATESET:{"setName":"...","reuseLastList":true}-->\n- "setName": a short, sensible name for the set, inferred from the conversation context (e.g. if you already listed vocabulary about "wild animals" earlier, and the user says "make flashcards from that"/"turn those into a deck"/"save this list" — however they phrase it — infer setName as "Wild animals").\n- "reuseLastList": true if the user is referring to a vocabulary list you ALREADY gave earlier in this conversation (in any phrasing — "that list", "the words above", "those", "what you just gave me", etc. — understand this from context, not fixed wording); false if they want a brand-new list on a topic you have not listed yet.\nOnly add this marker when the create/save intent is genuinely clear from context — do not add it for casual mentions of "flashcard" that aren\'t actually a request. Never mention "setName", "reuseLastList", or this hidden feature anywhere in the visible reply.'
     : 'Bạn là trợ lý AI của VocaLearn – ứng dụng học từ vựng tiếng Anh. Hãy trả lời bằng tiếng Việt, thân thiện và dễ hiểu.\n\n'
       + 'Nhiệm vụ: giải thích từ vựng, ngữ pháp tiếng Anh, gợi ý mẹo học, đặt câu ví dụ.\n\n'
       + 'QUAN TRỌNG VỀ DỮ LIỆU TỪ VỰNG:\n'
@@ -4160,7 +4160,7 @@ async function callChatAPI() {
       + setsContext.join('\n\n')
       + '\n\nTrả lời ngắn gọn, súc tích. Dùng emoji vừa phải để tạo cảm giác thân thiện.'
       + '\n\nTÍNH NĂNG ĐỀ XUẤT THÊM TỪ: Nếu trong lúc trò chuyện, người dùng hỏi về nghĩa/cách dùng của MỘT từ vựng tiếng Anh cụ thể, và từ đó: (1) CHƯA có sẵn trong dữ liệu từ vựng của người dùng ở trên, và (2) phù hợp rõ ràng với chủ đề của MỘT trong các bộ thẻ đã có (dựa trên tên bộ thẻ và các từ đã có trong đó), thì hãy thêm CHÍNH XÁC một dòng ẩn ở cuối cùng câu trả lời (không nhắc đến hay giải thích gì về dòng này với người dùng) theo đúng định dạng:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nsetId phải lấy đúng như "id" ghi bên cạnh bộ thẻ tương ứng ở trên. Nếu không có bộ thẻ nào phù hợp, hoặc từ đó người dùng đã biết/đã có sẵn, hoặc câu hỏi không phải về một từ vựng cụ thể, thì KHÔNG được thêm dòng này. Không bao giờ nhắc đến chữ "id" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.'
-      + '\n\nNHẬN DIỆN Ý ĐỊNH TẠO BỘ THẺ (quan trọng — dùng khả năng hiểu ngôn ngữ tự nhiên thật sự, KHÔNG dựa vào từ khoá cố định): Nếu dựa trên ý nghĩa tự nhiên của tin nhắn và bối cảnh hội thoại, người dùng đang nhờ bạn tạo/lưu/biến nội dung nào đó thành một bộ thẻ từ vựng — BẤT KỂ họ diễn đạt bằng câu chữ gì (có thể rất khác nhau, không cần đúng từ "tạo bộ thẻ") — hãy trả lời bằng MỘT câu xác nhận ngắn gọn, thân thiện (không lặp lại cả danh sách từ), sau đó thêm CHÍNH XÁC một dòng ẩn ở cuối cùng (không bao giờ nhắc đến hay giải thích dòng này với người dùng) theo đúng định dạng:\n<!--CREATESET:{"setName":"...","reuseLastList":true}-->\n- "setName": một tên bộ thẻ ngắn gọn, hợp lý, được suy ra từ bối cảnh hội thoại (vd: nếu bạn vừa liệt kê từ vựng về "động vật hoang dã" ở trên, và người dùng nói "làm cho tôi bộ thẻ từ đó"/"lưu lại danh sách này"/"biến cái này thành thẻ học" — dù diễn đạt kiểu gì — hãy suy ra setName là "Động vật hoang dã").\n- "reuseLastList": true nếu người dùng đang nhắc đến một danh sách từ vựng bạn ĐÃ đưa ra trước đó trong hội thoại (dù diễn đạt thế nào — "danh sách đó", "các từ ở trên", "những từ vừa rồi", "cái này"... — hãy hiểu từ ngữ cảnh, không cần đúng từ khoá cố định); false nếu họ muốn một danh sách HOÀN TOÀN MỚI về một chủ đề mà bạn chưa từng liệt kê.\nChỉ thêm dòng này khi ý định tạo/lưu bộ thẻ THỰC SỰ rõ ràng từ ngữ cảnh — không thêm nếu chỉ nhắc đến từ "bộ thẻ" một cách tình cờ mà không phải yêu cầu thật. Không bao giờ nhắc đến "setName", "reuseLastList" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.';
+      + '\n\nNHẬN DIỆN Ý ĐỊNH TẠO BỘ THẺ (quan trọng — dùng khả năng hiểu ngôn ngữ tự nhiên thật sự, KHÔNG dựa vào từ khoá cố định): Nếu dựa trên ý nghĩa tự nhiên của tin nhắn và bối cảnh hội thoại, người dùng đang nhờ bạn tạo/lưu/biến nội dung nào đó thành một bộ thẻ từ vựng — BẤT KỂ họ diễn đạt bằng câu chữ gì (có thể rất khác nhau, không cần đúng từ "tạo bộ thẻ") — hãy trả lời bằng MỘT câu ngắn gọn, thân thiện nói rằng bạn SẮP chuẩn bị bộ thẻ đó cho họ (vd: "Được rồi, để mình chuẩn bị bộ thẻ đó cho bạn nhé!") — TUYỆT ĐỐI KHÔNG khẳng định là đã tạo/đã lưu xong, vì việc tạo thực tế diễn ra ở một bước riêng ngay sau câu trả lời của bạn; cũng không lặp lại cả danh sách từ hay nêu số lượng từ cụ thể (số lượng thực tế được xác định riêng, có thể khác với những gì đã trao đổi). Sau đó thêm CHÍNH XÁC một dòng ẩn ở cuối cùng (không bao giờ nhắc đến hay giải thích dòng này với người dùng) theo đúng định dạng:\n<!--CREATESET:{"setName":"...","reuseLastList":true}-->\n- "setName": một tên bộ thẻ ngắn gọn, hợp lý, được suy ra từ bối cảnh hội thoại (vd: nếu bạn vừa liệt kê từ vựng về "động vật hoang dã" ở trên, và người dùng nói "làm cho tôi bộ thẻ từ đó"/"lưu lại danh sách này"/"biến cái này thành thẻ học" — dù diễn đạt kiểu gì — hãy suy ra setName là "Động vật hoang dã").\n- "reuseLastList": true nếu người dùng đang nhắc đến một danh sách từ vựng bạn ĐÃ đưa ra trước đó trong hội thoại (dù diễn đạt thế nào — "danh sách đó", "các từ ở trên", "những từ vừa rồi", "cái này"... — hãy hiểu từ ngữ cảnh, không cần đúng từ khoá cố định); false nếu họ muốn một danh sách HOÀN TOÀN MỚI về một chủ đề mà bạn chưa từng liệt kê.\nChỉ thêm dòng này khi ý định tạo/lưu bộ thẻ THỰC SỰ rõ ràng từ ngữ cảnh — không thêm nếu chỉ nhắc đến từ "bộ thẻ" một cách tình cờ mà không phải yêu cầu thật. Không bao giờ nhắc đến "setName", "reuseLastList" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.';
 
   // Build Gemini contents — support multipart (text + images) when _parts present
   const contents = chatHistory.map(function(m) {
@@ -4194,7 +4194,7 @@ async function callChatAPI() {
             body: JSON.stringify({
               system_instruction: { parts: [{ text: systemPrompt }] },
               contents: contents,
-              generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
+              generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
             })
           // Note: if system_instruction fails (400), we retry below with embedded system prompt
           },
@@ -4227,7 +4227,7 @@ async function callChatAPI() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     contents: contentsWithSystem,
-                    generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
+                    generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
                   })
                 },
                 15000
@@ -4487,7 +4487,7 @@ function offerFlashcardConfirm(topic, reuseHint) {
   // để đảm bảo từ/nghĩa/phiên âm khi tái sử dụng khớp 100% với những gì đã hiển thị cho người dùng).
   let hasReusableList = false;
   let reusableListIdx = -1;
-  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
+  for (let i = chatHistory.length - 1; i >= 0; i--) {
     if (chatHistory[i].role !== 'assistant') continue;
     if (parseWordListFromText(chatHistory[i].content).length >= 3) { hasReusableList = true; reusableListIdx = i; break; }
   }
@@ -4552,7 +4552,7 @@ function offerFlashcardConfirm(topic, reuseHint) {
 function parseWordListFromText(text) {
   if (!text) return [];
   const results = [];
-  const lineRe = /^\s*\d+[\.\)]\s*\*{0,2}([A-Za-z][A-Za-z\s\-']{0,40}?)\*{0,2}\s*(\/[^\/\n]+\/)?\s*[:\-–]\s*(.+?)\s*$/gm;
+  const lineRe = /^\s*\d+[\.\):]?\s*\*{0,2}([A-Za-z][A-Za-z0-9\s\-']{0,40}?)\*{0,2}\s*(\/[^\/\n]+\/)?\s*[:\-–—]\s*(.+?)\s*$/gm;
   let m;
   while ((m = lineRe.exec(text)) !== null) {
     const word = m[1].trim();
@@ -4594,7 +4594,7 @@ async function generateFlashcardsFromChat(offerId, topic, forceNoReuse) {
   // Bỏ qua bước này nếu AI đã xác định rõ đây là yêu cầu danh sách MỚI (forceNoReuse = true).
   let reuseCards = null;
   if (!forceNoReuse) {
-    for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
+    for (let i = chatHistory.length - 1; i >= 0; i--) {
       if (chatHistory[i].role !== 'assistant') continue;
       const found = parseWordListFromText(chatHistory[i].content);
       if (found.length >= 3) { reuseCards = found; break; }
