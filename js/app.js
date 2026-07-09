@@ -3936,18 +3936,6 @@ function sendChatMessage() {
 
   chatHistory.push({ role: 'user', content: text || '[File đính kèm]', _parts: parts, ts: new Date().toISOString() });
 
-  // Phát hiện ý định tạo bộ thẻ từ tin nhắn người dùng
-  if (text && detectFlashcardIntent(text)) {
-    const topic = extractTopicFromMessage(text);
-    showTypingIndicator();
-    // Đợi một chút rồi hiện xác nhận thay vì gọi chat API
-    setTimeout(() => {
-      removeTypingIndicator();
-      offerFlashcardConfirm(topic);
-    }, 500);
-    return;
-  }
-
   showTypingIndicator();
   callChatAPI();
 }
@@ -4160,6 +4148,7 @@ async function callChatAPI() {
       + setsContext.join('\n\n')
       + '\n\nKeep answers concise. Use emojis sparingly to stay friendly.'
       + '\n\nADD-CARD SUGGESTION FEATURE: If the user asks about the meaning/usage of ONE specific English word during the conversation, and that word: (1) is NOT already present in the user\'s vocabulary data above, and (2) clearly fits the topic of ONE of the existing sets above (based on that set\'s name and the words already in it), then append EXACTLY one hidden line at the very end of your reply (do not mention or explain this line to the user) in this exact format:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nUse the exact "setId" shown next to the matching set above. If no existing set clearly fits, or the word is already known, or the question isn\'t about one specific word, do NOT add this line. Never mention the word "id" or this hidden feature anywhere in the visible reply.'
+      + '\n\nCREATE-SET DETECTION (important — use real understanding, not exact keywords): If, based on the natural meaning of the user\'s message and the conversation so far, they are asking you to create/save/turn something into a flashcard set — REGARDLESS of the exact words they use to phrase it — reply with a short, warm confirmation sentence (do not repeat the whole word list), then append EXACTLY one hidden line at the very end (never mention or explain this line to the user) in this exact format:\n<!--CREATESET:{"setName":"...","reuseLastList":true}-->\n- "setName": a short, sensible name for the set, inferred from the conversation context (e.g. if you already listed vocabulary about "wild animals" earlier, and the user says "make flashcards from that"/"turn those into a deck"/"save this list" — however they phrase it — infer setName as "Wild animals").\n- "reuseLastList": true if the user is referring to a vocabulary list you ALREADY gave earlier in this conversation (in any phrasing — "that list", "the words above", "those", "what you just gave me", etc. — understand this from context, not fixed wording); false if they want a brand-new list on a topic you have not listed yet.\nOnly add this marker when the create/save intent is genuinely clear from context — do not add it for casual mentions of "flashcard" that aren\'t actually a request. Never mention "setName", "reuseLastList", or this hidden feature anywhere in the visible reply.'
     : 'Bạn là trợ lý AI của VocaLearn – ứng dụng học từ vựng tiếng Anh. Hãy trả lời bằng tiếng Việt, thân thiện và dễ hiểu.\n\n'
       + 'Nhiệm vụ: giải thích từ vựng, ngữ pháp tiếng Anh, gợi ý mẹo học, đặt câu ví dụ.\n\n'
       + 'QUAN TRỌNG VỀ DỮ LIỆU TỪ VỰNG:\n'
@@ -4170,7 +4159,8 @@ async function callChatAPI() {
       + '- Trạng thái: new = chưa học, learning = đang học, mastered = đã thuộc\n\n'
       + setsContext.join('\n\n')
       + '\n\nTrả lời ngắn gọn, súc tích. Dùng emoji vừa phải để tạo cảm giác thân thiện.'
-      + '\n\nTÍNH NĂNG ĐỀ XUẤT THÊM TỪ: Nếu trong lúc trò chuyện, người dùng hỏi về nghĩa/cách dùng của MỘT từ vựng tiếng Anh cụ thể, và từ đó: (1) CHƯA có sẵn trong dữ liệu từ vựng của người dùng ở trên, và (2) phù hợp rõ ràng với chủ đề của MỘT trong các bộ thẻ đã có (dựa trên tên bộ thẻ và các từ đã có trong đó), thì hãy thêm CHÍNH XÁC một dòng ẩn ở cuối cùng câu trả lời (không nhắc đến hay giải thích gì về dòng này với người dùng) theo đúng định dạng:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nsetId phải lấy đúng như "id" ghi bên cạnh bộ thẻ tương ứng ở trên. Nếu không có bộ thẻ nào phù hợp, hoặc từ đó người dùng đã biết/đã có sẵn, hoặc câu hỏi không phải về một từ vựng cụ thể, thì KHÔNG được thêm dòng này. Không bao giờ nhắc đến chữ "id" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.';
+      + '\n\nTÍNH NĂNG ĐỀ XUẤT THÊM TỪ: Nếu trong lúc trò chuyện, người dùng hỏi về nghĩa/cách dùng của MỘT từ vựng tiếng Anh cụ thể, và từ đó: (1) CHƯA có sẵn trong dữ liệu từ vựng của người dùng ở trên, và (2) phù hợp rõ ràng với chủ đề của MỘT trong các bộ thẻ đã có (dựa trên tên bộ thẻ và các từ đã có trong đó), thì hãy thêm CHÍNH XÁC một dòng ẩn ở cuối cùng câu trả lời (không nhắc đến hay giải thích gì về dòng này với người dùng) theo đúng định dạng:\n<!--ADDCARD:{"word":"...","phonetic":"/.../","meaning":"...","example":"...","setId":"...","setName":"..."}-->\nsetId phải lấy đúng như "id" ghi bên cạnh bộ thẻ tương ứng ở trên. Nếu không có bộ thẻ nào phù hợp, hoặc từ đó người dùng đã biết/đã có sẵn, hoặc câu hỏi không phải về một từ vựng cụ thể, thì KHÔNG được thêm dòng này. Không bao giờ nhắc đến chữ "id" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.'
+      + '\n\nNHẬN DIỆN Ý ĐỊNH TẠO BỘ THẺ (quan trọng — dùng khả năng hiểu ngôn ngữ tự nhiên thật sự, KHÔNG dựa vào từ khoá cố định): Nếu dựa trên ý nghĩa tự nhiên của tin nhắn và bối cảnh hội thoại, người dùng đang nhờ bạn tạo/lưu/biến nội dung nào đó thành một bộ thẻ từ vựng — BẤT KỂ họ diễn đạt bằng câu chữ gì (có thể rất khác nhau, không cần đúng từ "tạo bộ thẻ") — hãy trả lời bằng MỘT câu xác nhận ngắn gọn, thân thiện (không lặp lại cả danh sách từ), sau đó thêm CHÍNH XÁC một dòng ẩn ở cuối cùng (không bao giờ nhắc đến hay giải thích dòng này với người dùng) theo đúng định dạng:\n<!--CREATESET:{"setName":"...","reuseLastList":true}-->\n- "setName": một tên bộ thẻ ngắn gọn, hợp lý, được suy ra từ bối cảnh hội thoại (vd: nếu bạn vừa liệt kê từ vựng về "động vật hoang dã" ở trên, và người dùng nói "làm cho tôi bộ thẻ từ đó"/"lưu lại danh sách này"/"biến cái này thành thẻ học" — dù diễn đạt kiểu gì — hãy suy ra setName là "Động vật hoang dã").\n- "reuseLastList": true nếu người dùng đang nhắc đến một danh sách từ vựng bạn ĐÃ đưa ra trước đó trong hội thoại (dù diễn đạt thế nào — "danh sách đó", "các từ ở trên", "những từ vừa rồi", "cái này"... — hãy hiểu từ ngữ cảnh, không cần đúng từ khoá cố định); false nếu họ muốn một danh sách HOÀN TOÀN MỚI về một chủ đề mà bạn chưa từng liệt kê.\nChỉ thêm dòng này khi ý định tạo/lưu bộ thẻ THỰC SỰ rõ ràng từ ngữ cảnh — không thêm nếu chỉ nhắc đến từ "bộ thẻ" một cách tình cờ mà không phải yêu cầu thật. Không bao giờ nhắc đến "setName", "reuseLastList" hay tính năng ẩn này trong phần trả lời hiển thị cho người dùng.';
 
   // Build Gemini contents — support multipart (text + images) when _parts present
   const contents = chatHistory.map(function(m) {
@@ -4245,11 +4235,14 @@ async function callChatAPI() {
               const d2 = await r2.json();
               if (!d2.error) {
                 const reply2raw = extractTextFromParts(d2.candidates && d2.candidates[0] && d2.candidates[0].content && d2.candidates[0].content.parts);
-                const { cleanText: reply2, suggestion: suggestion2 } = extractAddCardSuggestion(reply2raw);
+                const step2a = extractAddCardSuggestion(reply2raw);
+                const step2b = extractCreateSetSuggestion(step2a.cleanText);
+                const reply2 = step2b.cleanText;
                 removeTypingIndicator();
                 chatHistory.push({ role: 'assistant', content: reply2, ts: new Date().toISOString() });
                 appendBubble('ai', reply2);
-                if (suggestion2) offerAddCardToSet(suggestion2);
+                if (step2a.suggestion) offerAddCardToSet(step2a.suggestion);
+                if (step2b.suggestion) offerFlashcardConfirm(step2b.suggestion.setName, step2b.suggestion.reuseLastList);
                 _saveSession();
                 return;
               }
@@ -4262,11 +4255,14 @@ async function callChatAPI() {
 
         // Thành công
         const replyRaw = extractTextFromParts(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts);
-        const { cleanText: reply, suggestion } = extractAddCardSuggestion(replyRaw);
+        const stepA = extractAddCardSuggestion(replyRaw);
+        const stepB = extractCreateSetSuggestion(stepA.cleanText);
+        const reply = stepB.cleanText;
         removeTypingIndicator();
         chatHistory.push({ role: 'assistant', content: reply, ts: new Date().toISOString() });
         appendBubble('ai', reply);
-        if (suggestion) offerAddCardToSet(suggestion);
+        if (stepA.suggestion) offerAddCardToSet(stepA.suggestion);
+        if (stepB.suggestion) offerFlashcardConfirm(stepB.suggestion.setName, stepB.suggestion.reuseLastList);
         _saveSession();
         return;
 
@@ -4318,6 +4314,20 @@ function extractAddCardSuggestion(rawText) {
       example: parsed.example || '', setId: targetSet.id, setName: targetSet.name
     }
   };
+}
+
+// Tách dòng ẩn <!--CREATESET:{...}--> ra khỏi nội dung hiển thị — đây là lúc AI (dựa vào ngữ cảnh
+// hội thoại thật sự, không phải regex/từ khoá cứng) tự xác định người dùng muốn tạo bộ thẻ, và tự đặt
+// tên bộ thẻ hợp lý. Trả về text đã làm sạch + gợi ý (setName, reuseLastList) nếu có.
+function extractCreateSetSuggestion(rawText) {
+  if (!rawText) return { cleanText: rawText, suggestion: null };
+  const m = rawText.match(/<!--\s*CREATESET:\s*(\{[\s\S]*?\})\s*-->/);
+  if (!m) return { cleanText: rawText, suggestion: null };
+  const cleanText = (rawText.slice(0, m.index) + rawText.slice(m.index + m[0].length)).trim();
+  let parsed = null;
+  try { parsed = JSON.parse(m[1]); } catch (e) { return { cleanText, suggestion: null }; }
+  if (!parsed || !parsed.setName) return { cleanText, suggestion: null };
+  return { cleanText, suggestion: { setName: String(parsed.setName).trim(), reuseLastList: !!parsed.reuseLastList } };
 }
 
 // Hiện bong bóng đề xuất "Thêm từ X vào bộ thẻ Y", cho phép người dùng đổi bộ thẻ đích trước khi xác nhận
@@ -4459,8 +4469,12 @@ function guessTopicFromText(text) {
   return null;
 }
 
-// Hỏi xác nhận + cho phép chỉnh sửa chủ đề trước khi tạo
-function offerFlashcardConfirm(topic) {
+// Hỏi xác nhận + cho phép chỉnh sửa chủ đề trước khi tạo.
+// `topic`: tên bộ thẻ gợi ý (ưu tiên do chính AI suy luận từ ngữ cảnh, xem CREATE-SET DETECTION ở
+// system prompt — không còn phụ thuộc regex đoán mò như trước).
+// `reuseHint`: AI cho biết người dùng có đang muốn dùng lại danh sách đã liệt kê trước đó hay không
+// (cũng suy luận từ ngữ cảnh, không cần đúng từ khoá). undefined nếu gọi từ nơi khác không có gợi ý này.
+function offerFlashcardConfirm(topic, reuseHint) {
   const messages = document.getElementById('chatMessages');
   const offerId = 'chatFlashcardOffer_' + Date.now();
   const inputId = 'chatFlashcardTopicInput_' + Date.now();
@@ -4468,9 +4482,9 @@ function offerFlashcardConfirm(topic) {
   offerEl.className = 'chat-bubble chat-bubble-ai';
   offerEl.id = offerId;
 
-  // Nếu hội thoại gần đây đã có sẵn danh sách từ (AI đã liệt kê), sẽ tái sử dụng đúng các từ đó.
-  // Đồng thời cố gắng đoán ra một TÊN BỘ THẺ hợp lý để điền sẵn vào ô nhập (người dùng có thể sửa lại),
-  // thay vì chỉ hiện dòng hướng dẫn suông.
+  // Xác minh độc lập: hội thoại gần đây có thực sự chứa một danh sách từ vựng có thể tái sử dụng không
+  // (đây vẫn là bước kiểm tra DỮ LIỆU chính xác — không phải đoán ý định — nên vẫn giữ nguyên bằng regex
+  // để đảm bảo từ/nghĩa/phiên âm khi tái sử dụng khớp 100% với những gì đã hiển thị cho người dùng).
   let hasReusableList = false;
   let reusableListIdx = -1;
   for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
@@ -4480,9 +4494,10 @@ function offerFlashcardConfirm(topic) {
 
   let suggestedName = (topic && topic.trim()) ? topic.trim() : '';
   if (!suggestedName && reusableListIdx !== -1) {
-    // Lớp 1: đoán chủ đề từ câu giới thiệu của chính AI (vd: "...về chủ đề Môi trường...")
+    // Dự phòng (chỉ dùng khi hàm này được gọi mà không có tên gợi ý từ AI, vd luồng cũ):
+    // đoán chủ đề từ câu giới thiệu của chính AI (vd: "...về chủ đề Môi trường...")
     suggestedName = guessTopicFromText(chatHistory[reusableListIdx].content) || '';
-    // Lớp 2: đoán từ câu hỏi trước đó của người dùng (câu đã khiến AI liệt kê danh sách này)
+    // Rồi đoán từ câu hỏi trước đó của người dùng (câu đã khiến AI liệt kê danh sách này)
     if (!suggestedName && reusableListIdx > 0 && chatHistory[reusableListIdx - 1].role === 'user') {
       suggestedName = extractTopicFromMessage(chatHistory[reusableListIdx - 1].content)
         || guessTopicFromText(chatHistory[reusableListIdx - 1].content) || '';
@@ -4516,7 +4531,9 @@ function offerFlashcardConfirm(topic) {
   document.getElementById(offerId + '_btnYes').onclick = function() {
     const inputEl = document.getElementById(inputId);
     const finalTopic = inputEl ? inputEl.value.trim() : '';
-    generateFlashcardsFromChat(offerId, finalTopic);
+    // Nếu AI xác định rõ đây KHÔNG phải yêu cầu dùng lại danh sách cũ (reuseHint === false),
+    // tôn trọng ý định đó — không tự động tái sử dụng dù có danh sách gần đó, để tạo từ mới thật sự.
+    generateFlashcardsFromChat(offerId, finalTopic, reuseHint === false);
   };
   // Enter để xác nhận
   const inputEl = document.getElementById(inputId);
@@ -4564,7 +4581,7 @@ function showFlashcardCreatedBubble(messages, setName, cards) {
   messages.scrollTop = messages.scrollHeight;
 }
 
-async function generateFlashcardsFromChat(offerId, topic) {
+async function generateFlashcardsFromChat(offerId, topic, forceNoReuse) {
   const offerEl = document.getElementById(offerId);
   if (offerEl) offerEl.remove();
 
@@ -4574,11 +4591,14 @@ async function generateFlashcardsFromChat(offerId, topic) {
   // BƯỚC 1: Ưu tiên tuyệt đối — nếu AI đã liệt kê sẵn một danh sách từ vựng trong hội thoại gần đây,
   // dùng LẠI CHÍNH XÁC danh sách đó thay vì gọi AI tạo một danh sách mới (tránh bị lệch từ so với
   // những gì người dùng đã thấy và đồng ý ở trên).
+  // Bỏ qua bước này nếu AI đã xác định rõ đây là yêu cầu danh sách MỚI (forceNoReuse = true).
   let reuseCards = null;
-  for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
-    if (chatHistory[i].role !== 'assistant') continue;
-    const found = parseWordListFromText(chatHistory[i].content);
-    if (found.length >= 3) { reuseCards = found; break; }
+  if (!forceNoReuse) {
+    for (let i = chatHistory.length - 1; i >= 0 && i >= chatHistory.length - 10; i--) {
+      if (chatHistory[i].role !== 'assistant') continue;
+      const found = parseWordListFromText(chatHistory[i].content);
+      if (found.length >= 3) { reuseCards = found; break; }
+    }
   }
 
   if (reuseCards) {
