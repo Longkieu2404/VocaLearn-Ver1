@@ -4427,7 +4427,7 @@ function extractTopicFromMessage(text) {
   // vd "10 từ trên", "các từ đó", "danh sách vừa rồi", "the words above"... → không dùng làm tên/chủ đề,
   // để hệ thống tự nhận diện & tái sử dụng danh sách từ đã có (xem parseWordListFromText) thay vì hiển thị
   // nguyên văn cụm tham chiếu này cho người dùng (gây cảm giác AI không hiểu ngữ cảnh).
-  const referenceOnlyRe = /^(?:với\s+|các\s+|những\s+|toàn\s+bộ\s+)*(?:\d+\s*)?(?:từ|danh\s+sách|list)\s*(?:trên|đó|này|vừa\s+rồi|đã\s+(?:cho|nêu|liệt\s+kê)|ở\s+trên)\.?$|^(?:the\s+)?(?:words?|list)\s+(?:above|mentioned)\.?$/i;
+  const referenceOnlyRe = /^(?:với\s+|các\s+|những\s+|toàn\s+bộ\s+)*(?:\d+\s*)?(?:từ|danh\s+sách|list)?\s*(?:trên|đó|này|vừa\s+rồi|đã\s+(?:cho|nêu|liệt\s+kê)|ở\s+trên)\.?$|^(?:the\s+)?(?:words?|list|topic)?\s*(?:above|mentioned|this|that|it)\.?$/i;
   for (const p of patterns) {
     const m = text.match(p);
     if (m && m[1] && m[1].trim().length > 1) {
